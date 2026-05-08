@@ -4,7 +4,7 @@
 
 | Estado | Significado |
 |---|---|
-| 🟢 | Listo, key en `.env.local`, sin acciones pendientes inmediatas |
+| 🟢 | Listo, sin acciones pendientes inmediatas |
 | 🟡 | En progreso o con TODO operacional pendiente |
 | ⬜ | No iniciado o diferido |
 
@@ -14,12 +14,12 @@
 
 | Cuenta | Estado | Notas |
 |---|---|---|
-| **GitHub** (`git@github.com:alexcriadog/Creed.git`) | 🟢 | Repo creado, vacío. Pendiente `git init` + push en fase 1 |
-| **Supabase Cloud** (`hlgqxingeavdltgzzbvy`, `eu-north-1`) | 🟡 | Credenciales en `.env.local`. **TODO**: considerar rotar `SUPABASE_SECRET_KEY` (pasó por chat). |
-| **Vercel** (`prj_pZXy39e5fmmF1d8Km3D5jDdLDcct`) | 🟡 | **TODO**: renombrar proyecto de `project-7h15x` a `creed` desde Settings. Conectar al repo de GitHub. |
+| **GitHub** (`git@github.com:alexcriadog/Creed.git`) | 🟢 | Repo creado, `main` pusheada con fase 1 completa. |
+| **Supabase Cloud** (`hlgqxingeavdltgzzbvy`, `eu-north-1`) | 🟡 | Credenciales en `.env.local`. **Pendiente opcional**: rotar `SUPABASE_SECRET_KEY` (pasó por chat). |
+| **Vercel** (`prj_pZXy39e5fmmF1d8Km3D5jDdLDcct`) | 🟡 | **Pendiente del autor**: renombrar `project-7h15x` → `creed`, conectar al repo desde Settings → Git, añadir env vars. |
 | **Anthropic API** | 🟢 | Key en `.env.local`. **Directiva**: uso cuidadoso, default Groq para tests. |
 | **Groq API** | 🟢 | Key en `.env.local`. Default para desarrollo y tareas baratas. |
-| **developer.whoop.com — Creed-Dev** | ⬜ | Diferido a fase 1 (necesita callback `…vercel.app/api/whoop/callback` y privacy URL `…vercel.app/privacy`). |
+| **developer.whoop.com — Creed-Dev** | ⬜ | Diferido a fase 1+ (necesita callback `…vercel.app/api/whoop/callback` y privacy URL `…vercel.app/privacy` accesibles tras conectar Vercel). |
 | **developer.whoop.com — Creed-Prod** | ⬜ | Diferido a fase 8 (necesita dominio final). |
 | **Resend** | 🟢 | Key en `.env.local`. Sandbox-only en MVP (`onboarding@resend.dev`, solo a `alexcrilez@gmail.com`). |
 | **Sentry** | ⬜ | Diferido a V1. MVP solo con logs Vercel + Supabase. |
@@ -27,15 +27,19 @@
 
 ---
 
-## TODOs operacionales (fuera del código)
+## TODOs operacionales pendientes
 
-### Antes de empezar fase 1
+### Acciones manuales del autor (Vercel Dashboard)
 
 - [ ] Renombrar proyecto Vercel `project-7h15x` → `creed` (Settings → General).
-- [ ] Conectar repo GitHub `Creed` a Vercel (Settings → Git).
-- [ ] (Opcional pero recomendado) Rotar `SUPABASE_SECRET_KEY` y `RESEND_API_KEY` que pasaron por chat hace varios turnos. Actualizar `.env.local` con las nuevas.
+- [ ] Conectar repo GitHub `Creed` a Vercel (Settings → Git → Connect Repository → seleccionar `alexcriadog/Creed`).
+- [ ] Añadir env vars de `.env.local` en Vercel Settings → Environment Variables (excluyendo `NEXT_PUBLIC_APP_URL` que se ajusta por entorno y `ADMIN_EMAILS` que ya está hardcoded).
 
-### Durante fase 1
+### Recomendado pero no bloqueante
+
+- [ ] Rotar `SUPABASE_SECRET_KEY` y `RESEND_API_KEY` que pasaron por chat. Actualizar `.env.local` con las nuevas (sin pegarlas en chat).
+
+### Durante fase 2-3
 
 - [ ] Registrar Whoop-Dev cuando la app esté desplegada en Vercel preview con `/privacy` accesible.
 
@@ -50,26 +54,15 @@
 
 ## TODOs documentales
 
-### Antes de empezar fase 1 — Sentry diferido
+### ✅ Aplicados antes de fase 1 (commit ccc6ed1)
 
-Sentry sale de MVP. Hay que actualizar:
+- [x] Sentry diferido a V1 en `08-deployment.md`, `02-architecture.md`, `10-roadmap.md`.
+- [x] HSTS preload diferido en `07-security-privacy.md` §4.
+- [x] Resend sandbox documentado en `06-frontend.md` §6.1.
 
-- [ ] `docs/08-deployment.md` §3 servicios externos: marcar Sentry como "V1+".
-- [ ] `docs/08-deployment.md` §4.1 env vars: quitar `SENTRY_DSN` de MVP.
-- [ ] `docs/08-deployment.md` §11 observabilidad: reescribir basándose en Vercel/Supabase logs solamente.
-- [ ] `docs/02-architecture.md` §2 diagrama: quitar el nodo de Sentry o marcarlo "V1+".
-- [ ] `docs/07-security-privacy.md` §8.4 filtros de Sentry: marcar como "V1+".
-- [ ] `docs/10-roadmap.md` fase 1: quitar "Sentry SDK instalado".
+### ⬜ Pendientes antes de fase 5 — LLMs híbrido Claude + Groq
 
-### Antes de empezar fase 1 — Resend sandbox
-
-- [ ] `docs/06-frontend.md` §6.1 Recordatorio diario: documentar que en MVP solo llega a `alexcrilez@gmail.com`. Pareja con PWA push.
-- [ ] `docs/08-deployment.md` §7.1 Configuración Resend: dominio verificado pasa a "cuando haya dominio en V1".
-- [ ] `docs/07-security-privacy.md` §4 HSTS preload: marcar como "se reabre cuando haya dominio propio".
-
-### Antes de empezar fase 5 — LLMs híbrido Claude + Groq
-
-- [ ] `docs/05-agents.md` §5 Modelos por flujo: reescribir tabla con la asignación híbrida (Sonnet/Llama 3.3 70B/Llama 3.1 8B).
+- [ ] `docs/05-agents.md` §5 Modelos por flujo: reescribir tabla con la asignación híbrida (Sonnet 4.6 / Llama 3.3 70B / Llama 3.1 8B).
 - [ ] `docs/05-agents.md` §17.2 capacidades MVP del admin: añadir override por flujo a Groq también.
 - [ ] `docs/08-deployment.md` §3 servicios externos: añadir Groq.
 - [ ] `docs/08-deployment.md` §4.1 env vars: añadir `GROQ_API_KEY`.
@@ -91,25 +84,4 @@ Sentry sale de MVP. Hay que actualizar:
   - `pnpm dev` corre en `http://localhost:3030` (port 3000 lo usa OrbStack).
   - `pnpm typecheck` y `pnpm build` verde y limpio.
   - Repo en `github.com:alexcriadog/Creed`, branch `main` pusheada.
-- ⬜ **Fase 2 — Auth + perfil + onboarding mínimo**.
-
-## Próximo paso operativo
-
-**Acciones manuales del autor (Vercel Dashboard)**:
-1. Conectar el repo `alexcriadog/Creed` al proyecto Vercel desde Settings → Git.
-2. Renombrar el proyecto Vercel `project-7h15x` → `creed`.
-3. Añadir las env vars de `.env.local` en Vercel Settings → Environment Variables (excluir `NEXT_PUBLIC_APP_URL` y `ADMIN_EMAILS` que se ajustan por entorno).
-
-Tras conectar Vercel, el primer push genera preview deployment automático.
-
-Después: propongo el plan de **fase 2 — Auth + perfil + onboarding mínimo** según `docs/10-roadmap.md` fase 1:
-
-- Monorepo pnpm + Turborepo
-- `apps/web` con Next.js 15 App Router
-- `packages/db`, `packages/agents`, `packages/integrations/whoop`, `packages/ui`, `packages/i18n`
-- Tailwind v4 + Geist + tokens base de `design.md`
-- GitHub Actions CI mínimo (lint/typecheck/build)
-- Vercel conectado, preview funcional
-- Supabase init local
-
-Antes de tocar código, reabrimos los TODOs documentales de "Antes de fase 1" arriba.
+- ⬜ **Fase 2 — Auth + perfil + onboarding mínimo** (próxima sesión).
