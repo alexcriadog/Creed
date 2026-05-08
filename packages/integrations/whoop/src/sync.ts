@@ -56,8 +56,8 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
 
   // Decrypt tokens
   const { decryptToken } = await import('./encryption');
-  const accessToken = decryptToken(Buffer.from(conn.access_token_encrypted));
-  const refreshToken = decryptToken(Buffer.from(conn.refresh_token_encrypted));
+  const accessToken = decryptToken(conn.access_token_encrypted as string);
+  const refreshToken = decryptToken(conn.refresh_token_encrypted as string);
 
   const client = new WhoopClient({
     accessToken,

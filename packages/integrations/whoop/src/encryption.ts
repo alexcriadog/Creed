@@ -2,10 +2,14 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
 /**
  * AES-256-GCM con clave de 32 bytes desde WHOOP_TOKEN_ENCRYPTION_KEY (base64).
- * Formato del bytea resultante: iv(12) || tag(16) || ciphertext
+ *
+ * Encrypt → string base64 (formato: iv 12 || tag 16 || ciphertext).
+ * Decrypt → string original.
+ *
+ * Se guarda como text en Postgres (no bytea) para evitar líos de roundtrip
+ * con Supabase JS que devuelve bytea como \x... hex.
  *
  * NOTA: si la key se pierde, los tokens guardados son irrecuperables.
- * Documentado en docs/04-whoop-integration.md §7 y memoria privada.
  */
 
 function getKey(): Buffer {
@@ -22,21 +26,22 @@ function getKey(): Buffer {
   return buf;
 }
 
-export function encryptToken(plain: string): Buffer {
+export function encryptToken(plain: string): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', getKey(), iv);
   const enc = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return Buffer.concat([iv, tag, enc]);
+  return Buffer.concat([iv, tag, enc]).toString('base64');
 }
 
-export function decryptToken(encrypted: Buffer): string {
-  if (encrypted.length < 28) {
+export function decryptToken(encryptedBase64: string): string {
+  const buf = Buffer.from(encryptedBase64, 'base64');
+  if (buf.length < 28) {
     throw new Error('Invalid encrypted token: too short');
   }
-  const iv = encrypted.subarray(0, 12);
-  const tag = encrypted.subarray(12, 28);
-  const data = encrypted.subarray(28);
+  const iv = buf.subarray(0, 12);
+  const tag = buf.subarray(12, 28);
+  const data = buf.subarray(28);
   const decipher = createDecipheriv('aes-256-gcm', getKey(), iv);
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(data), decipher.final()]).toString(

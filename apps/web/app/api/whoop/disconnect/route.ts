@@ -27,7 +27,7 @@ export async function POST() {
 
   if (conn?.refresh_token_encrypted) {
     try {
-      const refreshToken = decryptToken(Buffer.from(conn.refresh_token_encrypted));
+      const refreshToken = decryptToken(conn.refresh_token_encrypted as string);
       await revokeToken({
         clientId: process.env.WHOOP_CLIENT_ID!,
         clientSecret: process.env.WHOOP_CLIENT_SECRET!,
