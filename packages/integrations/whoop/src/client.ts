@@ -43,39 +43,39 @@ const cycleSchema = z.object({
   id: z.union([z.number(), z.string().transform((v) => Number(v))]),
   user_id: z.number(),
   start: z.string(),
-  end: z.string().nullable().optional(),
+  end: z.string().nullish(),
   score: z
     .object({
-      strain: z.number().optional(),
-      average_heart_rate: z.number().optional(),
-      max_heart_rate: z.number().optional(),
-      kilojoule: z.number().optional(),
-      percent_recorded: z.number().optional(),
+      strain: z.number().nullish(),
+      average_heart_rate: z.number().nullish(),
+      max_heart_rate: z.number().nullish(),
+      kilojoule: z.number().nullish(),
+      percent_recorded: z.number().nullish(),
     })
-    .optional(),
-  score_state: z.string().optional(),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
+    .nullish(),
+  score_state: z.string().nullish(),
+  created_at: z.string().nullish(),
+  updated_at: z.string().nullish(),
 });
 export type WhoopCycle = z.infer<typeof cycleSchema>;
 
 const recoverySchema = z.object({
   cycle_id: z.union([z.number(), z.string().transform((v) => Number(v))]),
-  sleep_id: z.union([z.number(), z.string()]).optional(),
+  sleep_id: z.union([z.number(), z.string()]).nullish(),
   user_id: z.number(),
   created_at: z.string(),
-  updated_at: z.string().optional(),
+  updated_at: z.string().nullish(),
   score: z
     .object({
-      user_calibrating: z.boolean().optional(),
-      recovery_score: z.number().optional(),
-      resting_heart_rate: z.number().optional(),
-      hrv_rmssd_milli: z.number().optional(),
-      spo2_percentage: z.number().optional(),
-      skin_temp_celsius: z.number().optional(),
+      user_calibrating: z.boolean().nullish(),
+      recovery_score: z.number().nullish(),
+      resting_heart_rate: z.number().nullish(),
+      hrv_rmssd_milli: z.number().nullish(),
+      spo2_percentage: z.number().nullish(),
+      skin_temp_celsius: z.number().nullish(),
     })
-    .optional(),
-  score_state: z.string().optional(),
+    .nullish(),
+  score_state: z.string().nullish(),
 });
 export type WhoopRecovery = z.infer<typeof recoverySchema>;
 
@@ -85,27 +85,27 @@ const sleepSchema = z.object({
   user_id: z.number(),
   start: z.string(),
   end: z.string(),
-  nap: z.boolean().optional(),
+  nap: z.boolean().nullish(),
   score: z
     .object({
       stage_summary: z
         .object({
-          total_in_bed_time_milli: z.number().optional(),
-          total_awake_time_milli: z.number().optional(),
-          total_light_sleep_time_milli: z.number().optional(),
-          total_slow_wave_sleep_time_milli: z.number().optional(),
-          total_rem_sleep_time_milli: z.number().optional(),
+          total_in_bed_time_milli: z.number().nullish(),
+          total_awake_time_milli: z.number().nullish(),
+          total_light_sleep_time_milli: z.number().nullish(),
+          total_slow_wave_sleep_time_milli: z.number().nullish(),
+          total_rem_sleep_time_milli: z.number().nullish(),
         })
-        .optional(),
+        .nullish(),
       sleep_needed: z
         .object({
-          baseline_milli: z.number().optional(),
+          baseline_milli: z.number().nullish(),
         })
-        .optional(),
-      sleep_efficiency_percentage: z.number().optional(),
+        .nullish(),
+      sleep_efficiency_percentage: z.number().nullish(),
     })
-    .optional(),
-  score_state: z.string().optional(),
+    .nullish(),
+  score_state: z.string().nullish(),
 });
 export type WhoopSleep = z.infer<typeof sleepSchema>;
 
@@ -115,25 +115,25 @@ const workoutSchema = z.object({
   user_id: z.number(),
   start: z.string(),
   end: z.string(),
-  sport_id: z.number().optional(),
-  sport_name: z.string().optional(),
+  sport_id: z.number().nullish(),
+  sport_name: z.string().nullish(),
   score: z
     .object({
-      strain: z.number().optional(),
-      average_heart_rate: z.number().optional(),
-      max_heart_rate: z.number().optional(),
-      kilojoule: z.number().optional(),
-      distance_meter: z.number().optional(),
+      strain: z.number().nullish(),
+      average_heart_rate: z.number().nullish(),
+      max_heart_rate: z.number().nullish(),
+      kilojoule: z.number().nullish(),
+      distance_meter: z.number().nullish(),
     })
-    .optional(),
-  score_state: z.string().optional(),
+    .nullish(),
+  score_state: z.string().nullish(),
 });
 export type WhoopWorkout = z.infer<typeof workoutSchema>;
 
 const paginatedSchema = <T extends z.ZodTypeAny>(item: T) =>
   z.object({
     records: z.array(item),
-    next_token: z.string().nullable().optional(),
+    next_token: z.string().nullish(),
   });
 
 export class WhoopClient {

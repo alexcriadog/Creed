@@ -1,7 +1,7 @@
 import type { WhoopCycle, WhoopRecovery, WhoopSleep, WhoopWorkout } from './client';
 
-const milliToMinutes = (ms: number | undefined): number | null =>
-  ms !== undefined ? Math.round(ms / 60000) : null;
+const milliToMinutes = (ms: number | null | undefined): number | null =>
+  ms != null ? Math.round(ms / 60000) : null;
 
 export interface CycleRow {
   whoop_id: number;
