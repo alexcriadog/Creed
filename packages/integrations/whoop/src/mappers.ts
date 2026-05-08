@@ -56,6 +56,7 @@ export interface SleepRow {
   start_at: string;
   end_at: string;
   duration_in_bed_minutes: number | null;
+  sleep_minutes: number | null;
   rem_minutes: number | null;
   deep_minutes: number | null;
   light_minutes: number | null;
@@ -68,14 +69,22 @@ export interface SleepRow {
 
 export function sleepToRow(s: WhoopSleep): SleepRow {
   const stage = s.score?.stage_summary;
+  const remM = milliToMinutes(stage?.total_rem_sleep_time_milli);
+  const deepM = milliToMinutes(stage?.total_slow_wave_sleep_time_milli);
+  const lightM = milliToMinutes(stage?.total_light_sleep_time_milli);
+  const sleepMinutes =
+    remM != null || deepM != null || lightM != null
+      ? (remM ?? 0) + (deepM ?? 0) + (lightM ?? 0)
+      : null;
   return {
     whoop_id: String(s.id),
     start_at: s.start,
     end_at: s.end,
     duration_in_bed_minutes: milliToMinutes(stage?.total_in_bed_time_milli),
-    rem_minutes: milliToMinutes(stage?.total_rem_sleep_time_milli),
-    deep_minutes: milliToMinutes(stage?.total_slow_wave_sleep_time_milli),
-    light_minutes: milliToMinutes(stage?.total_light_sleep_time_milli),
+    sleep_minutes: sleepMinutes,
+    rem_minutes: remM,
+    deep_minutes: deepM,
+    light_minutes: lightM,
     awake_minutes: milliToMinutes(stage?.total_awake_time_milli),
     efficiency_pct: s.score?.sleep_efficiency_percentage ?? null,
     needed_minutes: milliToMinutes(s.score?.sleep_needed?.baseline_milli),
