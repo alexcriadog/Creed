@@ -80,9 +80,29 @@ Sentry sale de MVP. Hay que actualizar:
 
 ---
 
+## Estado actual de fases
+
+- ✅ **Fase 0 — Documentación** (sesiones 1–7).
+- ✅ **Fase 1 — Andamiaje técnico** (2026-05-08).
+  - Monorepo pnpm + Turborepo, Next.js 16 + React 19 + TS 6 + Tailwind v4.
+  - apps/web con landing minimal + `/api/health`.
+  - 5 packages placeholder (`db`, `agents`, `ui`, `i18n`, `whoop`).
+  - GitHub Actions CI con lint/typecheck/build.
+  - `pnpm dev` corre en `http://localhost:3030` (port 3000 lo usa OrbStack).
+  - `pnpm typecheck` y `pnpm build` verde y limpio.
+  - Repo en `github.com:alexcriadog/Creed`, branch `main` pusheada.
+- ⬜ **Fase 2 — Auth + perfil + onboarding mínimo**.
+
 ## Próximo paso operativo
 
-Tras este turno, propongo el plan de **fase 1 — andamiaje técnico** según `docs/10-roadmap.md` fase 1:
+**Acciones manuales del autor (Vercel Dashboard)**:
+1. Conectar el repo `alexcriadog/Creed` al proyecto Vercel desde Settings → Git.
+2. Renombrar el proyecto Vercel `project-7h15x` → `creed`.
+3. Añadir las env vars de `.env.local` en Vercel Settings → Environment Variables (excluir `NEXT_PUBLIC_APP_URL` y `ADMIN_EMAILS` que se ajustan por entorno).
+
+Tras conectar Vercel, el primer push genera preview deployment automático.
+
+Después: propongo el plan de **fase 2 — Auth + perfil + onboarding mínimo** según `docs/10-roadmap.md` fase 1:
 
 - Monorepo pnpm + Turborepo
 - `apps/web` con Next.js 15 App Router
