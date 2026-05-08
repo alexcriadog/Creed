@@ -2,7 +2,7 @@
   "name": "creed",
   "version": "0.0.0",
   "private": true,
-  "description": "Plataforma personal de coaching físico con Whoop + dos agentes AI",
+  "description": "Plataforma personal de coaching f\u00edsico con Whoop + dos agentes AI",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -17,7 +17,13 @@
     "test:e2e": "turbo run test:e2e",
     "test:visual": "turbo run test:visual",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\"",
+    "db:start": ".bin/supabase start",
+    "db:stop": ".bin/supabase stop",
+    "db:status": ".bin/supabase status",
+    "db:reset": ".bin/supabase db reset",
+    "db:migration:new": ".bin/supabase migration new",
+    "db:gen:types": ".bin/supabase gen types typescript --local > packages/db/src/database.types.ts"
   },
   "devDependencies": {
     "prettier": "^3.8.3",

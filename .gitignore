@@ -71,3 +71,6 @@ Icon
 *.pem
 *.local
 .vercel
+
+# Local CLI binaries
+.bin/

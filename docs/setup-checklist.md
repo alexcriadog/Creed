@@ -82,6 +82,14 @@
   - 5 packages placeholder (`db`, `agents`, `ui`, `i18n`, `whoop`).
   - GitHub Actions CI con lint/typecheck/build.
   - `pnpm dev` corre en `http://localhost:3030` (port 3000 lo usa OrbStack).
-  - `pnpm typecheck` y `pnpm build` verde y limpio.
-  - Repo en `github.com:alexcriadog/Creed`, branch `main` pusheada.
-- ⬜ **Fase 2 — Auth + perfil + onboarding mínimo** (próxima sesión).
+- 🟡 **Fase 2 — Auth + perfil + onboarding mínimo** (en progreso 2026-05-08).
+  - Supabase CLI 2.98.2 instalada en `.bin/` (gitignored).
+  - Supabase local arrancado vía Docker (Postgres :54322, API :54321, Studio :54323).
+  - Migración 1: `profiles` + `athlete_folder` + `audit_log` con RLS + trigger `on_auth_user_created`.
+  - Cliente Supabase SSR (server, client, middleware) en `apps/web/lib/supabase/`.
+  - Páginas: `/login` (email + OTP), `/verify` (6-digit code), `/onboarding` (formulario simple), `/profile` (lectura + signout + borrar cuenta).
+  - Middleware redirige no-auth a `/login`, auth-en-login a `/`.
+  - Borrar cuenta: cascada via `auth.admin.deleteUser` con audit_log entry.
+  - **Falta**: tests RLS + ejecutar el flujo end-to-end manual.
+  - **Falta**: en fase 5, sustituir el formulario de onboarding por entrevista con coach.
+- ⬜ **Fase 3 — Whoop + dashboard pasivo**.

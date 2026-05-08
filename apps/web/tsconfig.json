@@ -1,19 +1,46 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@creed/db": ["../../packages/db/src"],
-      "@creed/db/*": ["../../packages/db/src/*"],
-      "@creed/agents": ["../../packages/agents/src"],
-      "@creed/agents/*": ["../../packages/agents/src/*"],
-      "@creed/ui": ["../../packages/ui/src"],
-      "@creed/ui/*": ["../../packages/ui/src/*"],
-      "@creed/i18n": ["../../packages/i18n/src"],
-      "@creed/i18n/*": ["../../packages/i18n/src/*"],
-      "@creed/whoop": ["../../packages/integrations/whoop/src"],
-      "@creed/whoop/*": ["../../packages/integrations/whoop/src/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@creed/db": [
+        "../../packages/db/src"
+      ],
+      "@creed/db/*": [
+        "../../packages/db/src/*"
+      ],
+      "@creed/agents": [
+        "../../packages/agents/src"
+      ],
+      "@creed/agents/*": [
+        "../../packages/agents/src/*"
+      ],
+      "@creed/ui": [
+        "../../packages/ui/src"
+      ],
+      "@creed/ui/*": [
+        "../../packages/ui/src/*"
+      ],
+      "@creed/i18n": [
+        "../../packages/i18n/src"
+      ],
+      "@creed/i18n/*": [
+        "../../packages/i18n/src/*"
+      ],
+      "@creed/whoop": [
+        "../../packages/integrations/whoop/src"
+      ],
+      "@creed/whoop/*": [
+        "../../packages/integrations/whoop/src/*"
+      ]
     }
   },
   "include": [
@@ -22,5 +49,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }
