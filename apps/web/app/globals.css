@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Creed — Design tokens
+   Source of truth: docs/design.md
+   ============================================================ */
+
+@theme {
+  /* Backgrounds — capas */
+  --color-canvas: oklch(98% 0.005 260);
+  --color-canvas-tint: oklch(96% 0.010 260);
+  --color-surface: oklch(100% 0 0 / 0.65);
+  --color-surface-strong: oklch(100% 0 0 / 0.85);
+  --color-surface-raised: oklch(100% 0 0 / 0.4);
+
+  /* Borders */
+  --color-border-subtle: oklch(100% 0 0 / 0.18);
+  --color-border-default: oklch(20% 0 0 / 0.10);
+  --color-border-strong: oklch(20% 0 0 / 0.20);
+
+  /* Text */
+  --color-text-primary: oklch(18% 0 0);
+  --color-text-secondary: oklch(38% 0 0);
+  --color-text-muted: oklch(56% 0 0);
+  --color-text-on-accent: oklch(99% 0 0);
+
+  /* Accent */
+  --color-accent: oklch(58% 0.21 260);
+  --color-accent-strong: oklch(50% 0.22 260);
+  --color-accent-soft: oklch(58% 0.21 260 / 0.12);
+
+  /* Semáforo */
+  --color-status-green: oklch(68% 0.18 145);
+  --color-status-amber: oklch(75% 0.16 75);
+  --color-status-red: oklch(60% 0.21 25);
+
+  /* Type families */
+  --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Geist", "Inter Display", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Type scale (clamp) */
+  --text-xs: clamp(0.75rem, 0.72rem + 0.1vw, 0.8125rem);
+  --text-sm: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1.05rem + 0.3vw, 1.1875rem);
+  --text-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.4375rem);
+  --text-2xl: clamp(1.5rem, 1.2rem + 1.2vw, 1.875rem);
+  --text-3xl: clamp(1.875rem, 1.4rem + 2vw, 2.5rem);
+  --text-display: clamp(2.5rem, 1.8rem + 3vw, 3.5rem);
+  --text-numeric: clamp(2.25rem, 1.6rem + 2.6vw, 3.25rem);
+
+  /* Spacing (4px base) */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-pill: 9999px;
+
+  /* Motion durations */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+  --duration-slow: 320ms;
+  --duration-slowest: 500ms;
+
+  /* Easings */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-apple: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ============================================================
+   Dark mode tokens (override via [data-theme="dark"] or prefers-color-scheme)
+   ============================================================ */
+
+[data-theme="dark"] {
+  --color-canvas: oklch(14% 0.005 260);
+  --color-canvas-tint: oklch(18% 0.008 260);
+  --color-surface: oklch(20% 0.005 260 / 0.55);
+  --color-surface-strong: oklch(20% 0.005 260 / 0.80);
+  --color-surface-raised: oklch(22% 0.005 260 / 0.40);
+
+  --color-border-subtle: oklch(100% 0 0 / 0.08);
+  --color-border-default: oklch(100% 0 0 / 0.10);
+  --color-border-strong: oklch(100% 0 0 / 0.20);
+
+  --color-text-primary: oklch(96% 0 0);
+  --color-text-secondary: oklch(72% 0 0);
+  --color-text-muted: oklch(56% 0 0);
+
+  --color-accent: oklch(70% 0.20 260);
+  --color-accent-strong: oklch(78% 0.20 260);
+  --color-accent-soft: oklch(70% 0.20 260 / 0.16);
+
+  --color-status-green: oklch(72% 0.16 145);
+  --color-status-amber: oklch(78% 0.14 75);
+  --color-status-red: oklch(65% 0.18 25);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --color-canvas: oklch(14% 0.005 260);
+    --color-canvas-tint: oklch(18% 0.008 260);
+    --color-surface: oklch(20% 0.005 260 / 0.55);
+    --color-surface-strong: oklch(20% 0.005 260 / 0.80);
+    --color-surface-raised: oklch(22% 0.005 260 / 0.40);
+
+    --color-border-subtle: oklch(100% 0 0 / 0.08);
+    --color-border-default: oklch(100% 0 0 / 0.10);
+    --color-border-strong: oklch(100% 0 0 / 0.20);
+
+    --color-text-primary: oklch(96% 0 0);
+    --color-text-secondary: oklch(72% 0 0);
+    --color-text-muted: oklch(56% 0 0);
+
+    --color-accent: oklch(70% 0.20 260);
+    --color-accent-strong: oklch(78% 0.20 260);
+    --color-accent-soft: oklch(70% 0.20 260 / 0.16);
+
+    --color-status-green: oklch(72% 0.16 145);
+    --color-status-amber: oklch(78% 0.14 75);
+    --color-status-red: oklch(65% 0.18 25);
+  }
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Global base
+   ============================================================ */
+
+html, body {
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% -10%, oklch(85% 0.10 260 / 0.6), transparent 50%),
+    radial-gradient(circle at 90% 110%, oklch(85% 0.10 30 / 0.4), transparent 50%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(circle at 20% -10%, oklch(30% 0.15 260 / 0.6), transparent 50%),
+    radial-gradient(circle at 90% 110%, oklch(30% 0.15 30 / 0.4), transparent 50%);
+}
+
+/* Numerals tabulares para datos */
+.tabular-nums {
+  font-feature-settings: "tnum";
+}
+
+/* Glass card primitive — usado por Card en packages/ui */
+.surface-glass {
+  background: var(--color-surface);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 2px 4px oklch(20% 0 0 / 0.04),
+    0 16px 48px oklch(20% 0 0 / 0.08),
+    inset 0 1px 0 oklch(100% 0 0 / 0.6);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-canvas),
+    0 0 0 4px var(--color-accent);
+  border-radius: var(--radius-md);
+}

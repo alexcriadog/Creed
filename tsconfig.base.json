@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": false,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "jsx": "preserve",
+    "incremental": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@creed/db": [
+        "./packages/db/src"
+      ],
+      "@creed/db/*": [
+        "./packages/db/src/*"
+      ],
+      "@creed/agents": [
+        "./packages/agents/src"
+      ],
+      "@creed/agents/*": [
+        "./packages/agents/src/*"
+      ],
+      "@creed/ui": [
+        "./packages/ui/src"
+      ],
+      "@creed/ui/*": [
+        "./packages/ui/src/*"
+      ],
+      "@creed/i18n": [
+        "./packages/i18n/src"
+      ],
+      "@creed/i18n/*": [
+        "./packages/i18n/src/*"
+      ],
+      "@creed/whoop": [
+        "./packages/integrations/whoop/src"
+      ],
+      "@creed/whoop/*": [
+        "./packages/integrations/whoop/src/*"
+      ]
+    },
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist",
+    "coverage",
+    "playwright-report"
+  ]
+}

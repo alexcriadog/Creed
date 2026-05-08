@@ -1,0 +1,53 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env.local", ".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "VERCEL_ENV"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_APP_URL",
+        "SUPABASE_SECRET_KEY",
+        "ANTHROPIC_API_KEY",
+        "GROQ_API_KEY",
+        "RESEND_API_KEY",
+        "RESEND_FROM_EMAIL",
+        "ADMIN_EMAILS",
+        "WHOOP_CLIENT_ID",
+        "WHOOP_CLIENT_SECRET",
+        "WHOOP_REDIRECT_URI",
+        "WHOOP_WEBHOOK_SECRET",
+        "CRON_SECRET"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "outputs": ["playwright-report/**", "test-results/**"]
+    },
+    "test:visual": {
+      "dependsOn": ["^build"],
+      "outputs": ["__snapshots__/**", "test-results/**"]
+    }
+  }
+}

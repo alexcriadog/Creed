@@ -1,0 +1,47 @@
+{
+  "name": "@creed/web",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test --grep @visual",
+    "test:e2e:update": "playwright test --update-snapshots"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.95.1",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.105.4",
+    "framer-motion": "^12.38.0",
+    "groq-sdk": "^1.1.2",
+    "lucide-react": "^1.14.0",
+    "next": "^16.2.6",
+    "next-intl": "^4.11.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-hook-form": "^7.75.0",
+    "recharts": "^3.8.1",
+    "resend": "^6.12.3",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@types/node": "^25.6.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^10.3.0",
+    "eslint-config-next": "^16.2.6",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^4.2.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  }
+}
