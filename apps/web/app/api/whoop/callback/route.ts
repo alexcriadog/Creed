@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
-import { encryptToken, exchangeCode, getWhoopUserProfile, whoopScopes } from '@creed/whoop';
+import { encryptToken, exchangeCode, getWhoopUserProfile, syncWhoop, whoopScopes } from '@creed/whoop';
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -96,6 +96,25 @@ export async function GET(request: NextRequest) {
 
   cookieStore.delete('whoop_oauth_state');
   cookieStore.delete('whoop_oauth_pkce');
+
+  // Trigger initial backfill (90 días) en background — no bloqueamos el redirect.
+  // Si falla, el usuario puede hacer "Sincronizar ahora" desde el home.
+  syncWhoop({
+    supabase: admin,
+    userId: user.id,
+    whoopClientId: process.env.WHOOP_CLIENT_ID!,
+    whoopClientSecret: process.env.WHOOP_CLIENT_SECRET!,
+  })
+    .then(async (result) => {
+      await admin.from('audit_log').insert({
+        user_id: user.id,
+        action: 'whoop_backfill_initial',
+        metadata: result as unknown as Record<string, unknown>,
+      });
+    })
+    .catch((e) => {
+      console.error('[whoop.callback] initial backfill', e instanceof Error ? e.message : e);
+    });
 
   return redirectHome();
 }
