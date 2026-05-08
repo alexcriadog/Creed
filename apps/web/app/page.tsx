@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { RecoveryRing } from '@/components/recovery-ring';
 import { WhoopStatusBanner } from '@/components/whoop-status-banner';
+import { TodayStats } from '@/components/today-stats';
+import { TrainingRecent } from '@/components/training-recent';
+import { VerdictCard } from '@/components/verdict-card';
 
 const WHOOP_ERRORS: Record<string, string> = {
   state_mismatch: 'La sesión de OAuth caducó. Inténtalo de nuevo.',
@@ -201,6 +204,14 @@ export default async function HomePage({
         ) : (
           <WhoopDisconnected />
         )}
+
+        <div className="my-8 border-t border-[color:var(--color-border-default)]" />
+
+        <VerdictCard />
+
+        <TodayStats />
+
+        <TrainingRecent />
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border-default)] pt-6">
           <Link

@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/api/health',
   '/api/whoop/cron-sync',
   '/api/whoop/webhook',
+  '/api/weekly-close',
 ];
 
 function isPublicPath(pathname: string) {

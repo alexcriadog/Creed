@@ -4,6 +4,10 @@
     {
       "path": "/api/whoop/cron-sync",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/weekly-close",
+      "schedule": "0 6 * * 1"
     }
   ]
 }
