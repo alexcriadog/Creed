@@ -10,6 +10,7 @@ const WHOOP_ERRORS: Record<string, string> = {
   missing_params: 'Whoop nos devolvió una respuesta incompleta.',
   access_denied: 'Cancelaste la autorización en Whoop.',
   sync_failed: 'No pudimos sincronizar con Whoop. Intenta más tarde.',
+  sync_threw: 'El sync lanzó una excepción.',
 };
 
 interface SyncResult {
@@ -27,6 +28,7 @@ export default async function HomePage({
     whoop_connected?: string;
     whoop_synced?: string;
     whoop_error?: string;
+    whoop_msg?: string;
   }>;
 }) {
   const supabase = await createSupabaseServerClient();
@@ -52,7 +54,8 @@ export default async function HomePage({
   const params = await searchParams;
   const successFlash = params.whoop_connected === '1';
   const errorFlash = params.whoop_error
-    ? WHOOP_ERRORS[params.whoop_error] ?? `Error: ${params.whoop_error}`
+    ? (WHOOP_ERRORS[params.whoop_error] ?? `Error: ${params.whoop_error}`) +
+      (params.whoop_msg ? ` — ${decodeURIComponent(params.whoop_msg)}` : '')
     : null;
 
   let syncFlash: SyncResult | null = null;
@@ -119,9 +122,14 @@ export default async function HomePage({
           <Flash kind={syncFlash.errors.length > 0 ? 'amber' : 'green'}>
             Sync completo: {syncFlash.cycles} cycles · {syncFlash.recovery} recovery · {syncFlash.sleep} sleep · {syncFlash.workouts} workouts
             {syncFlash.errors.length > 0 && (
-              <span className="block text-[length:var(--text-xs)] opacity-80">
-                Con {syncFlash.errors.length} error(es): {syncFlash.errors.slice(0, 1).join(', ')}
-              </span>
+              <details className="mt-2 text-[length:var(--text-xs)] opacity-90">
+                <summary className="cursor-pointer">{syncFlash.errors.length} error(es)</summary>
+                <ul className="mt-1 list-disc pl-5">
+                  {syncFlash.errors.map((e, i) => (
+                    <li key={i} className="font-mono">{e}</li>
+                  ))}
+                </ul>
+              </details>
             )}
           </Flash>
         )}

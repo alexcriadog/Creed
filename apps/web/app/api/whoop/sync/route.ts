@@ -18,6 +18,7 @@ export async function POST() {
   }
 
   const admin = createSupabaseServiceRoleClient();
+  const base = process.env.NEXT_PUBLIC_APP_URL!;
 
   try {
     const result = await syncWhoop({
@@ -33,13 +34,22 @@ export async function POST() {
       metadata: result as unknown as Record<string, unknown>,
     });
 
+    console.info('[whoop.sync] result', JSON.stringify(result));
+
     return NextResponse.redirect(
-      new URL(`/?whoop_synced=${encodeURIComponent(JSON.stringify(result))}`, process.env.NEXT_PUBLIC_APP_URL!),
+      new URL(
+        `/?whoop_synced=${encodeURIComponent(JSON.stringify(result))}`,
+        base,
+      ),
     );
   } catch (e) {
-    console.error('[whoop.sync]', e instanceof Error ? e.message : e);
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[whoop.sync] threw', msg, e);
     return NextResponse.redirect(
-      new URL(`/?whoop_error=sync_failed`, process.env.NEXT_PUBLIC_APP_URL!),
+      new URL(
+        `/?whoop_error=sync_threw&whoop_msg=${encodeURIComponent(msg.slice(0, 300))}`,
+        base,
+      ),
     );
   }
 }
