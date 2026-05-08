@@ -71,3 +71,25 @@
 ### Inspiración visual / referencias
 
 - **`design-frontend.md`** (en raíz del repo, dejado por el usuario). Análisis del marketing site de ClickHouse — black canvas + electric yellow + Inter. **Decisión del usuario (2026-05-08)**: ignorar este archivo. La dirección visual oficial sigue siendo **glass moderno bien hecho** según `docs/design.md` (sesión 6). El archivo se queda en raíz pero no se aplica.
+
+
+---
+
+## 2026-05-08 (tarde) — Vercel deploy + Whoop dev
+
+### Acción del usuario
+
+- Conectó el repo GitHub al proyecto Vercel.
+- Registró la app Whoop-Dev en developer.whoop.com con URL **placeholder** (aún sin dominio real). `WHOOP_CLIENT_ID` y `WHOOP_CLIENT_SECRET` añadidos por el usuario directamente en `.env.local` (forma segura, no por chat).
+
+### Problema reportado
+
+- Deploy de Vercel falla con `No Output Directory named "public" found`. Vercel no detectaba la app Next.js porque vive en `apps/web/`, no en raíz.
+
+### Fix aplicado
+
+- Creado `vercel.json` en raíz con framework=nextjs + buildCommand turbo + outputDirectory `apps/web/.next`. El próximo push a `main` debería desbloquear el deploy.
+
+### Pendiente
+
+- Tras el primer deploy verde, actualizar `WHOOP_REDIRECT_URI` en developer.whoop.com con la URL real de Vercel y guardarla también en Vercel env vars.

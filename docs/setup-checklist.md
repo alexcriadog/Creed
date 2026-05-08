@@ -19,7 +19,7 @@
 | **Vercel** (`prj_pZXy39e5fmmF1d8Km3D5jDdLDcct`) | 🟡 | **Pendiente del autor**: renombrar `project-7h15x` → `creed`, conectar al repo desde Settings → Git, añadir env vars. |
 | **Anthropic API** | 🟢 | Key en `.env.local`. **Directiva**: uso cuidadoso, default Groq para tests. |
 | **Groq API** | 🟢 | Key en `.env.local`. Default para desarrollo y tareas baratas. |
-| **developer.whoop.com — Creed-Dev** | ⬜ | Diferido a fase 1+ (necesita callback `…vercel.app/api/whoop/callback` y privacy URL `…vercel.app/privacy` accesibles tras conectar Vercel). |
+| **developer.whoop.com — Creed-Dev** | 🟡 | App registrada con URL placeholder. `WHOOP_CLIENT_ID` y `WHOOP_CLIENT_SECRET` en `.env.local`. **TODO**: actualizar redirect URI cuando Vercel deploy real funcione. |
 | **developer.whoop.com — Creed-Prod** | ⬜ | Diferido a fase 8 (necesita dominio final). |
 | **Resend** | 🟢 | Key en `.env.local`. Sandbox-only en MVP (`onboarding@resend.dev`, solo a `alexcrilez@gmail.com`). |
 | **Sentry** | ⬜ | Diferido a V1. MVP solo con logs Vercel + Supabase. |
@@ -31,9 +31,19 @@
 
 ### Acciones manuales del autor (Vercel Dashboard)
 
+- [x] Conectar repo GitHub `Creed` a Vercel.
+- [x] Whoop dev registrado con URL placeholder (`WHOOP_CLIENT_ID`/`WHOOP_CLIENT_SECRET` en `.env.local`).
 - [ ] Renombrar proyecto Vercel `project-7h15x` → `creed` (Settings → General).
-- [ ] Conectar repo GitHub `Creed` a Vercel (Settings → Git → Connect Repository → seleccionar `alexcriadog/Creed`).
-- [ ] Añadir env vars de `.env.local` en Vercel Settings → Environment Variables (excluyendo `NEXT_PUBLIC_APP_URL` que se ajusta por entorno y `ADMIN_EMAILS` que ya está hardcoded).
+- [ ] Añadir env vars de `.env.local` en Vercel Settings → Environment Variables. Pendientes en producción para que el build pase:
+  - `NEXT_PUBLIC_SUPABASE_URL` (Cloud, no la local)
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Cloud)
+  - `SUPABASE_SECRET_KEY` (Cloud)
+  - `ANTHROPIC_API_KEY`
+  - `GROQ_API_KEY`
+  - `RESEND_API_KEY`
+  - `RESEND_FROM_EMAIL` = `onboarding@resend.dev`
+  - `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`
+- [ ] Tras el primer deploy verde, copiar la URL Vercel y actualizar `WHOOP_REDIRECT_URI` en developer.whoop.com → guardar también en Vercel env vars.
 
 ### Recomendado pero no bloqueante
 
