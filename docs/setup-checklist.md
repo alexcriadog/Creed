@@ -102,4 +102,18 @@
   - Borrar cuenta: cascada via `auth.admin.deleteUser` con audit_log entry.
   - **Falta**: tests RLS + ejecutar el flujo end-to-end manual.
   - **Falta**: en fase 5, sustituir el formulario de onboarding por entrevista con coach.
-- ⬜ **Fase 3 — Whoop + dashboard pasivo**.
+- 🟡 **Fase 3 — Whoop + dashboard pasivo** (en progreso 2026-05-08).
+  - OAuth flow completo (`/api/whoop/{authorize,callback}`) con state-cookie HMAC, scopes correctos (`offline + read:*`).
+  - Tokens AES-256-GCM (`WHOOP_TOKEN_ENCRYPTION_KEY`) en Postgres como text base64.
+  - 5 migraciones Whoop: `whoop_connections` + 4 tablas de datos (cycles, recovery, sleep, workouts) con RLS por user_id; ALTER de IDs sleep/workout a text (UUIDs en API v2); ALTER de tokens a text base64.
+  - Cliente REST `WhoopClient` v2 (`/developer/v2`) con paginación cursor, refresh on 401, backoff 429.
+  - `syncWhoop()` orquestador: backfill 90d en primer connect + sync incremental con `since`. Idempotente por (user_id, whoop_id).
+  - Schemas Zod tolerantes a null (`.nullish()`) en todos los campos opcionales del API.
+  - Sync manual: `/api/whoop/sync` (POST con sesión de usuario) → redirect con `?whoop_synced={...}`.
+  - Sync automático: `/api/whoop/cron-sync` (POST con `Authorization: Bearer $CRON_SECRET`) configurado en `apps/web/vercel.json` con schedule `0 */6 * * *`.
+  - Webhook entrante: `/api/whoop/webhook` con verificación HMAC-SHA256 base64 contra `WHOOP_WEBHOOK_SECRET`.
+  - Dashboard real en `/`: RecoveryRing SVG + stats card (strain, sleep, HR), bar chart de recovery últimos 7 días, banner si Whoop atrasado >25h o status ≠ connected.
+  - **Pendiente del autor**:
+    - Generar `WHOOP_WEBHOOK_SECRET` en developer.whoop.com cuando configures webhooks (luego `.env.local` + Vercel env vars + endpoint URL en developer.whoop.com).
+    - Añadir `CRON_SECRET` y `WHOOP_TOKEN_ENCRYPTION_KEY` a Vercel env vars cuando deployes en prod.
+- ⬜ **Fase 4 — Registro manual** (alimentación, peso, entrenamiento sin Whoop).
