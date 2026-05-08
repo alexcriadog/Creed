@@ -132,7 +132,7 @@ const profileSchema = z.object({
 export async function getWhoopUserProfile(
   accessToken: string,
 ): Promise<{ whoopUserId: string; email?: string }> {
-  const res = await fetch(`${WHOOP_API_BASE}/v2/user/profile/basic`, {
+  const res = await fetch(`${WHOOP_API_BASE}/developer/v2/user/profile/basic`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) {

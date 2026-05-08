@@ -2,12 +2,17 @@ import { z } from 'zod';
 import { WHOOP_API_BASE, refreshTokens, type WhoopTokens } from './oauth';
 
 /**
- * Cliente REST de Whoop API v2 con auto-refresh de tokens.
+ * Cliente REST de Whoop API v2 con auto-refresh de tokens y backoff de rate limit.
+ *
+ * Base: https://api.prod.whoop.com/developer/v2/...
+ * Rate limits: 100 req/min y 10k req/day por API key (Whoop dev docs).
  *
  * Uso:
- *   const client = new WhoopClient({ accessToken, refreshToken, expiresAt, onTokensRefreshed });
+ *   const client = new WhoopClient({ accessToken, refreshToken, expiresAt, ... });
  *   const { records } = await client.listCycles({ start, end });
  */
+
+const DATA_API_PREFIX = '/developer/v2';
 
 export interface WhoopClientOptions {
   accessToken: string;
@@ -35,7 +40,7 @@ export interface PaginatedResponse<T> {
 }
 
 const cycleSchema = z.object({
-  id: z.union([z.number(), z.string().transform(Number)]),
+  id: z.union([z.number(), z.string().transform((v) => Number(v))]),
   user_id: z.number(),
   start: z.string(),
   end: z.string().nullable().optional(),
@@ -55,7 +60,7 @@ const cycleSchema = z.object({
 export type WhoopCycle = z.infer<typeof cycleSchema>;
 
 const recoverySchema = z.object({
-  cycle_id: z.union([z.number(), z.string().transform(Number)]),
+  cycle_id: z.union([z.number(), z.string().transform((v) => Number(v))]),
   sleep_id: z.union([z.number(), z.string()]).optional(),
   user_id: z.number(),
   created_at: z.string(),
@@ -74,8 +79,9 @@ const recoverySchema = z.object({
 });
 export type WhoopRecovery = z.infer<typeof recoverySchema>;
 
+// v2: sleep id es UUID (string).
 const sleepSchema = z.object({
-  id: z.union([z.number(), z.string().transform(String)]),
+  id: z.union([z.string(), z.number().transform((v) => String(v))]),
   user_id: z.number(),
   start: z.string(),
   end: z.string(),
@@ -103,8 +109,9 @@ const sleepSchema = z.object({
 });
 export type WhoopSleep = z.infer<typeof sleepSchema>;
 
+// v2: workout id es UUID (string).
 const workoutSchema = z.object({
-  id: z.union([z.number(), z.string().transform(String)]),
+  id: z.union([z.string(), z.number().transform((v) => String(v))]),
   user_id: z.number(),
   start: z.string(),
   end: z.string(),
@@ -164,53 +171,61 @@ export class WhoopClient {
     }
   }
 
-  private async request<T>(path: string, schema: z.ZodSchema<T>): Promise<T> {
+  private async request<T>(path: string, schema: z.ZodSchema<T>, retried = false): Promise<T> {
     await this.ensureFreshToken();
     const res = await fetch(`${WHOOP_API_BASE}${path}`, {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
-    if (res.status === 401) {
-      // Force refresh and retry once
+
+    // 401 → refresh y reintenta una vez
+    if (res.status === 401 && !retried) {
       this.expiresAt = new Date(0);
       await this.ensureFreshToken();
-      const retry = await fetch(`${WHOOP_API_BASE}${path}`, {
-        headers: { Authorization: `Bearer ${this.accessToken}` },
-      });
-      if (!retry.ok) {
-        throw new Error(`Whoop API ${path}: ${retry.status} ${retry.statusText}`);
-      }
-      return schema.parse(await retry.json());
+      return this.request(path, schema, true);
     }
+
+    // 429 → respeta X-RateLimit-Reset (segundos), reintenta una vez si <= 30s
+    if (res.status === 429 && !retried) {
+      const resetHdr = res.headers.get('X-RateLimit-Reset');
+      const resetSecs = resetHdr ? Number(resetHdr) : NaN;
+      if (Number.isFinite(resetSecs) && resetSecs > 0 && resetSecs <= 30) {
+        await new Promise((r) => setTimeout(r, resetSecs * 1000));
+        return this.request(path, schema, true);
+      }
+      throw new Error(`Whoop API rate limited (429). Reset in ${resetSecs}s`);
+    }
+
     if (!res.ok) {
       throw new Error(`Whoop API ${path}: ${res.status} ${res.statusText}`);
     }
     return schema.parse(await res.json());
   }
 
-  private buildPath(base: string, params: PaginatedRequest): string {
+  private buildPath(resource: string, params: PaginatedRequest): string {
     const qs = new URLSearchParams();
     if (params.start) qs.set('start', params.start);
     if (params.end) qs.set('end', params.end);
     if (params.limit) qs.set('limit', String(params.limit));
     if (params.nextToken) qs.set('nextToken', params.nextToken);
     const q = qs.toString();
+    const base = `${DATA_API_PREFIX}${resource}`;
     return q ? `${base}?${q}` : base;
   }
 
   listCycles(params: PaginatedRequest = {}): Promise<PaginatedResponse<WhoopCycle>> {
-    return this.request(this.buildPath('/v2/cycle', params), paginatedSchema(cycleSchema));
+    return this.request(this.buildPath('/cycle', params), paginatedSchema(cycleSchema));
   }
 
   listRecovery(params: PaginatedRequest = {}): Promise<PaginatedResponse<WhoopRecovery>> {
-    return this.request(this.buildPath('/v2/recovery', params), paginatedSchema(recoverySchema));
+    return this.request(this.buildPath('/recovery', params), paginatedSchema(recoverySchema));
   }
 
   listSleep(params: PaginatedRequest = {}): Promise<PaginatedResponse<WhoopSleep>> {
-    return this.request(this.buildPath('/v2/activity/sleep', params), paginatedSchema(sleepSchema));
+    return this.request(this.buildPath('/activity/sleep', params), paginatedSchema(sleepSchema));
   }
 
   listWorkouts(params: PaginatedRequest = {}): Promise<PaginatedResponse<WhoopWorkout>> {
-    return this.request(this.buildPath('/v2/activity/workout', params), paginatedSchema(workoutSchema));
+    return this.request(this.buildPath('/activity/workout', params), paginatedSchema(workoutSchema));
   }
 
   /**
@@ -220,11 +235,14 @@ export class WhoopClient {
     fetchPage: (params: PaginatedRequest) => Promise<PaginatedResponse<T>>,
     initialParams: PaginatedRequest = {},
   ): AsyncGenerator<T[]> {
-    let nextToken: string | undefined = initialParams.nextToken;
+    let nextToken: string | null | undefined = initialParams.nextToken;
     let count = 0;
     const MAX_PAGES = 200; // safety
     while (count < MAX_PAGES) {
-      const page: PaginatedResponse<T> = await fetchPage({ ...initialParams, ...(nextToken !== undefined && { nextToken }) });
+      const page: PaginatedResponse<T> = await fetchPage({
+        ...initialParams,
+        ...(nextToken !== undefined && nextToken !== null && { nextToken }),
+      });
       yield page.records;
       if (!page.next_token) break;
       nextToken = page.next_token;

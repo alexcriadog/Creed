@@ -52,7 +52,7 @@ export function recoveryToRow(rec: WhoopRecovery): RecoveryRow {
 }
 
 export interface SleepRow {
-  whoop_id: number;
+  whoop_id: string;
   start_at: string;
   end_at: string;
   duration_in_bed_minutes: number | null;
@@ -69,7 +69,7 @@ export interface SleepRow {
 export function sleepToRow(s: WhoopSleep): SleepRow {
   const stage = s.score?.stage_summary;
   return {
-    whoop_id: Number(s.id),
+    whoop_id: String(s.id),
     start_at: s.start,
     end_at: s.end,
     duration_in_bed_minutes: milliToMinutes(stage?.total_in_bed_time_milli),
@@ -85,7 +85,7 @@ export function sleepToRow(s: WhoopSleep): SleepRow {
 }
 
 export interface WorkoutRow {
-  whoop_id: number;
+  whoop_id: string;
   sport: string | null;
   start_at: string;
   end_at: string;
@@ -99,7 +99,7 @@ export interface WorkoutRow {
 
 export function workoutToRow(w: WhoopWorkout): WorkoutRow {
   return {
-    whoop_id: Number(w.id),
+    whoop_id: String(w.id),
     sport: w.sport_name ?? (w.sport_id !== undefined ? `sport_${w.sport_id}` : null),
     start_at: w.start,
     end_at: w.end,
