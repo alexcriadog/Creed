@@ -163,7 +163,7 @@ export default async function HomePage({
     <main className="mx-auto max-w-2xl px-6 py-12">
       <div className="surface-glass p-8 md:p-10">
         <p className="mb-3 text-sm font-medium uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Fase 3 · Whoop
+          Creed
         </p>
         <h1 className="mb-6 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-tight text-[color:var(--color-text-primary)]">
           Hola, {profile?.display_name ?? 'atleta'}.
