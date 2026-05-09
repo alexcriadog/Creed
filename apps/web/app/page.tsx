@@ -7,6 +7,7 @@ import { TodayStats } from '@/components/today-stats';
 import { TrainingRecent } from '@/components/training-recent';
 import { VerdictCard } from '@/components/verdict-card';
 import { LapseBanner } from '@/components/lapse-banner';
+import { QuickCoachActions } from '@/components/quick-coach-actions';
 
 const WHOOP_ERRORS: Record<string, string> = {
   state_mismatch: 'La sesión de OAuth caducó. Inténtalo de nuevo.',
@@ -211,6 +212,8 @@ export default async function HomePage({
         <div className="my-8 border-t border-[color:var(--color-border-default)]" />
 
         <VerdictCard />
+
+        <QuickCoachActions />
 
         <TodayStats />
 

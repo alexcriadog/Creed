@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ProposalCard } from '@/components/proposal-card';
 import type { ProposalRow } from '@/lib/actions/proposals';
 
@@ -34,11 +34,13 @@ export function ChatClient({
   initialProposals,
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId,
   );
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const [draft, setDraft] = useState('');
+  const prefill = searchParams.get('prefill') ?? '';
+  const [draft, setDraft] = useState(prefill);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement | null>(null);
