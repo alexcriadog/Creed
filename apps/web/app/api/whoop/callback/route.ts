@@ -10,10 +10,10 @@ export const runtime = 'nodejs';
 
 function redirectHome(error?: string, msg?: string) {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  if (!error) return NextResponse.redirect(`${base}/?whoop_connected=1`);
+  if (!error) return NextResponse.redirect(`${base}/datos?whoop_connected=1`);
   const params = new URLSearchParams({ whoop_error: error });
   if (msg) params.set('whoop_msg', msg.slice(0, 300));
-  return NextResponse.redirect(`${base}/?${params.toString()}`);
+  return NextResponse.redirect(`${base}/datos?${params.toString()}`);
 }
 
 export async function GET(request: NextRequest) {

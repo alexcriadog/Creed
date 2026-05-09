@@ -18,7 +18,7 @@ function homeRedirect(error: string, msg?: string): NextResponse {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const params = new URLSearchParams({ whoop_error: error });
   if (msg) params.set('whoop_msg', msg.slice(0, 300));
-  return NextResponse.redirect(`${base}/?${params.toString()}`);
+  return NextResponse.redirect(`${base}/datos?${params.toString()}`);
 }
 
 export async function GET(): Promise<NextResponse> {

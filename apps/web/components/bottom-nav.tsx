@@ -12,8 +12,8 @@ interface NavItem {
 const ITEMS: NavItem[] = [
   { label: 'Hoy', href: '/', icon: 'home' },
   { label: 'Plan', href: '/chat', icon: 'plan' },
-  { label: 'Datos', href: '/profile', icon: 'data' },
-  { label: 'Equipo', href: '/profile?tab=equipo', icon: 'team' },
+  { label: 'Datos', href: '/datos', icon: 'data' },
+  { label: 'Perfil', href: '/profile', icon: 'team' },
 ];
 
 export function BottomNav() {
