@@ -214,12 +214,20 @@ export default async function HomePage({
         <TrainingRecent />
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--color-border-default)] pt-6">
-          <Link
-            href="/profile"
-            className="text-[length:var(--text-sm)] text-[color:var(--color-text-muted)] underline-offset-2 hover:underline"
-          >
-            Perfil
-          </Link>
+          <div className="flex gap-4">
+            <Link
+              href="/chat?role=nutrition"
+              className="text-[length:var(--text-sm)] text-[color:var(--color-text-muted)] underline-offset-2 hover:underline"
+            >
+              Chat
+            </Link>
+            <Link
+              href="/profile"
+              className="text-[length:var(--text-sm)] text-[color:var(--color-text-muted)] underline-offset-2 hover:underline"
+            >
+              Perfil
+            </Link>
+          </div>
           {whoop && (
             <div className="flex gap-2">
               <form action="/api/whoop/sync" method="post">

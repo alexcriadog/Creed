@@ -30,3 +30,12 @@ export type {
 
 export { parseMeal } from './parser/meal-parser';
 export type { ParseResult, ParsedItem } from './parser/meal-parser';
+
+export { runAgent } from './runner';
+export type {
+  RunAgentOptions,
+  RunAgentResult,
+  AgentRole,
+  AgentName,
+  ConversationMode,
+} from './runner';
