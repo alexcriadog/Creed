@@ -83,26 +83,22 @@ export default async function AdminHome() {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-3 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Mes actual
-        </h2>
+        <h2 className="text-label mb-3">MES ACTUAL</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Atletas" value={String(profilesCount.count ?? 0)} />
-          <Stat label="Conversaciones" value={String(conversationsCount.count ?? 0)} />
-          <Stat label="Comidas" value={String(mealsCount.count ?? 0)} />
-          <Stat label="Sesiones" value={String(trainingsCount.count ?? 0)} />
+          <Stat label="ATLETAS" value={String(profilesCount.count ?? 0)} />
+          <Stat label="CONVERSACIONES" value={String(conversationsCount.count ?? 0)} />
+          <Stat label="COMIDAS" value={String(mealsCount.count ?? 0)} />
+          <Stat label="SESIONES" value={String(trainingsCount.count ?? 0)} />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Tokens y coste estimado (Anthropic, mes actual)
-        </h2>
+        <h2 className="text-label mb-3">TOKENS · COSTE · MES ACTUAL</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Stat label="Input tokens" value={totalIn.toLocaleString('es-ES')} />
-          <Stat label="Output tokens" value={totalOut.toLocaleString('es-ES')} />
+          <Stat label="INPUT" value={totalIn.toLocaleString('es-ES')} />
+          <Stat label="OUTPUT" value={totalOut.toLocaleString('es-ES')} />
           <Stat
-            label="Coste estimado"
+            label="COSTE EST."
             value={`€${estCostEur.toFixed(2)}`}
             subtitle="aprox. Sonnet 4.6"
           />
@@ -110,26 +106,22 @@ export default async function AdminHome() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Histórico
-        </h2>
+        <h2 className="text-label mb-3">HISTÓRICO</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-          <Stat label="Veredictos semanales totales" value={String(verdictsCount.count ?? 0)} />
+          <Stat label="VEREDICTOS TOTALES" value={String(verdictsCount.count ?? 0)} />
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Cambios admin recientes
-        </h2>
+        <h2 className="text-label mb-3">CAMBIOS RECIENTES</h2>
         {auditLog.length === 0 ? (
-          <p className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--color-border-default)] p-4 text-center text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
+          <p className="surface-glass p-4 text-center text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
             Sin cambios todavía.
           </p>
         ) : (
-          <ul className="divide-y divide-[color:var(--color-border-default)] rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)]">
+          <ul className="surface-glass divide-y divide-[color:var(--color-border-subtle)] overflow-hidden p-0">
             {auditLog.map((entry) => (
-              <li key={entry.id} className="px-3 py-2">
+              <li key={entry.id} className="px-4 py-3">
                 <div className="font-mono text-[length:var(--text-xs)] text-[color:var(--color-text-primary)]">
                   {formatAuditChange(entry.metadata)}
                 </div>
@@ -155,15 +147,13 @@ function Stat({
   subtitle?: string;
 }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] p-3">
-      <div className="text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]">
-        {label}
-      </div>
-      <div className="mt-1 font-mono text-[length:var(--text-xl)] font-semibold tabular-nums text-[color:var(--color-text-primary)]">
+    <div className="metric-card">
+      <div className="text-label mb-2">{label}</div>
+      <div className="font-mono text-[length:var(--text-xl)] font-semibold tabular-nums leading-tight text-[color:var(--color-text-primary)]">
         {value}
       </div>
       {subtitle && (
-        <div className="text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
+        <div className="mt-1 text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
           {subtitle}
         </div>
       )}
