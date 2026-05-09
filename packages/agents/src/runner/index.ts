@@ -254,17 +254,104 @@ interface MessageRow {
   tool_call_id: string | null;
 }
 
-async function loadHistory(
+interface ConversationSummary {
+  summary: string;
+  last_compacted_turn: number;
+}
+
+async function loadHistoryWithSummary(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   conversationId: string,
-): Promise<MessageRow[]> {
-  const { data } = await supabase
+): Promise<{ summary: ConversationSummary | null; messages: MessageRow[] }> {
+  const [summaryResp, messagesResp] = await Promise.all([
+    supabase
+      .from('conversation_summaries')
+      .select('summary, last_compacted_turn')
+      .eq('conversation_id', conversationId)
+      .maybeSingle(),
+    supabase
+      .from('messages')
+      .select('turn, role, content, tool_calls, tool_call_id')
+      .eq('conversation_id', conversationId)
+      .order('turn', { ascending: true }),
+  ]);
+
+  const summary = summaryResp.data as ConversationSummary | null;
+  const allMessages = (messagesResp.data ?? []) as MessageRow[];
+  const messages = summary
+    ? allMessages.filter((m) => m.turn > summary.last_compacted_turn)
+    : allMessages;
+  return { summary, messages };
+}
+
+const COMPACT_THRESHOLD_TURNS = 30;
+const COMPACT_KEEP_RECENT = 10;
+
+async function compactConversation(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  apiKey: string,
+  userId: string,
+  conversationId: string,
+  agentName: AgentName,
+): Promise<void> {
+  const { data: msgs } = await supabase
     .from('messages')
-    .select('turn, role, content, tool_calls, tool_call_id')
+    .select('turn, role, content')
     .eq('conversation_id', conversationId)
+    .in('role', ['user', 'assistant'])
     .order('turn', { ascending: true });
-  return (data ?? []) as MessageRow[];
+
+  const messages = (msgs ?? []) as Array<{
+    turn: number;
+    role: string;
+    content: string | null;
+  }>;
+  if (messages.length < COMPACT_THRESHOLD_TURNS) return;
+
+  const cutoff = messages[messages.length - COMPACT_KEEP_RECENT];
+  if (!cutoff) return;
+  const lastCompactedTurn = cutoff.turn - 1;
+  const toSummarize = messages.filter((m) => m.turn <= lastCompactedTurn);
+  if (toSummarize.length === 0) return;
+
+  const transcript = toSummarize
+    .map((m) => `[turn ${m.turn} · ${m.role}] ${m.content ?? ''}`)
+    .join('\n');
+
+  const groq = new Groq({ apiKey });
+  const response = await groq.chat.completions.create({
+    model: MODEL,
+    max_tokens: 600,
+    messages: [
+      {
+        role: 'system',
+        content: `Eres un compactador de conversaciones de coaching ${agentName === 'nutritionist' ? 'nutricional' : agentName === 'trainer' ? 'físico' : ''}. Resume la conversación a continuación en 200-400 palabras, manteniendo:
+- Objetivos del atleta acordados
+- Decisiones tomadas (targets, sesiones aceptadas)
+- Patrones observados (adherencia, lesiones, restricciones)
+- Cualquier dato concreto que el coach necesite recordar (peso target, alergias, equipamiento)
+Omite saludos, fluff y mensajes redundantes. Devuelve solo el resumen, sin preámbulo.`,
+      },
+      { role: 'user', content: transcript },
+    ],
+  });
+
+  const summary = response.choices[0]?.message?.content?.trim();
+  if (!summary) return;
+
+  await supabase.from('conversation_summaries').upsert(
+    {
+      conversation_id: conversationId,
+      user_id: userId,
+      summary,
+      last_compacted_turn: lastCompactedTurn,
+      model: MODEL,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'conversation_id' },
+  );
 }
 
 function historyToOpenAI(history: MessageRow[]): ChatMessage[] {
@@ -529,9 +616,14 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   const agentName = AGENT_NAME[opts.agentRole];
   const systemPrompt = SYSTEM_PROMPTS[agentName];
 
-  const history = await loadHistory(opts.supabase, opts.conversationId);
+  const { summary, messages: history } = await loadHistoryWithSummary(
+    opts.supabase,
+    opts.conversationId,
+  );
   const lastTurn =
-    history.length > 0 ? Math.max(...history.map((m) => m.turn)) : 0;
+    history.length > 0
+      ? Math.max(...history.map((m) => m.turn))
+      : (summary?.last_compacted_turn ?? 0);
 
   let nextTurn = lastTurn + 1;
   const { error: userErr } = await opts.supabase
@@ -547,8 +639,12 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     .single();
   if (userErr) throw new Error(`save_user_msg: ${userErr.message}`);
 
+  const fullSystem = summary
+    ? `${systemPrompt}\n\nRESUMEN DE LA CONVERSACIÓN PREVIA (compactado, turns 1..${summary.last_compacted_turn}):\n${summary.summary}`
+    : systemPrompt;
+
   const messages: ChatMessage[] = [
-    { role: 'system', content: systemPrompt },
+    { role: 'system', content: fullSystem },
     ...historyToOpenAI(history),
     { role: 'user', content: opts.userMessage },
   ];
@@ -673,6 +769,22 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     .from('conversations')
     .update({ last_message_at: new Date().toISOString() })
     .eq('id', opts.conversationId);
+
+  // Background compactación si la conversación pasa el umbral.
+  if (nextTurn >= COMPACT_THRESHOLD_TURNS) {
+    void compactConversation(
+      opts.supabase,
+      opts.apiKey,
+      opts.userId,
+      opts.conversationId,
+      agentName,
+    ).catch((e) => {
+      console.error(
+        '[runner] compactConversation failed',
+        e instanceof Error ? e.message : e,
+      );
+    });
+  }
 
   return {
     assistantText,
