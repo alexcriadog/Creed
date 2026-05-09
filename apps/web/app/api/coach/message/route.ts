@@ -36,9 +36,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'anthropic_not_configured' }, { status: 503 });
+    return NextResponse.json({ error: 'groq_not_configured' }, { status: 503 });
   }
 
   const supabase = await createSupabaseServerClient();

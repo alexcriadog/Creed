@@ -1,13 +1,16 @@
 /**
- * Agent runner — Sonnet 4.6 con tool use + persistencia en Postgres.
+ * Agent runner — Groq Llama 3.3 70B (modo cheap por defecto del usuario).
+ * Tool use + persistencia en Postgres. OpenAI-compatible API.
  *
- * No streaming en esta versión (fase 5a). El streaming SSE llega en 5b.
- * Tools 5a (lectura + nota):
- *  - get_athlete_state: snapshot completo
- *  - add_agent_note: registra observación
+ * Cambiar a Sonnet 4.6 cuando el usuario lo pida (model_assignments en panel
+ * admin permitiría override por flujo, pero por ahora hardcoded).
+ *
+ * Tools 5a:
+ *  - get_athlete_state: snapshot completo + verdict
+ *  - add_agent_note: registra observación en agent_notes
  */
-import Anthropic from '@anthropic-ai/sdk';
-import type { Anthropic as AnthropicNS } from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
+import type { Groq as GroqNS } from 'groq-sdk';
 import { computeVerdict, DEFAULT_GOALS } from '../verdict/compute';
 import type { VerdictInput } from '../verdict/types';
 
@@ -15,7 +18,7 @@ export type AgentRole = 'nutrition' | 'training' | 'general';
 export type AgentName = 'nutritionist' | 'trainer' | 'orchestrator';
 export type ConversationMode = 'normal' | 'onboarding' | 'lapse_recovery' | 'weekly_close';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'llama-3.3-70b-versatile';
 const MAX_TOKENS = 1024;
 
 const AGENT_NAME: Record<AgentRole, AgentName> = {
@@ -53,38 +56,51 @@ Reglas:
   orchestrator: `Eres el orquestador. Decides si una pregunta del atleta va al nutricionista, al preparador, o si la respondes tú directamente. Hablas español de España, breve.`,
 };
 
-const TOOLS: AnthropicNS.Messages.Tool[] = [
+type ChatMessage = GroqNS.Chat.ChatCompletionMessageParam;
+type ToolDef = GroqNS.Chat.ChatCompletionTool;
+
+const TOOLS: ToolDef[] = [
   {
-    name: 'get_athlete_state',
-    description:
-      'Devuelve el estado actual del atleta: comidas últimos 7 días, peso reciente, recovery medio 14d, sesiones recientes, mood, veredicto compuesto. Llama esto ANTES de aconsejar.',
-    input_schema: {
-      type: 'object',
-      properties: {},
-      required: [],
+    type: 'function',
+    function: {
+      name: 'get_athlete_state',
+      description:
+        'Devuelve el estado actual del atleta: comidas últimos 7 días, peso reciente, recovery medio 14d, sesiones recientes, mood, veredicto compuesto. Llama esto ANTES de aconsejar.',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
     },
   },
   {
-    name: 'add_agent_note',
-    description:
-      'Registra una observación importante en el dossier del atleta (visible para el otro coach y para el cierre semanal). Usar cuando observes un patrón persistente, no para cada respuesta.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        category: {
-          type: 'string',
-          enum: [
-            'plan_change',
-            'observation',
-            'red_flag',
-            'recovery_low',
-            'lapse_summary',
-            'adherence_drop',
-          ],
+    type: 'function',
+    function: {
+      name: 'add_agent_note',
+      description:
+        'Registra una observación importante en el dossier del atleta (visible para el otro coach y para el cierre semanal). Usar cuando observes un patrón persistente, no para cada respuesta.',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            enum: [
+              'plan_change',
+              'observation',
+              'red_flag',
+              'recovery_low',
+              'lapse_summary',
+              'adherence_drop',
+            ],
+            description: 'Categoría de la nota.',
+          },
+          body: {
+            type: 'string',
+            description: 'Texto de la nota (1-3 frases).',
+          },
         },
-        body: { type: 'string', description: 'Texto de la nota (1-3 frases).' },
+        required: ['category', 'body'],
       },
-      required: ['category', 'body'],
     },
   },
 ];
@@ -113,11 +129,17 @@ export interface RunAgentResult {
   }>;
 }
 
+interface StoredToolCall {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
 interface MessageRow {
   turn: number;
   role: 'user' | 'assistant' | 'tool';
   content: string | null;
-  tool_calls: AnthropicNS.Messages.ToolUseBlock[] | null;
+  tool_calls: StoredToolCall[] | null;
   tool_call_id: string | null;
 }
 
@@ -134,39 +156,26 @@ async function loadHistory(
   return (data ?? []) as MessageRow[];
 }
 
-function historyToAnthropic(
-  history: MessageRow[],
-): AnthropicNS.Messages.MessageParam[] {
-  const out: AnthropicNS.Messages.MessageParam[] = [];
+function historyToOpenAI(history: MessageRow[]): ChatMessage[] {
+  const out: ChatMessage[] = [];
   for (const m of history) {
     if (m.role === 'user' && m.content) {
       out.push({ role: 'user', content: m.content });
     } else if (m.role === 'assistant') {
-      const blocks: AnthropicNS.Messages.ContentBlockParam[] = [];
-      if (m.content) blocks.push({ type: 'text', text: m.content });
-      if (m.tool_calls && Array.isArray(m.tool_calls)) {
-        for (const tc of m.tool_calls) {
-          blocks.push({
-            type: 'tool_use',
-            id: tc.id,
-            name: tc.name,
-            input: tc.input,
-          });
-        }
+      const msg: ChatMessage = {
+        role: 'assistant',
+        content: m.content ?? '',
+      };
+      if (m.tool_calls && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (msg as any).tool_calls = m.tool_calls;
       }
-      if (blocks.length > 0) {
-        out.push({ role: 'assistant', content: blocks });
-      }
-    } else if (m.role === 'tool' && m.tool_call_id && m.content) {
+      out.push(msg);
+    } else if (m.role === 'tool' && m.tool_call_id && m.content !== null) {
       out.push({
-        role: 'user',
-        content: [
-          {
-            type: 'tool_result',
-            tool_use_id: m.tool_call_id,
-            content: m.content,
-          },
-        ],
+        role: 'tool',
+        tool_call_id: m.tool_call_id,
+        content: m.content,
       });
     }
   }
@@ -341,7 +350,7 @@ async function getAthleteState(
 }
 
 export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
-  const anthropic = new Anthropic({ apiKey: opts.apiKey });
+  const groq = new Groq({ apiKey: opts.apiKey });
   const agentName = AGENT_NAME[opts.agentRole];
   const systemPrompt = SYSTEM_PROMPTS[agentName];
 
@@ -363,8 +372,9 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
     .single();
   if (userErr) throw new Error(`save_user_msg: ${userErr.message}`);
 
-  const messages: AnthropicNS.Messages.MessageParam[] = [
-    ...historyToAnthropic(history),
+  const messages: ChatMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...historyToOpenAI(history),
     { role: 'user', content: opts.userMessage },
   ];
 
@@ -374,22 +384,23 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   let assistantText = '';
 
   for (let iter = 0; iter < 4; iter++) {
-    const response = await anthropic.messages.create({
+    const response = await groq.chat.completions.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: systemPrompt,
-      tools: TOOLS,
       messages,
+      tools: TOOLS,
+      tool_choice: 'auto',
     });
-    totalIn += response.usage.input_tokens;
-    totalOut += response.usage.output_tokens;
+    if (response.usage) {
+      totalIn += response.usage.prompt_tokens ?? 0;
+      totalOut += response.usage.completion_tokens ?? 0;
+    }
 
-    const textBlocks = response.content
-      .filter((b): b is AnthropicNS.Messages.TextBlock => b.type === 'text')
-      .map((b) => b.text);
-    const toolUses = response.content.filter(
-      (b): b is AnthropicNS.Messages.ToolUseBlock => b.type === 'tool_use',
-    );
+    const choice = response.choices[0];
+    if (!choice) break;
+    const aMsg = choice.message;
+    const text = aMsg.content ?? '';
+    const toolCalls = (aMsg.tool_calls ?? []) as StoredToolCall[];
 
     nextTurn++;
     const { data: assistantMsg, error: aErr } = await opts.supabase
@@ -400,38 +411,49 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
         turn: nextTurn,
         role: 'assistant',
         agent: agentName,
-        content: textBlocks.join('\n\n') || null,
-        tool_calls: toolUses.length > 0 ? toolUses : null,
+        content: text || null,
+        tool_calls: toolCalls.length > 0 ? toolCalls : null,
         model: MODEL,
-        input_tokens: response.usage.input_tokens,
-        output_tokens: response.usage.output_tokens,
+        input_tokens: response.usage?.prompt_tokens ?? null,
+        output_tokens: response.usage?.completion_tokens ?? null,
       })
       .select('id')
       .single();
     if (aErr) throw new Error(`save_assistant_msg: ${aErr.message}`);
 
-    assistantText = textBlocks.join('\n\n');
+    assistantText = text;
 
-    if (response.stop_reason !== 'tool_use' || toolUses.length === 0) {
+    if (toolCalls.length === 0 || choice.finish_reason !== 'tool_calls') {
       break;
     }
 
-    messages.push({ role: 'assistant', content: response.content });
-    const toolResults: AnthropicNS.Messages.ToolResultBlockParam[] = [];
+    messages.push({
+      role: 'assistant',
+      content: text,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tool_calls: toolCalls as any,
+    });
 
-    for (const tu of toolUses) {
+    for (const tc of toolCalls) {
+      let parsedArgs: Record<string, unknown> = {};
+      try {
+        parsedArgs = JSON.parse(tc.function.arguments) as Record<string, unknown>;
+      } catch {
+        // ignore — pass empty
+      }
+
       const exec = await executeTool(
         opts.supabase,
         opts.userId,
         opts.conversationId,
         agentName,
-        tu.name,
-        tu.input as Record<string, unknown>,
+        tc.function.name,
+        parsedArgs,
       );
 
       toolCallsExecuted.push({
-        name: tu.name,
-        arguments: tu.input as Record<string, unknown>,
+        name: tc.function.name,
+        arguments: parsedArgs,
         result: exec.result,
         ...(exec.error ? { error: exec.error } : {}),
         duration_ms: exec.duration_ms,
@@ -441,8 +463,8 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
         user_id: opts.userId,
         conversation_id: opts.conversationId,
         message_id: assistantMsg.id,
-        tool_name: tu.name,
-        arguments: tu.input,
+        tool_name: tc.function.name,
+        arguments: parsedArgs,
         result: exec.error ? null : exec.result,
         error: exec.error ?? null,
         duration_ms: exec.duration_ms,
@@ -460,17 +482,15 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
         role: 'tool',
         agent: agentName,
         content: resultText,
-        tool_call_id: tu.id,
+        tool_call_id: tc.id,
       });
 
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: tu.id,
+      messages.push({
+        role: 'tool',
+        tool_call_id: tc.id,
         content: resultText,
-        ...(exec.error ? { is_error: true } : {}),
       });
     }
-    messages.push({ role: 'user', content: toolResults });
   }
 
   await opts.supabase
