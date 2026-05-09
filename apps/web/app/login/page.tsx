@@ -1,8 +1,10 @@
-import { sendOtp } from './actions';
+import { sendOtp, signInWithPassword } from './actions';
 
 const ERRORS: Record<string, string> = {
   invalid_email: 'Introduce un email válido.',
-  send_failed: 'No pudimos enviar el código. Inténtalo de nuevo.',
+  missing_password: 'Introduce tu contraseña.',
+  invalid_credentials: 'Email o contraseña incorrectos.',
+  send_failed: 'No pudimos enviar el magic link. Inténtalo de nuevo.',
 };
 
 export default async function LoginPage({
@@ -20,7 +22,7 @@ export default async function LoginPage({
           Entrar a Creed
         </h1>
         <p className="mb-6 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)]">
-          Recibirás un código de 6 dígitos por email. Sin contraseñas.
+          Email y contraseña.
         </p>
 
         {errorMsg && (
@@ -32,7 +34,7 @@ export default async function LoginPage({
           </div>
         )}
 
-        <form action={sendOtp} className="space-y-4">
+        <form action={signInWithPassword} className="space-y-4">
           <input
             name="email"
             type="email"
@@ -42,13 +44,42 @@ export default async function LoginPage({
             inputMode="email"
             className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-4 py-3 text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
           />
+          <input
+            name="password"
+            type="password"
+            required
+            placeholder="contraseña"
+            autoComplete="current-password"
+            className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-4 py-3 text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
+          />
           <button
             type="submit"
             className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-4 py-3 font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)]"
           >
-            Enviar código
+            Entrar
           </button>
         </form>
+
+        <details className="mt-4 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
+          <summary className="cursor-pointer">¿Sin contraseña? Magic link por email</summary>
+          <form action={sendOtp} className="mt-3 space-y-2">
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="tu@email.com"
+              autoComplete="email"
+              inputMode="email"
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-3 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
+            />
+            <button
+              type="submit"
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-3 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
+            >
+              Enviar magic link
+            </button>
+          </form>
+        </details>
       </div>
     </main>
   );

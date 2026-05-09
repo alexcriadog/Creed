@@ -23,3 +23,25 @@ export async function sendOtp(formData: FormData) {
 
   redirect(`/verify?email=${encodeURIComponent(email)}`);
 }
+
+export async function signInWithPassword(formData: FormData) {
+  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const password = String(formData.get('password') ?? '');
+
+  if (!email || !email.includes('@')) {
+    redirect('/login?error=invalid_email');
+  }
+  if (!password) {
+    redirect('/login?error=missing_password');
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    console.error('[login.signInWithPassword]', { code: error.code, name: error.name });
+    redirect('/login?error=invalid_credentials');
+  }
+
+  redirect('/');
+}
