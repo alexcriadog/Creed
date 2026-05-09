@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -33,11 +34,16 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get('theme')?.value;
+  const theme =
+    themeCookie === 'light' || themeCookie === 'dark' ? themeCookie : 'auto';
+
   return (
-    <html lang="es" data-theme="auto" suppressHydrationWarning>
+    <html lang="es" data-theme={theme} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );
