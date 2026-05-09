@@ -6,6 +6,7 @@ import { WhoopStatusBanner } from '@/components/whoop-status-banner';
 import { TodayStats } from '@/components/today-stats';
 import { TrainingRecent } from '@/components/training-recent';
 import { VerdictCard } from '@/components/verdict-card';
+import { LapseBanner } from '@/components/lapse-banner';
 
 const WHOOP_ERRORS: Record<string, string> = {
   state_mismatch: 'La sesión de OAuth caducó. Inténtalo de nuevo.',
@@ -164,6 +165,8 @@ export default async function HomePage({
         <h1 className="mb-6 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold leading-tight tracking-tight text-[color:var(--color-text-primary)]">
           Hola, {profile?.display_name ?? 'atleta'}.
         </h1>
+
+        <LapseBanner />
 
         {whoop && (
           <WhoopStatusBanner
