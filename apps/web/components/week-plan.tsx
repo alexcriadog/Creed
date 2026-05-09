@@ -87,11 +87,9 @@ export async function WeekPlan() {
   const weekRange = `${monday.getDate()} ${monday.toLocaleDateString('es-ES', { month: 'short' })} – ${sunday.getDate()} ${sunday.toLocaleDateString('es-ES', { month: 'short' })}`;
 
   return (
-    <section className="mb-8">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Esta semana · {weekRange}
-        </h2>
+    <section>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-label">SEMANA · {weekRange.toUpperCase()}</h2>
         <Link
           href={`/chat?role=training&prefill=${encodeURIComponent('Ajusta mi plan de la semana basándote en mi progreso de los últimos días.')}`}
           className="text-[length:var(--text-xs)] text-[color:var(--color-accent)] underline-offset-2 hover:underline"
@@ -110,41 +108,42 @@ export async function WeekPlan() {
           return (
             <div
               key={d.date}
-              className={`flex aspect-[3/4] flex-col rounded-[var(--radius-md)] border p-2 text-center transition ${
+              className="metric-card flex aspect-[3/4] flex-col p-2 text-center transition"
+              style={
                 d.isToday
-                  ? 'border-[color:var(--color-accent)] bg-[color:color-mix(in_oklch,var(--color-accent)_8%,var(--color-surface-raised))]'
-                  : 'border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)]'
-              }`}
+                  ? {
+                      borderColor: 'var(--color-accent)',
+                      boxShadow:
+                        'inset 0 1px 0 oklch(100% 0 0 / 0.5), 0 0 0 1px var(--color-accent), 0 1px 2px oklch(20% 0 0 / 0.04)',
+                    }
+                  : undefined
+              }
             >
-              <div className="text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]">
-                {d.label}
-              </div>
+              <div className="text-label text-[10px] tracking-[0.15em]">{d.label}</div>
               <div className="mb-1 font-mono text-[length:var(--text-base)] font-semibold tabular-nums text-[color:var(--color-text-primary)]">
                 {d.dayNum}
               </div>
               {hasSession && main ? (
                 <div className="mt-auto space-y-0.5">
                   <div
-                    className="truncate text-[length:var(--text-xs)] font-medium"
+                    className="truncate text-[length:var(--text-xs)] font-semibold"
                     style={{ color: color ?? 'var(--color-text-primary)' }}
                   >
-                    {main.type ? TYPE_LABEL[main.type] ?? main.type : '·'}
+                    {main.type ? (TYPE_LABEL[main.type] ?? main.type) : '·'}
                   </div>
                   {main.whoop_workout_id && (
-                    <div className="text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
+                    <div className="text-[10px] text-[color:var(--color-text-muted)]">
                       whoop
                     </div>
                   )}
                   {d.sessions.length > 1 && (
-                    <div className="text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
+                    <div className="text-[10px] text-[color:var(--color-text-muted)]">
                       +{d.sessions.length - 1}
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="mt-auto text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
-                  —
-                </div>
+                <div className="mt-auto text-[10px] text-[color:var(--color-text-muted)]">·</div>
               )}
             </div>
           );
