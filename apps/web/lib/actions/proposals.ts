@@ -23,6 +23,25 @@ export interface ProposalRow {
   applied_to_id: string | null;
 }
 
+export async function listPendingProposals(limit = 5): Promise<ProposalRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from('agent_proposals')
+    .select(
+      'id, agent, proposal_type, payload, rationale, status, created_at, responded_at, message_id, applied_to_id',
+    )
+    .eq('user_id', user.id)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return (data ?? []) as ProposalRow[];
+}
+
 export async function listProposalsForConversation(
   conversationId: string,
 ): Promise<ProposalRow[]> {
