@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ChatClient, type AgentRole, type ChatMessage } from './chat-client';
 import { listProposalsForConversation } from '@/lib/actions/proposals';
+import { AppHeader } from '@/components/app-header';
+import { BottomNav } from '@/components/bottom-nav';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,34 +68,32 @@ export default async function ChatPage({
   }
 
   return (
-    <main className="mx-auto flex h-[100dvh] max-w-2xl flex-col px-6 py-6">
-      <header className="mb-4 flex items-center justify-between">
-        <Link
-          href="/"
-          className="text-[length:var(--text-sm)] text-[color:var(--color-text-muted)] underline-offset-2 hover:underline"
-        >
-          ← Inicio
-        </Link>
-        <nav className="flex gap-1">
+    <>
+      <main className="mx-auto flex h-[100dvh] max-w-md flex-col px-4 pb-28 pt-6 sm:max-w-lg sm:px-6 sm:pt-10">
+        <AppHeader />
+
+        <nav className="mb-4 flex gap-2" aria-label="Cambiar coach">
           <RoleTab
             href="/chat?role=nutrition"
-            label="Nutri"
+            label="Nutricionista"
             active={validRole === 'nutrition'}
           />
           <RoleTab
             href="/chat?role=training"
-            label="Prep"
+            label="Coach"
             active={validRole === 'training'}
           />
         </nav>
-      </header>
-      <ChatClient
-        agentRole={validRole}
-        initialConversationId={activeConv?.id ?? null}
-        initialMessages={initialMessages}
-        initialProposals={initialProposals}
-      />
-    </main>
+
+        <ChatClient
+          agentRole={validRole}
+          initialConversationId={activeConv?.id ?? null}
+          initialMessages={initialMessages}
+          initialProposals={initialProposals}
+        />
+      </main>
+      <BottomNav />
+    </>
   );
 }
 

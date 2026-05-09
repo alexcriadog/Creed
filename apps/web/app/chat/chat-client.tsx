@@ -27,6 +27,18 @@ const ROLE_LABEL: Record<AgentRole, string> = {
   general: 'asistente',
 };
 
+const ROLE_INITIAL: Record<AgentRole, string> = {
+  nutrition: 'N',
+  training: 'C',
+  general: 'A',
+};
+
+const ROLE_CHIP_CLASS: Record<AgentRole, string> = {
+  nutrition: 'agent-chip-nutrition',
+  training: 'agent-chip-coach',
+  general: 'agent-chip-coach',
+};
+
 export function ChatClient({
   agentRole,
   initialConversationId,
@@ -135,7 +147,7 @@ export function ChatClient({
           </p>
         )}
         {messages.map((m) => (
-          <Bubble key={m.id} role={m.role} content={m.content} />
+          <Bubble key={m.id} role={m.role} content={m.content} agentRole={agentRole} />
         ))}
         {initialProposals.length > 0 && (
           <div className="mt-2 space-y-2">
@@ -152,7 +164,7 @@ export function ChatClient({
               ))}
           </div>
         )}
-        {isPending && <Typing />}
+        {isPending && <Typing agentRole={agentRole} />}
       </div>
       {error && (
         <p
@@ -174,13 +186,19 @@ export function ChatClient({
           rows={2}
           placeholder={`Mensaje al ${ROLE_LABEL[agentRole]}…`}
           disabled={isPending}
-          className="flex-1 resize-none rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 text-[length:var(--text-base)] text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/30 disabled:opacity-50"
+          className="input-glass flex-1 resize-none disabled:opacity-50"
         />
         <button
           type="button"
           onClick={send}
           disabled={isPending || draft.trim().length === 0}
-          className="self-end rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-4 py-2 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)] disabled:opacity-50"
+          className="self-end rounded-[var(--radius-md)] px-4 py-2 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition disabled:opacity-50"
+          style={{
+            background:
+              'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
+            boxShadow:
+              'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 6px oklch(20% 0.05 260 / 0.18)',
+          }}
         >
           {isPending ? '…' : 'Enviar'}
         </button>
@@ -192,30 +210,48 @@ export function ChatClient({
 function Bubble({
   role,
   content,
+  agentRole,
 }: {
   role: 'user' | 'assistant';
   content: string;
+  agentRole: AgentRole;
 }) {
-  const isUser = role === 'user';
+  if (role === 'user') {
+    return (
+      <div className="flex justify-end">
+        <div
+          className="max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-lg)] px-4 py-2.5 text-[length:var(--text-base)] leading-relaxed text-[color:var(--color-text-on-accent)]"
+          style={{
+            background:
+              'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
+            boxShadow:
+              'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 6px oklch(20% 0.05 260 / 0.18)',
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={`max-w-[85%] whitespace-pre-wrap rounded-[var(--radius-md)] px-3 py-2 text-[length:var(--text-base)] leading-relaxed ${
-          isUser
-            ? 'bg-[color:var(--color-accent)] text-[color:var(--color-text-on-accent)]'
-            : 'border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] text-[color:var(--color-text-primary)]'
-        }`}
-      >
+    <div className="flex items-start gap-3">
+      <span className={`agent-chip ${ROLE_CHIP_CLASS[agentRole]}`}>
+        {ROLE_INITIAL[agentRole]}
+      </span>
+      <div className="message-bubble max-w-[85%] whitespace-pre-wrap text-[length:var(--text-base)] leading-relaxed text-[color:var(--color-text-primary)]">
         {content}
       </div>
     </div>
   );
 }
 
-function Typing() {
+function Typing({ agentRole }: { agentRole: AgentRole }) {
   return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-1 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
+    <div className="flex items-start gap-3">
+      <span className={`agent-chip ${ROLE_CHIP_CLASS[agentRole]}`}>
+        {ROLE_INITIAL[agentRole]}
+      </span>
+      <div className="message-bubble flex items-center gap-1">
         <Dot delay={0} />
         <Dot delay={150} />
         <Dot delay={300} />
