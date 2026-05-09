@@ -16,6 +16,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  appleWebApp: {
+    capable: true,
+    title: 'Creed',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export const viewport: Viewport = {
