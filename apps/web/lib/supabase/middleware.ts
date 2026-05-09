@@ -57,5 +57,44 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Mandatory onboarding gate. Si user existe y onboarding incompleto, redirige al paso
+  // pendiente. /onboarding/* y /api/* quedan exentos para no romper el propio flujo.
+  if (
+    user &&
+    !pathname.startsWith('/onboarding') &&
+    !pathname.startsWith('/api/')
+  ) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_status')
+      .eq('id', user.id)
+      .single();
+
+    if (profile && profile.onboarding_status !== 'complete') {
+      const { data: folder } = await supabase
+        .from('athlete_folder')
+        .select(
+          'initialized_at, nutrition_onboarding_completed_at, training_onboarding_completed_at',
+        )
+        .eq('user_id', user.id)
+        .single();
+
+      let target = '/onboarding';
+      if (folder?.initialized_at) {
+        if (!folder.nutrition_onboarding_completed_at) {
+          target = '/onboarding/nutrition';
+        } else if (!folder.training_onboarding_completed_at) {
+          target = '/onboarding/training';
+        }
+      }
+      if (pathname !== target) {
+        const url = request.nextUrl.clone();
+        url.pathname = target;
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   return response;
 }
