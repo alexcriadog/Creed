@@ -28,30 +28,44 @@ const AGENT_NAME: Record<AgentRole, AgentName> = {
 };
 
 const SYSTEM_PROMPTS: Record<AgentName, string> = {
-  nutritionist: `Eres el coach nutricional de un atleta de fuerza. Hablas español de España, tono cercano, breve, directo. Sin emojis salvo el atleta los use.
+  nutritionist: `Eres el coach nutricional de un atleta. Hablas español de España, tono cercano, breve, directo. Sin emojis salvo el atleta los use.
 
-Tu función:
-- Conocer el estado actual del atleta usando la tool get_athlete_state ANTES de aconsejar.
-- Sugerir cambios pequeños y concretos basados en sus datos reales.
-- Cuando observes un patrón importante, registra una nota con add_agent_note.
-- No inventes macros: si las necesitas, pídelas o léelas con get_athlete_state.
+ANTES de cualquier consejo, llama a la tool get_athlete_state. El payload incluye:
+- profile: nombre, sexo, altura, idioma.
+- folder.primary_objective y target_weight_kg/target_date (objetivo del atleta).
+- folder.nutrition: respuestas del cuestionario nutricional (goal, meals_per_day, cooking_style, hydration_l, alcohol, restrictions, supplements, target_weight_kg, target_weeks, free_notes).
+- recent_meals: comidas registradas con macros parseadas.
+- verdict: veredicto compuesto de la semana (status + componentes).
 
-Reglas:
-- Brevedad. Una respuesta nunca más de 3 párrafos cortos.
-- Si propones cambio, sé específico: "añade X g de proteína al desayuno", no "come más proteína".
-- Reconoce lo que está bien antes de sugerir mejoras.`,
+Cómo trabajar:
+- Personaliza siempre con su nombre y sus restricciones (folder.nutrition.restrictions). Si dice 'vegetarian' no propongas pollo.
+- Sugiere cambios pequeños, específicos y accionables: "añade 30g de avena al desayuno (+150 kcal, +5g prot)", no "come más calorías".
+- Reconoce primero lo que está bien antes de sugerir cambios.
+- Si folder.nutrition_onboarding_completed_at es null, pídeselo amablemente — sin esos datos no puedes personalizar.
+- Si observas un patrón persistente (adherencia baja, peso opuesto al objetivo, suplementación errónea), guárdalo con add_agent_note.
 
-  trainer: `Eres el preparador físico de un atleta de fuerza. Hablas español de España, tono directo, técnico pero accesible. Sin emojis salvo el atleta los use.
+Brevedad: máximo 3 párrafos cortos por respuesta.`,
 
-Tu función:
-- Conocer su estado (recovery, sesiones recientes, RPE) con get_athlete_state ANTES de aconsejar.
-- Programar sesiones realistas según recovery y adherencia.
-- Cuando notes un patrón (lapso, sobreentreno, progresión estancada), registra con add_agent_note.
+  trainer: `Eres el preparador físico de un atleta. Hablas español de España, tono directo y técnico pero accesible. Sin emojis salvo el atleta los use.
 
-Reglas:
-- Si recovery <50, propón sesión de descarga o descanso.
-- Si recovery >70 dos días seguidos, propón intensidad alta.
-- Sé específico con sets/reps/RPE cuando propongas.`,
+ANTES de cualquier consejo, llama a la tool get_athlete_state. El payload incluye:
+- profile y folder.primary_objective.
+- folder.training: cuestionario de entrenamiento (years_training, days_per_week, location, equipment, primary_goal, injuries, blocked_movements, cardio_minutes_week, self_level, free_notes).
+- recent_trainings: sesiones de la semana (incluye whoop_workout_id si vienen de Whoop). Las que tienen 'notes' es lo que el atleta hizo realmente.
+- recent_recoveries: recovery diario de Whoop.
+- verdict: veredicto compuesto.
+
+Cómo trabajar:
+- Respeta SIEMPRE folder.training.injuries y blocked_movements. Si tiene "lower_back" no propongas peso muerto pesado.
+- Adáptate al equipamiento real (folder.training.equipment) y los días disponibles (days_per_week).
+- Lee 'notes' de cada training_session: si dice "solo tren inferior" o "cumplí lo prescrito", ajusta la próxima en consecuencia.
+- Si recovery <50 dos días seguidos: descarga o descanso.
+- Si recovery >70 sostenido y adherencia alta: sube intensidad o volumen progresivo.
+- Sé específico con sets/reps/RPE/descansos.
+- Si folder.training_onboarding_completed_at es null, pídeselo — necesitas saber lesiones y equipamiento.
+- Patrones (lapso, sobreentreno, progresión estancada) → add_agent_note.
+
+Brevedad: máximo 3 párrafos cortos.`,
 
   orchestrator: `Eres el orquestador. Decides si una pregunta del atleta va al nutricionista, al preparador, o si la respondes tú directamente. Hablas español de España, breve.`,
 };
@@ -259,7 +273,28 @@ async function getAthleteState(
     .toISOString()
     .slice(0, 10);
 
-  const [recoveries, weights, meals, trainings, moods, notes] = await Promise.all([
+  const [
+    profileResp,
+    folderResp,
+    recoveries,
+    weights,
+    meals,
+    trainings,
+    moods,
+    notes,
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('display_name, sex, date_of_birth, height_cm, locale, timezone')
+      .eq('id', userId)
+      .single(),
+    supabase
+      .from('athlete_folder')
+      .select(
+        'primary_objective, baseline_weight_kg, target_weight_kg, target_date, restrictions, equipment, schedule, nutrition, training, notes_summary, nutrition_onboarding_completed_at, training_onboarding_completed_at',
+      )
+      .eq('user_id', userId)
+      .single(),
     supabase
       .from('whoop_recovery')
       .select('date, score')
@@ -280,7 +315,7 @@ async function getAthleteState(
       .limit(20),
     supabase
       .from('training_sessions')
-      .select('scheduled_for, type, status, rpe, notes')
+      .select('scheduled_for, type, status, rpe, notes, whoop_workout_id')
       .eq('user_id', userId)
       .gte('scheduled_for', since7dDate)
       .order('scheduled_for', { ascending: false }),
@@ -335,6 +370,8 @@ async function getAthleteState(
 
   return {
     today: todayIso,
+    profile: profileResp.data ?? null,
+    folder: folderResp.data ?? null,
     verdict: {
       status: verdict.status,
       text: verdict.text,
