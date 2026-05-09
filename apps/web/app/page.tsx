@@ -44,7 +44,7 @@ export default async function HomePage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, onboarding_status')
+    .select('display_name, onboarding_status, role')
     .eq('id', user.id)
     .single();
 
@@ -227,6 +227,14 @@ export default async function HomePage({
             >
               Perfil
             </Link>
+            {profile?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="text-[length:var(--text-sm)] font-medium text-[color:var(--color-accent)] underline-offset-2 hover:underline"
+              >
+                Admin
+              </Link>
+            )}
           </div>
           {whoop && (
             <div className="flex gap-2">
