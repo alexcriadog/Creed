@@ -6,10 +6,8 @@ export async function PendingProposals() {
   if (proposals.length === 0) return null;
 
   return (
-    <section className="mb-8">
-      <h2 className="mb-3 text-[length:var(--text-sm)] font-semibold uppercase tracking-wider text-[color:var(--color-text-muted)]">
-        Propuestas pendientes ({proposals.length})
-      </h2>
+    <section className="mb-6">
+      <h2 className="text-label mb-3">PROPUESTAS · {proposals.length} PENDIENTES</h2>
       <div className="space-y-2">
         {proposals.map((p) => (
           <ProposalCard key={p.id} proposal={p} />

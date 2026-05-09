@@ -40,21 +40,18 @@ export function ProposalCard({ proposal }: { proposal: ProposalRow }) {
 
   return (
     <div
-      className="my-3 rounded-[var(--radius-md)] border bg-[color:var(--color-surface-raised)] p-3"
-      style={{
-        borderColor: badge.color,
-        background: `color-mix(in oklch, ${badge.color} 6%, transparent)`,
-      }}
+      className="surface-glass my-3 p-4"
+      style={{ borderLeft: `3px solid ${badge.color}` }}
     >
-      <header className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]">
+      <header className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-label">
           {TYPE_LABEL[proposal.proposal_type]} · {proposal.agent}
-        </p>
+        </span>
         <span
-          className="shrink-0 rounded-full px-2 py-0.5 text-[length:var(--text-xs)] font-medium"
+          className="shrink-0 rounded-[var(--radius-pill)] px-2 py-0.5 font-mono text-[length:var(--text-xs)] font-medium"
           style={{
             color: badge.color,
-            background: `color-mix(in oklch, ${badge.color} 12%, transparent)`,
+            background: `color-mix(in oklch, ${badge.color} 14%, transparent)`,
           }}
         >
           {badge.label}
@@ -64,7 +61,7 @@ export function ProposalCard({ proposal }: { proposal: ProposalRow }) {
       <ProposalBody proposal={proposal} />
 
       {proposal.rationale && (
-        <p className="mt-2 text-[length:var(--text-sm)] italic text-[color:var(--color-text-secondary)]">
+        <p className="mt-3 text-[length:var(--text-sm)] italic text-[color:var(--color-text-secondary)]">
           {proposal.rationale}
         </p>
       )}
@@ -76,12 +73,18 @@ export function ProposalCard({ proposal }: { proposal: ProposalRow }) {
       )}
 
       {isPendingStatus && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-4 flex gap-2">
           <button
             type="button"
             onClick={onAccept}
             disabled={isPending}
-            className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-3 py-1.5 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)] disabled:opacity-50"
+            className="rounded-[var(--radius-md)] px-4 py-1.5 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition disabled:opacity-50"
+            style={{
+              background:
+                'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
+              boxShadow:
+                'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 6px oklch(20% 0.05 260 / 0.18)',
+            }}
           >
             {isPending ? '…' : 'Aceptar'}
           </button>
@@ -89,7 +92,7 @@ export function ProposalCard({ proposal }: { proposal: ProposalRow }) {
             type="button"
             onClick={onReject}
             disabled={isPending}
-            className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-3 py-1.5 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-status-red)] hover:text-[color:var(--color-status-red)] disabled:opacity-50"
+            className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-4 py-1.5 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-status-red)] hover:text-[color:var(--color-status-red)] disabled:opacity-50"
           >
             Rechazar
           </button>
@@ -209,10 +212,10 @@ function ProposalBody({ proposal }: { proposal: ProposalRow }) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]">
-        {label}
-      </dt>
-      <dd className="font-mono tabular-nums text-[color:var(--color-text-primary)]">{value}</dd>
+      <dt className="text-label">{label}</dt>
+      <dd className="font-mono text-[length:var(--text-base)] font-semibold tabular-nums text-[color:var(--color-text-primary)]">
+        {value}
+      </dd>
     </div>
   );
 }
