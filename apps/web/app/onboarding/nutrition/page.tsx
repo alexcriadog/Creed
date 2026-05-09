@@ -96,7 +96,7 @@ export default async function NutritionOnboardingPage({
               max="8"
               required
               defaultValue="4"
-              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 font-mono tabular-nums text-[color:var(--color-text-primary)]"
+              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono tabular-nums text-[color:var(--color-text-primary)]"
             />
           </Section>
 
@@ -122,7 +122,7 @@ export default async function NutritionOnboardingPage({
                 min="0"
                 max="10"
                 placeholder="2.5"
-                className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono tabular-nums"
+                className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono tabular-nums"
               />
             </label>
           </Section>
@@ -159,7 +159,7 @@ export default async function NutritionOnboardingPage({
                   min="20"
                   max="300"
                   placeholder="70"
-                  className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono tabular-nums"
+                  className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono tabular-nums"
                 />
               </label>
               <label>
@@ -170,7 +170,7 @@ export default async function NutritionOnboardingPage({
                   min="1"
                   max="104"
                   placeholder="12"
-                  className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono tabular-nums"
+                  className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono tabular-nums"
                 />
               </label>
             </div>
@@ -182,7 +182,7 @@ export default async function NutritionOnboardingPage({
               rows={4}
               maxLength={2000}
               placeholder="Texto libre. Alergias específicas, intolerancias, gustos, situaciones puntuales…"
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent)]"
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent)]"
             />
           </Section>
 

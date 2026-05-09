@@ -113,7 +113,7 @@ function AssignmentRow({
           if (e.target.value === '__custom__') return;
           setModel(e.target.value);
         }}
-        className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono text-[length:var(--text-xs)] outline-none focus:border-[color:var(--color-accent)]"
+        className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono text-[length:var(--text-xs)] outline-none focus:border-[color:var(--color-accent)]"
       >
         {KNOWN_MODELS.map((m) => (
           <option key={m} value={m}>
@@ -204,7 +204,7 @@ function LimitRow({ limit }: { limit: CostLimit }) {
           step="1"
           value={cap}
           onChange={(e) => setCap(e.target.value)}
-          className="ml-1 w-20 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
+          className="ml-1 w-20 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
         />
       </label>
       <label className="text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
@@ -216,7 +216,7 @@ function LimitRow({ limit }: { limit: CostLimit }) {
           step="1"
           value={alarm}
           onChange={(e) => setAlarm(e.target.value)}
-          className="ml-1 w-16 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
+          className="ml-1 w-16 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
         />
       </label>
       <label className="flex items-center gap-1 text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">

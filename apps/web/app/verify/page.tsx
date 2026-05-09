@@ -24,7 +24,7 @@ export default async function VerifyPage({
           </p>
           <Link
             href="/login"
-            className="inline-block rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-4 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-bg-surface-raised)]"
+            className="inline-block rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-4 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-surface-raised)]"
           >
             Volver
           </Link>

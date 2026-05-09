@@ -88,7 +88,7 @@ function SettingRow({ setting }: { setting: AppSetting }) {
         inputMode={isNumeric ? 'numeric' : 'text'}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="w-32 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
+        className="w-32 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono text-[length:var(--text-sm)] tabular-nums outline-none focus:border-[color:var(--color-accent)]"
       />
       <button
         type="button"

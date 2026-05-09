@@ -26,7 +26,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="m-auto w-full max-w-md rounded-[var(--radius-lg)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] p-0 shadow-[var(--shadow-lg)] backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="m-auto w-full max-w-md rounded-[var(--radius-lg)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] p-0 shadow-[var(--shadow-lg)] backdrop:bg-black/40 backdrop:backdrop-blur-sm"
     >
       <div className="flex items-center justify-between border-b border-[color:var(--color-border-default)] px-5 py-3">
         <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--color-text-primary)]">

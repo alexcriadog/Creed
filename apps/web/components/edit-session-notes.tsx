@@ -36,7 +36,7 @@ export function EditSessionNotesButton({ sessionId, initialNotes, label = 'Notas
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 text-[length:var(--text-xs)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
+        className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 text-[length:var(--text-xs)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
       >
         {label}
       </button>

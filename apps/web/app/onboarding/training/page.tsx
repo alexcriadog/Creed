@@ -92,7 +92,7 @@ export default async function TrainingOnboardingPage({
               max="60"
               required
               defaultValue="0"
-              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 font-mono tabular-nums"
+              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono tabular-nums"
             />
           </Section>
 
@@ -104,7 +104,7 @@ export default async function TrainingOnboardingPage({
               max="7"
               required
               defaultValue="3"
-              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 font-mono tabular-nums"
+              className="w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 font-mono tabular-nums"
             />
           </Section>
 
@@ -158,7 +158,7 @@ export default async function TrainingOnboardingPage({
                 min="0"
                 max="2000"
                 placeholder="60"
-                className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-2 py-1 font-mono tabular-nums"
+                className="ml-2 w-24 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-1 font-mono tabular-nums"
               />
             </label>
           </Section>
@@ -181,7 +181,7 @@ export default async function TrainingOnboardingPage({
               rows={4}
               maxLength={2000}
               placeholder="Texto libre. Lesiones específicas, ejercicios favoritos, RPE habitual, contexto…"
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-base)] px-3 py-2 text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent)]"
+              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-2 text-[color:var(--color-text-primary)] outline-none focus:border-[color:var(--color-accent)]"
             />
           </Section>
 

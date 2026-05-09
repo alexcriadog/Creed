@@ -60,12 +60,12 @@ export function CreedLogo({
     >
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#1e40af" />
-          <stop offset="0.55" stopColor="#3b82f6" />
-          <stop offset="1" stopColor="#60a5fa" />
+          <stop offset="0" stopColor="#1e3a8a" />
+          <stop offset="0.5" stopColor="#3b82f6" />
+          <stop offset="1" stopColor="#93c5fd" />
         </linearGradient>
-        <linearGradient id={highlightId} x1="0" y1="0" x2="0" y2="32" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.85" />
+        <linearGradient id={highlightId} x1="0" y1="0" x2="0" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
           <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
       </defs>
