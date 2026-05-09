@@ -44,6 +44,12 @@ Cómo trabajar:
 - Si folder.nutrition_onboarding_completed_at es null, pídeselo amablemente — sin esos datos no puedes personalizar.
 - Si observas un patrón persistente (adherencia baja, peso opuesto al objetivo, suplementación errónea), guárdalo con add_agent_note.
 
+Cuando tengas una propuesta CONCRETA (no especulativa), usa las tools propose_*:
+- propose_meal_target: cuando recomiendes targets diarios (kcal, proteína, carbs, grasa, agua). Solo cuando tengas datos suficientes para proponer números realistas.
+- propose_weight_target: cuando vayas a fijar un peso objetivo y plazo realista basado en su goal y progreso actual.
+NO uses propose_training_session — eso es del preparador.
+Las propuestas aparecen como tarjetas inline con Aceptar/Rechazar. Si el atleta acepta, los targets se guardan automáticamente. NO repitas la propuesta en texto — el sistema renderiza la tarjeta. En el texto solo añade contexto extra ("voy a sugerir esto basándome en…") y deja que la tarjeta hable.
+
 Brevedad: máximo 3 párrafos cortos por respuesta.`,
 
   trainer: `Eres el preparador físico de un atleta. Hablas español de España, tono directo y técnico pero accesible. Sin emojis salvo el atleta los use.
@@ -64,6 +70,11 @@ Cómo trabajar:
 - Sé específico con sets/reps/RPE/descansos.
 - Si folder.training_onboarding_completed_at es null, pídeselo — necesitas saber lesiones y equipamiento.
 - Patrones (lapso, sobreentreno, progresión estancada) → add_agent_note.
+
+Cuando tengas una sesión CONCRETA que proponer:
+- Usa propose_training_session con scheduled_for (YYYY-MM-DD), type (push/pull/legs/full/cardio/rest), prescribed completo (blocks con exercises sets/reps/rpe/rest_s) y rationale.
+- La propuesta aparece como tarjeta inline. Si el atleta acepta, se crea la sesión en su calendario. NO repitas la sesión en texto — la tarjeta lo muestra.
+- Solo propón sesiones específicas para los próximos 1-3 días, no semanas enteras.
 
 Brevedad: máximo 3 párrafos cortos.`,
 
@@ -114,6 +125,84 @@ const TOOLS: ToolDef[] = [
           },
         },
         required: ['category', 'body'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_training_session',
+      description:
+        'Propone una sesión de entreno concreta. El atleta verá una tarjeta inline con Aceptar/Rechazar. Si acepta, se crea la sesión en su calendario. Usar SOLO cuando tengas una propuesta concreta y específica con sets/reps/RPE — no para sugerencias vagas.',
+      parameters: {
+        type: 'object',
+        properties: {
+          scheduled_for: {
+            type: 'string',
+            description: 'Fecha YYYY-MM-DD.',
+          },
+          type: {
+            type: 'string',
+            description:
+              "Tipo de sesión: push, pull, legs, full, cardio, rest, etc.",
+          },
+          prescribed: {
+            type: 'object',
+            description:
+              'Plan: {blocks:[{name,exercises:[{name,sets,reps,rpe,rest_s,notes}]}]}',
+          },
+          rationale: {
+            type: 'string',
+            description: 'Motivo breve (1-2 frases) basado en su recovery/notas/adherencia.',
+          },
+        },
+        required: ['scheduled_for', 'type', 'prescribed', 'rationale'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_meal_target',
+      description:
+        'Propone targets diarios de macros e hidratación. Si el atleta acepta, se guardan en folder.nutrition.targets y los usaremos para evaluar adherencia. Usar tras revisar su comidas y peso recientes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          daily_calories: { type: 'number' },
+          daily_protein_g: { type: 'number' },
+          daily_carbs_g: { type: 'number' },
+          daily_fat_g: { type: 'number' },
+          hydration_l: { type: 'number' },
+          rationale: {
+            type: 'string',
+            description: 'Por qué estos números (1-2 frases).',
+          },
+        },
+        required: ['daily_calories', 'daily_protein_g', 'rationale'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'propose_weight_target',
+      description:
+        'Propone un peso objetivo y plazo. Si el atleta acepta, se guarda en folder.target_weight_kg y target_date.',
+      parameters: {
+        type: 'object',
+        properties: {
+          target_weight_kg: { type: 'number' },
+          target_date: {
+            type: 'string',
+            description: 'YYYY-MM-DD (opcional).',
+          },
+          rationale: {
+            type: 'string',
+            description: 'Por qué este peso/plazo es realista.',
+          },
+        },
+        required: ['target_weight_kg', 'rationale'],
       },
     },
   },
@@ -202,6 +291,7 @@ async function executeTool(
   userId: string,
   conversationId: string,
   agentName: AgentName,
+  messageId: string | null,
   name: string,
   args: Record<string, unknown>,
 ): Promise<{ result: unknown; error?: string; duration_ms: number }> {
@@ -210,6 +300,46 @@ async function executeTool(
     if (name === 'get_athlete_state') {
       const result = await getAthleteState(supabase, userId);
       return { result, duration_ms: Date.now() - start };
+    }
+    if (
+      name === 'propose_training_session' ||
+      name === 'propose_meal_target' ||
+      name === 'propose_weight_target'
+    ) {
+      const proposal_type = (
+        {
+          propose_training_session: 'training_session',
+          propose_meal_target: 'meal_target',
+          propose_weight_target: 'weight_target',
+        } as const
+      )[name];
+      const rationale = String(args.rationale ?? '');
+      const payload: Record<string, unknown> = { ...args };
+      delete payload.rationale;
+      const { data, error } = await supabase
+        .from('agent_proposals')
+        .insert({
+          user_id: userId,
+          conversation_id: conversationId,
+          message_id: messageId,
+          agent: agentName,
+          proposal_type,
+          payload,
+          rationale: rationale || null,
+        })
+        .select('id')
+        .single();
+      if (error) {
+        return {
+          result: null,
+          error: error.message,
+          duration_ms: Date.now() - start,
+        };
+      }
+      return {
+        result: { proposal_id: data.id, type: proposal_type, status: 'pending' },
+        duration_ms: Date.now() - start,
+      };
     }
     if (name === 'add_agent_note') {
       const category = String(args.category ?? '');
@@ -484,6 +614,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
         opts.userId,
         opts.conversationId,
         agentName,
+        assistantMsg.id,
         tc.function.name,
         parsedArgs,
       );

@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { ProposalCard } from '@/components/proposal-card';
+import type { ProposalRow } from '@/lib/actions/proposals';
 
 export type AgentRole = 'nutrition' | 'training' | 'general';
 
@@ -15,6 +18,7 @@ interface Props {
   agentRole: AgentRole;
   initialConversationId: string | null;
   initialMessages: ChatMessage[];
+  initialProposals: ProposalRow[];
 }
 
 const ROLE_LABEL: Record<AgentRole, string> = {
@@ -27,7 +31,9 @@ export function ChatClient({
   agentRole,
   initialConversationId,
   initialMessages,
+  initialProposals,
 }: Props) {
+  const router = useRouter();
   const [conversationId, setConversationId] = useState<string | null>(
     initialConversationId,
   );
@@ -95,6 +101,9 @@ export function ChatClient({
           content: data.assistantText ?? '',
         };
         setMessages((m) => [...m, reply]);
+        // Refresca el server component padre para traer las propuestas nuevas
+        // que el coach haya creado en este turno.
+        router.refresh();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Error desconocido';
         setError(message);
@@ -126,6 +135,21 @@ export function ChatClient({
         {messages.map((m) => (
           <Bubble key={m.id} role={m.role} content={m.content} />
         ))}
+        {initialProposals.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {initialProposals
+              .slice()
+              .sort((a, b) => {
+                // pending arriba, luego por fecha
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return a.created_at.localeCompare(b.created_at);
+              })
+              .map((p) => (
+                <ProposalCard key={p.id} proposal={p} />
+              ))}
+          </div>
+        )}
         {isPending && <Typing />}
       </div>
       {error && (

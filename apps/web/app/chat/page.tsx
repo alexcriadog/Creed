@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ChatClient, type AgentRole, type ChatMessage } from './chat-client';
+import { listProposalsForConversation } from '@/lib/actions/proposals';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,14 +43,18 @@ export default async function ChatPage({
   const activeConv = (convs?.[0] ?? null) as Conversation | null;
 
   let initialMessages: ChatMessage[] = [];
+  let initialProposals: Awaited<ReturnType<typeof listProposalsForConversation>> = [];
   if (activeConv) {
-    const { data: msgs } = await supabase
-      .from('messages')
-      .select('id, turn, role, agent, content, created_at')
-      .eq('conversation_id', activeConv.id)
-      .in('role', ['user', 'assistant'])
-      .order('turn', { ascending: true });
-    initialMessages = (msgs ?? [])
+    const [msgsResp, proposalsResp] = await Promise.all([
+      supabase
+        .from('messages')
+        .select('id, turn, role, agent, content, created_at')
+        .eq('conversation_id', activeConv.id)
+        .in('role', ['user', 'assistant'])
+        .order('turn', { ascending: true }),
+      listProposalsForConversation(activeConv.id),
+    ]);
+    initialMessages = (msgsResp.data ?? [])
       .filter((m) => m.content)
       .map((m) => ({
         id: m.id,
@@ -57,6 +62,7 @@ export default async function ChatPage({
         role: m.role as 'user' | 'assistant',
         content: m.content as string,
       }));
+    initialProposals = proposalsResp;
   }
 
   return (
@@ -85,6 +91,7 @@ export default async function ChatPage({
         agentRole={validRole}
         initialConversationId={activeConv?.id ?? null}
         initialMessages={initialMessages}
+        initialProposals={initialProposals}
       />
     </main>
   );
