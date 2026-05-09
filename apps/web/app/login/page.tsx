@@ -1,3 +1,4 @@
+import { CreedLogo } from '@/components/creed-logo';
 import { sendOtp, signInWithPassword } from './actions';
 
 const ERRORS: Record<string, string> = {
@@ -16,14 +17,21 @@ export default async function LoginPage({
   const errorMsg = error ? ERRORS[error] ?? 'Algo no fue bien.' : null;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
-      <div className="surface-glass p-8">
-        <h1 className="mb-2 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--color-text-primary)]">
-          Entrar a Creed
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-16 sm:px-6">
+      <div className="mb-6 flex flex-col items-center gap-3">
+        <span className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] bg-gradient-to-br from-[oklch(18%_0.04_260)] to-[oklch(10%_0.05_260)] shadow-[inset_0_1px_0_oklch(100%_0_0/0.15),0_8px_24px_oklch(20%_0.05_260/0.3)]">
+          <CreedLogo size={40} />
+        </span>
+        <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold tracking-tight text-[color:var(--color-text-primary)]">
+          creed
+        </span>
+      </div>
+
+      <div className="surface-glass p-6 sm:p-8">
+        <h1 className="mb-1 text-verdict text-[color:var(--color-text-primary)]">
+          Entrar.
         </h1>
-        <p className="mb-6 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)]">
-          Email y contraseña.
-        </p>
+        <p className="text-label mb-6">EMAIL Y CONTRASEÑA</p>
 
         {errorMsg && (
           <div
@@ -34,7 +42,7 @@ export default async function LoginPage({
           </div>
         )}
 
-        <form action={signInWithPassword} className="space-y-4">
+        <form action={signInWithPassword} className="space-y-3">
           <input
             name="email"
             type="email"
@@ -42,7 +50,7 @@ export default async function LoginPage({
             placeholder="tu@email.com"
             autoComplete="email"
             inputMode="email"
-            className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-4 py-3 text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
+            className="input-glass"
           />
           <input
             name="password"
@@ -50,17 +58,23 @@ export default async function LoginPage({
             required
             placeholder="contraseña"
             autoComplete="current-password"
-            className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-4 py-3 text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
+            className="input-glass"
           />
           <button
             type="submit"
-            className="w-full rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-4 py-3 font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)]"
+            className="w-full rounded-[var(--radius-md)] px-4 py-3 font-medium text-[color:var(--color-text-on-accent)] transition"
+            style={{
+              background:
+                'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
+              boxShadow:
+                'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 4px 12px oklch(20% 0.05 260 / 0.25)',
+            }}
           >
             Entrar
           </button>
         </form>
 
-        <details className="mt-4 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
+        <details className="mt-5 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
           <summary className="cursor-pointer">¿Sin contraseña? Magic link por email</summary>
           <form action={sendOtp} className="mt-3 space-y-2">
             <input
@@ -70,7 +84,7 @@ export default async function LoginPage({
               placeholder="tu@email.com"
               autoComplete="email"
               inputMode="email"
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-bg-surface-raised)] px-3 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)] outline-none transition focus:border-[color:var(--color-accent)]"
+              className="input-glass"
             />
             <button
               type="submit"
