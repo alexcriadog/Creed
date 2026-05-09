@@ -8,10 +8,12 @@ import {
 
 export const runtime = 'nodejs';
 
-function redirectHome(error?: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL!;
-  const url = error ? `${base}/?whoop_error=${encodeURIComponent(error)}` : `${base}/?whoop_connected=1`;
-  return NextResponse.redirect(url);
+function redirectHome(error?: string, msg?: string) {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  if (!error) return NextResponse.redirect(`${base}/?whoop_connected=1`);
+  const params = new URLSearchParams({ whoop_error: error });
+  if (msg) params.set('whoop_msg', msg.slice(0, 300));
+  return NextResponse.redirect(`${base}/?${params.toString()}`);
 }
 
 export async function GET(request: NextRequest) {
@@ -69,12 +71,31 @@ export async function GET(request: NextRequest) {
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
   const scopes = tokens.scope ? tokens.scope.split(/\s+/) : [...whoopScopes];
 
-  const admin = createSupabaseServiceRoleClient();
+  let admin;
+  try {
+    admin = createSupabaseServiceRoleClient();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'unknown';
+    console.error('[whoop.callback] service_role_client', msg);
+    return redirectHome('config_missing', msg);
+  }
+
+  let accessEnc: string;
+  let refreshEnc: string;
+  try {
+    accessEnc = encryptToken(tokens.access_token);
+    refreshEnc = encryptToken(tokens.refresh_token);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'unknown';
+    console.error('[whoop.callback] encrypt', msg);
+    return redirectHome('encrypt_failed', msg);
+  }
+
   const { error: upsertError } = await admin.from('whoop_connections').upsert({
     user_id: user.id,
     whoop_user_id: whoopUserId,
-    access_token_encrypted: encryptToken(tokens.access_token),
-    refresh_token_encrypted: encryptToken(tokens.refresh_token),
+    access_token_encrypted: accessEnc,
+    refresh_token_encrypted: refreshEnc,
     expires_at: expiresAt,
     scopes,
     status: 'connected',
@@ -84,15 +105,19 @@ export async function GET(request: NextRequest) {
 
   if (upsertError) {
     console.error('[whoop.callback] upsert', upsertError.code, upsertError.message);
-    return redirectHome('save_failed');
+    return redirectHome('save_failed', upsertError.message);
   }
 
-  // Audit
-  await admin.from('audit_log').insert({
-    user_id: user.id,
-    action: 'whoop_connect',
-    metadata: { whoop_user_id: whoopUserId },
-  });
+  // Audit (no bloqueante si falla)
+  try {
+    await admin.from('audit_log').insert({
+      user_id: user.id,
+      action: 'whoop_connect',
+      metadata: { whoop_user_id: whoopUserId },
+    });
+  } catch (e) {
+    console.error('[whoop.callback] audit', e instanceof Error ? e.message : e);
+  }
 
   cookieStore.delete('whoop_oauth_state');
   cookieStore.delete('whoop_oauth_pkce');
