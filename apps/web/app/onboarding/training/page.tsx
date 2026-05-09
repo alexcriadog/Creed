@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { CreedLogo } from '@/components/creed-logo';
 import { saveTrainingOnboarding } from '@/lib/actions/onboarding-coach';
 
 export const dynamic = 'force-dynamic';
@@ -52,16 +53,25 @@ export default async function TrainingOnboardingPage({
   const errorMsg = error ? decodeURIComponent(error) : null;
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-8">
-      <div className="surface-glass p-6 md:p-8">
-        <p className="mb-1 text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]">
-          Onboarding · Paso 2 de 2
-        </p>
-        <h1 className="mb-1 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--color-text-primary)]">
-          Cuestionario de entrenamiento
+    <main className="mx-auto max-w-md px-4 py-10 sm:max-w-lg sm:px-6">
+      <header className="mb-6 flex items-center gap-3">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-gradient-to-br from-[oklch(18%_0.04_260)] to-[oklch(10%_0.05_260)] shadow-[inset_0_1px_0_oklch(100%_0_0/0.15),0_4px_12px_oklch(20%_0.05_260/0.3)]">
+          <CreedLogo size={26} />
+        </span>
+        <div className="flex flex-col leading-tight">
+          <span className="font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-bold tracking-tight text-[color:var(--color-text-primary)]">
+            creed
+          </span>
+          <span className="text-label">PASO 3 · DE 3 · ENTRENAMIENTO</span>
+        </div>
+      </header>
+
+      <div className="surface-glass p-6 sm:p-8">
+        <h1 className="mb-2 text-verdict text-[color:var(--color-text-primary)]">
+          Entreno.
         </h1>
         <p className="mb-6 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)]">
-          5 minutos. El preparador físico usará esto para programar tus sesiones desde el primer día.
+          5 minutos. El coach usa esto para programar tus sesiones desde el primer día.
         </p>
 
         {errorMsg && (
@@ -184,7 +194,13 @@ export default async function TrainingOnboardingPage({
             </Link>
             <button
               type="submit"
-              className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-5 py-2 font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)]"
+              className="rounded-[var(--radius-md)] px-5 py-2 font-medium text-[color:var(--color-text-on-accent)] transition"
+              style={{
+                background:
+                  'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
+                boxShadow:
+                  'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 4px 12px oklch(20% 0.05 260 / 0.25)',
+              }}
             >
               Terminar onboarding →
             </button>
