@@ -1,5 +1,6 @@
 import { listRecentSessions } from '@/lib/actions/training';
 import { LogTrainingButton } from './log-training-sheet';
+import { EditSessionNotesButton } from './edit-session-notes';
 
 const TYPE_LABEL: Record<string, string> = {
   push: 'Push',
@@ -48,12 +49,22 @@ export async function TrainingRecent() {
               month: 'short',
             });
             return (
-              <li key={s.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                <div className="min-w-0">
-                  <div className="text-[length:var(--text-sm)] text-[color:var(--color-text-primary)]">
-                    {date}
-                    {s.type ? ` · ${TYPE_LABEL[s.type] ?? s.type}` : ''}
-                    {s.rpe ? ` · RPE ${s.rpe}` : ''}
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)]">
+                    <span>
+                      {date}
+                      {s.type ? ` · ${TYPE_LABEL[s.type] ?? s.type}` : ''}
+                      {s.rpe ? ` · RPE ${s.rpe}` : ''}
+                    </span>
+                    {s.whoop_workout_id && (
+                      <span
+                        className="rounded-full border border-[color:var(--color-border-default)] px-1.5 py-0 text-[length:var(--text-xs)] uppercase tracking-wider text-[color:var(--color-text-muted)]"
+                        title="Importado automáticamente desde Whoop"
+                      >
+                        whoop
+                      </span>
+                    )}
                   </div>
                   {s.notes && (
                     <div className="truncate text-[length:var(--text-xs)] text-[color:var(--color-text-muted)]">
@@ -61,15 +72,22 @@ export async function TrainingRecent() {
                     </div>
                   )}
                 </div>
-                <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[length:var(--text-xs)] font-medium"
-                  style={{
-                    color: badge.color,
-                    background: `color-mix(in oklch, ${badge.color} 12%, transparent)`,
-                  }}
-                >
-                  {badge.label}
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[length:var(--text-xs)] font-medium"
+                    style={{
+                      color: badge.color,
+                      background: `color-mix(in oklch, ${badge.color} 12%, transparent)`,
+                    }}
+                  >
+                    {badge.label}
+                  </span>
+                  <EditSessionNotesButton
+                    sessionId={s.id}
+                    initialNotes={s.notes ?? ''}
+                    label={s.notes ? 'Editar notas' : '+ Notas'}
+                  />
+                </div>
               </li>
             );
           })}

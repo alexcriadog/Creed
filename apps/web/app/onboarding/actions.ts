@@ -28,7 +28,6 @@ export async function saveOnboarding(formData: FormData) {
       sex,
       date_of_birth,
       height_cm,
-      onboarding_status: 'complete',
     })
     .eq('id', user.id);
 
@@ -54,5 +53,5 @@ export async function saveOnboarding(formData: FormData) {
     throw new Error('No se pudo guardar la carpeta del atleta');
   }
 
-  redirect('/');
+  redirect('/onboarding/nutrition');
 }

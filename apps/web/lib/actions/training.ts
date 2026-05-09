@@ -43,6 +43,7 @@ export interface SessionRow {
   done_at: string | null;
   rpe: number | null;
   notes: string | null;
+  whoop_workout_id: string | null;
 }
 
 export interface SetRow {
@@ -166,6 +167,31 @@ export async function deleteSession(id: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+export async function updateSessionNotes(
+  sessionId: string,
+  notes: string,
+): Promise<ActionResult> {
+  if (!z.string().uuid().safeParse(sessionId).success) {
+    return { ok: false, error: 'invalid_id' };
+  }
+  if (notes.length > 2000) {
+    return { ok: false, error: 'notes_too_long' };
+  }
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'unauthorized' };
+
+  const { error } = await supabase
+    .from('training_sessions')
+    .update({ notes: notes.trim() || null })
+    .eq('id', sessionId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/');
+  return { ok: true };
+}
+
 export async function listRecentSessions(limit = 14): Promise<SessionRow[]> {
   const supabase = await createSupabaseServerClient();
   const {
@@ -175,7 +201,7 @@ export async function listRecentSessions(limit = 14): Promise<SessionRow[]> {
 
   const { data } = await supabase
     .from('training_sessions')
-    .select('id, scheduled_for, type, status, done_at, rpe, notes')
+    .select('id, scheduled_for, type, status, done_at, rpe, notes, whoop_workout_id')
     .eq('user_id', user.id)
     .order('scheduled_for', { ascending: false })
     .limit(limit);

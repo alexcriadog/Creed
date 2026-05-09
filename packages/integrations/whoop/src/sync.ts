@@ -181,6 +181,47 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
     result.errors.push(`workouts fetch: ${e instanceof Error ? e.message : String(e)}`);
   }
 
+  // --- Auto-import workouts como training_sessions
+  // ignoreDuplicates: true → no sobreescribe notas/status que el usuario haya editado.
+  try {
+    const { data: workouts } = await opts.supabase
+      .from('whoop_workouts')
+      .select('whoop_id, start_at, end_at, sport')
+      .eq('user_id', opts.userId)
+      .gte('start_at', since);
+
+    if (workouts && workouts.length > 0) {
+      const sessionRows = workouts.map(
+        (w: {
+          whoop_id: string;
+          start_at: string;
+          end_at: string | null;
+          sport: string | null;
+        }) => ({
+          user_id: opts.userId,
+          whoop_workout_id: w.whoop_id,
+          scheduled_for: w.start_at.slice(0, 10),
+          type: w.sport ?? 'whoop',
+          status: 'done',
+          done_at: w.end_at,
+        }),
+      );
+      const { error: tsErr } = await opts.supabase
+        .from('training_sessions')
+        .upsert(sessionRows, {
+          onConflict: 'user_id,whoop_workout_id',
+          ignoreDuplicates: true,
+        });
+      if (tsErr) {
+        result.errors.push(`session_import: ${tsErr.message}`);
+      }
+    }
+  } catch (e) {
+    result.errors.push(
+      `session_import: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
   // Update last_synced_at + status
   const newStatus = result.errors.length > 0 ? 'error' : 'connected';
   await opts.supabase

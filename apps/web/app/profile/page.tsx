@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { signOut } from './actions';
 import { DeleteAccountButton } from './delete-button';
@@ -25,6 +26,12 @@ export default async function ProfilePage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <div className="surface-glass p-8 md:p-10">
+        <Link
+          href="/"
+          className="mb-4 inline-block text-[length:var(--text-sm)] text-[color:var(--color-text-muted)] underline-offset-2 hover:underline"
+        >
+          ← Inicio
+        </Link>
         <h1 className="mb-6 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--color-text-primary)]">
           Perfil
         </h1>
