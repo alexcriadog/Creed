@@ -85,11 +85,13 @@ export interface RefreshTokensOptions {
 export async function refreshTokens(
   opts: RefreshTokensOptions,
 ): Promise<WhoopTokens> {
+  // Whoop requires scope=offline on refresh, otherwise returns 400.
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: opts.refreshToken,
     client_id: opts.clientId,
     client_secret: opts.clientSecret,
+    scope: 'offline',
   });
   const res = await fetch(`${WHOOP_API_BASE}/oauth/oauth2/token`, {
     method: 'POST',
@@ -97,7 +99,10 @@ export async function refreshTokens(
     body: body.toString(),
   });
   if (!res.ok) {
-    throw new Error(`Whoop token refresh failed: ${res.status} ${res.statusText}`);
+    const detail = await res.text().catch(() => '');
+    throw new Error(
+      `Whoop token refresh failed: ${res.status} ${res.statusText}${detail ? ` — ${detail.slice(0, 200)}` : ''}`,
+    );
   }
   return tokenResponseSchema.parse(await res.json());
 }
