@@ -9,6 +9,7 @@ import { VerdictCard } from '@/components/verdict-card';
 import { LapseBanner } from '@/components/lapse-banner';
 import { QuickCoachActions } from '@/components/quick-coach-actions';
 import { PendingProposals } from '@/components/pending-proposals';
+import { WeekPlan } from '@/components/week-plan';
 
 const WHOOP_ERRORS: Record<string, string> = {
   state_mismatch: 'La sesión de OAuth caducó. Inténtalo de nuevo.',
@@ -217,6 +218,8 @@ export default async function HomePage({
         <PendingProposals />
 
         <QuickCoachActions />
+
+        <WeekPlan />
 
         <TodayStats />
 
