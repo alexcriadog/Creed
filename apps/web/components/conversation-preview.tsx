@@ -42,7 +42,7 @@ export async function ConversationPreview() {
             <Link
               key={m.id}
               href="/chat"
-              className="flex items-start gap-3 transition hover:opacity-90"
+              className="tap-feedback flex items-start gap-3 hover:opacity-90"
             >
               <span className={`agent-chip ${chipClass(m.agent)}`}>
                 {AGENT_INITIAL[agent] ?? '·'}

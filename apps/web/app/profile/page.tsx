@@ -5,6 +5,7 @@ import { DeleteAccountButton } from './delete-button';
 import { setLocale } from '@/lib/actions/locale';
 import { AppHeader } from '@/components/app-header';
 import { BottomNav } from '@/components/bottom-nav';
+import { SubmitButton } from '@/components/submit-button';
 
 export default async function ProfilePage() {
   const supabase = await createSupabaseServerClient();
@@ -78,12 +79,9 @@ export default async function ProfilePage() {
         <Section label="SESIÓN">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-4 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-primary)] transition hover:bg-[color:var(--color-surface-raised)]"
-              >
+              <SubmitButton variant="secondary" size="sm" pendingLabel="Cerrando…">
                 Cerrar sesión
-              </button>
+              </SubmitButton>
             </form>
             <DeleteAccountButton />
           </div>
@@ -137,25 +135,14 @@ function LocaleButton({
   return (
     <form action={setLocale}>
       <input type="hidden" name="locale" value={locale} />
-      <button
-        type="submit"
+      <SubmitButton
+        variant={active ? 'primary' : 'secondary'}
+        size="sm"
+        className="!rounded-[var(--radius-pill)] !px-3 !py-1 font-mono"
         aria-pressed={active}
-        className={`rounded-[var(--radius-pill)] px-3 py-1 font-mono text-[length:var(--text-xs)] font-medium transition ${
-          active
-            ? 'text-[color:var(--color-text-on-accent)]'
-            : 'border border-[color:var(--color-border-default)] text-[color:var(--color-text-secondary)]'
-        }`}
-        style={
-          active
-            ? {
-                background:
-                  'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
-              }
-            : undefined
-        }
       >
         {label}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

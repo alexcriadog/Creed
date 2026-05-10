@@ -34,7 +34,7 @@ export function BottomNav() {
               key={item.label}
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
-              className="group flex flex-col items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5 transition"
+              className="tap-feedback group flex flex-col items-center gap-1 rounded-[var(--radius-md)] px-3 py-1.5"
             >
               <span
                 className={

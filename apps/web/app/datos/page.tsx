@@ -5,6 +5,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { WhoopStatusBanner } from '@/components/whoop-status-banner';
 import { TodayStats } from '@/components/today-stats';
 import { TrainingRecent } from '@/components/training-recent';
+import { SubmitButton } from '@/components/submit-button';
 
 export default async function DatosPage({
   searchParams,
@@ -61,26 +62,14 @@ export default async function DatosPage({
               />
               <div className="mt-4 flex flex-wrap gap-2">
                 <form action="/api/whoop/sync" method="post">
-                  <button
-                    type="submit"
-                    className="rounded-[var(--radius-md)] px-4 py-1.5 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
-                      boxShadow:
-                        'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 6px oklch(20% 0.05 260 / 0.18)',
-                    }}
-                  >
+                  <SubmitButton size="sm" pendingLabel="Sincronizando…">
                     Sincronizar
-                  </button>
+                  </SubmitButton>
                 </form>
                 <form action="/api/whoop/disconnect" method="post">
-                  <button
-                    type="submit"
-                    className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-4 py-1.5 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-status-red)] hover:text-[color:var(--color-status-red)]"
-                  >
+                  <SubmitButton variant="secondary" size="sm" pendingLabel="Desconectando…">
                     Desconectar
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             </>
@@ -91,7 +80,7 @@ export default async function DatosPage({
               </p>
               <a
                 href="/api/whoop/authorize"
-                className="inline-block rounded-[var(--radius-md)] px-4 py-1.5 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)] transition"
+                className="tap-feedback inline-block rounded-[var(--radius-md)] px-4 py-1.5 text-[length:var(--text-sm)] font-medium text-[color:var(--color-text-on-accent)]"
                 style={{
                   background:
                     'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
@@ -99,7 +88,7 @@ export default async function DatosPage({
                     'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 2px 6px oklch(20% 0.05 260 / 0.18)',
                 }}
               >
-                Conectar Whoop
+                Conectar Whoop →
               </a>
             </div>
           )}

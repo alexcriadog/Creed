@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CreedLogo } from '@/components/creed-logo';
+import { SubmitButton } from '@/components/submit-button';
 import { saveTrainingOnboarding } from '@/lib/actions/onboarding-coach';
 
 export const dynamic = 'force-dynamic';
@@ -192,18 +193,7 @@ export default async function TrainingOnboardingPage({
             >
               ← Anterior
             </Link>
-            <button
-              type="submit"
-              className="rounded-[var(--radius-md)] px-5 py-2 font-medium text-[color:var(--color-text-on-accent)] transition"
-              style={{
-                background:
-                  'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
-                boxShadow:
-                  'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 4px 12px oklch(20% 0.05 260 / 0.25)',
-              }}
-            >
-              Terminar onboarding →
-            </button>
+            <SubmitButton pendingLabel="Guardando…">Terminar onboarding →</SubmitButton>
           </div>
         </form>
       </div>

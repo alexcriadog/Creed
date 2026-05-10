@@ -1,4 +1,5 @@
 'use client';
+import { SubmitButton } from '@/components/submit-button';
 import { deleteAccount } from './actions';
 
 export function DeleteAccountButton() {
@@ -15,12 +16,9 @@ export function DeleteAccountButton() {
         }
       }}
     >
-      <button
-        type="submit"
-        className="rounded-[var(--radius-md)] border border-[color:var(--color-status-red)] bg-[color:var(--color-status-red)]/10 px-4 py-2 text-[length:var(--text-sm)] font-medium text-[color:var(--color-status-red)] transition hover:bg-[color:var(--color-status-red)]/20"
-      >
+      <SubmitButton variant="danger" size="sm" pendingLabel="Borrando…">
         Borrar mi cuenta
-      </button>
+      </SubmitButton>
     </form>
   );
 }

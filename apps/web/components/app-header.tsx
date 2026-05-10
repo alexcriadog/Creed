@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { CreedLogo } from '@/components/creed-logo';
+import { IconSubmitButton } from '@/components/icon-submit-button';
 import { setTheme } from '@/lib/actions/theme';
 
 interface AppHeaderProps {
@@ -35,12 +36,10 @@ export async function AppHeader({ hasUnread = false }: AppHeaderProps) {
       <div className="flex items-center gap-2">
         <form action={setTheme}>
           <input type="hidden" name="theme" value={nextTheme} />
-          <button
-            type="submit"
-            aria-label={
+          <IconSubmitButton
+            ariaLabel={
               nextTheme === 'dark' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro'
             }
-            className="icon-chip"
           >
             {nextTheme === 'dark' ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,7 +51,7 @@ export async function AppHeader({ hasUnread = false }: AppHeaderProps) {
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
               </svg>
             )}
-          </button>
+          </IconSubmitButton>
         </form>
         <button
           type="button"

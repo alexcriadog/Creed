@@ -392,6 +392,50 @@ body {
   border-color: var(--color-border-default);
 }
 
+/* Press feedback — usado por SubmitButton y cualquier botón interactivo */
+.btn-feedback {
+  transition:
+    transform var(--duration-instant) var(--ease-out-apple),
+    opacity var(--duration-fast) var(--ease-out-expo),
+    box-shadow var(--duration-fast) var(--ease-out-expo);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-feedback:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-feedback:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* Press feedback para Links (cards, nav items) */
+.tap-feedback {
+  transition:
+    transform var(--duration-instant) var(--ease-out-apple),
+    opacity var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tap-feedback:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 700ms linear infinite;
+}
+
 /* Badge dot (notificación) */
 .badge-dot {
   position: absolute;

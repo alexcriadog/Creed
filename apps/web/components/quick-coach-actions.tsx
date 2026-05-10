@@ -40,7 +40,7 @@ export function QuickCoachActions() {
           <Link
             key={a.label}
             href={`/chat?role=${a.role}&prefill=${encodeURIComponent(a.prefill)}`}
-            className="metric-card group flex flex-col items-start gap-2 transition hover:border-[color:var(--color-accent)]"
+            className="metric-card tap-feedback group flex flex-col items-start gap-2 hover:border-[color:var(--color-accent)]"
           >
             <span
               className={`agent-chip ${

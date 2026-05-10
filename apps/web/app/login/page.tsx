@@ -1,4 +1,5 @@
 import { CreedLogo } from '@/components/creed-logo';
+import { SubmitButton } from '@/components/submit-button';
 import { sendOtp, signInWithPassword } from './actions';
 
 const ERRORS: Record<string, string> = {
@@ -60,18 +61,7 @@ export default async function LoginPage({
             autoComplete="current-password"
             className="input-glass"
           />
-          <button
-            type="submit"
-            className="w-full rounded-[var(--radius-md)] px-4 py-3 font-medium text-[color:var(--color-text-on-accent)] transition"
-            style={{
-              background:
-                'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
-              boxShadow:
-                'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 4px 12px oklch(20% 0.05 260 / 0.25)',
-            }}
-          >
-            Entrar
-          </button>
+          <SubmitButton fullWidth pendingLabel="Entrando…">Entrar</SubmitButton>
         </form>
 
         <details className="mt-5 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
@@ -86,12 +76,9 @@ export default async function LoginPage({
               inputMode="email"
               className="input-glass"
             />
-            <button
-              type="submit"
-              className="w-full rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-3 py-2 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
-            >
+            <SubmitButton variant="secondary" fullWidth size="sm" pendingLabel="Enviando…">
               Enviar magic link
-            </button>
+            </SubmitButton>
           </form>
         </details>
       </div>

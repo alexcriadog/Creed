@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CreedLogo } from '@/components/creed-logo';
+import { SubmitButton } from '@/components/submit-button';
 import { saveOnboarding } from './actions';
 
 export default async function OnboardingPage() {
@@ -146,18 +147,9 @@ export default async function OnboardingPage() {
             </Field>
           </div>
 
-          <button
-            type="submit"
-            className="w-full rounded-[var(--radius-md)] px-6 py-3 font-medium text-[color:var(--color-text-on-accent)] transition"
-            style={{
-              background:
-                'linear-gradient(135deg, oklch(58% 0.21 260), oklch(50% 0.22 260))',
-              boxShadow:
-                'inset 0 1px 0 oklch(100% 0 0 / 0.25), 0 4px 12px oklch(20% 0.05 260 / 0.25)',
-            }}
-          >
+          <SubmitButton fullWidth pendingLabel="Guardando…">
             Guardar y continuar →
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </main>
