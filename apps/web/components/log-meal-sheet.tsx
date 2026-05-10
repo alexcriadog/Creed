@@ -65,7 +65,7 @@ export function LogMealButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] transition hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
+        className="btn-feedback rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
       >
         + Comida
       </button>
@@ -101,7 +101,8 @@ export function LogMealButton() {
           <PrimaryButton
             type="button"
             onClick={submit}
-            disabled={isPending || rawText.trim().length === 0}
+            loading={isPending}
+            disabled={rawText.trim().length === 0}
           >
             {isPending ? 'Guardando…' : 'Guardar'}
           </PrimaryButton>

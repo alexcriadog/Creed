@@ -60,7 +60,7 @@ function Row({
               disabled={disabled}
               aria-label={`${label} ${v}`}
               aria-pressed={active}
-              className={`flex-1 rounded-[var(--radius-sm)] border px-1 py-0.5 text-[length:var(--text-xs)] font-mono tabular-nums transition disabled:opacity-50 ${
+              className={`btn-feedback flex-1 rounded-[var(--radius-sm)] border px-1 py-0.5 font-mono text-[length:var(--text-xs)] tabular-nums ${
                 active
                   ? 'border-[color:var(--color-accent)] bg-[color:var(--color-accent)] text-[color:var(--color-text-on-accent)]'
                   : 'border-[color:var(--color-border-default)] text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)]'

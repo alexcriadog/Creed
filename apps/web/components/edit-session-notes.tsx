@@ -62,7 +62,7 @@ export function EditSessionNotesButton({ sessionId, initialNotes, label = 'Notas
           <SecondaryButton type="button" onClick={close}>
             Cancelar
           </SecondaryButton>
-          <PrimaryButton type="button" onClick={save} disabled={isPending}>
+          <PrimaryButton type="button" onClick={save} loading={isPending}>
             {isPending ? 'Guardando…' : 'Guardar'}
           </PrimaryButton>
         </div>
