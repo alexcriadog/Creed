@@ -130,9 +130,25 @@ function AssignmentRow({
         type="button"
         onClick={save}
         disabled={!dirty || isPending}
-        className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-3 py-1 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)] disabled:opacity-30"
+        aria-busy={isPending || undefined}
+        className="btn-feedback inline-flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-3 py-1 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-on-accent)] hover:bg-[color:var(--color-accent-strong)]"
       >
-        {isPending ? '…' : 'Guardar'}
+        {isPending && (
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden
+            className="animate-spin"
+          >
+            <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+          </svg>
+        )}
+        {isPending ? 'Guardando' : 'Guardar'}
       </button>
       {savedAt && !dirty && (
         <span className="text-[length:var(--text-xs)] text-[color:var(--color-status-green)]">
@@ -231,9 +247,25 @@ function LimitRow({ limit }: { limit: CostLimit }) {
         type="button"
         onClick={save}
         disabled={!dirty || isPending}
-        className="rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-3 py-1 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-on-accent)] transition hover:bg-[color:var(--color-accent-strong)] disabled:opacity-30"
+        aria-busy={isPending || undefined}
+        className="btn-feedback inline-flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[color:var(--color-accent)] px-3 py-1 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-on-accent)] hover:bg-[color:var(--color-accent-strong)]"
       >
-        {isPending ? '…' : 'Guardar'}
+        {isPending && (
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden
+            className="animate-spin"
+          >
+            <path d="M21 12a9 9 0 1 1-6.2-8.55" />
+          </svg>
+        )}
+        {isPending ? 'Guardando' : 'Guardar'}
       </button>
       {savedAt && !dirty && (
         <span className="text-[length:var(--text-xs)] text-[color:var(--color-status-green)]">

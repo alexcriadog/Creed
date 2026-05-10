@@ -436,6 +436,36 @@ body {
   animation: spin 700ms linear infinite;
 }
 
+/* Skeleton shimmer — usado por page-skeleton.tsx */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-raised) 0%,
+    var(--color-surface) 50%,
+    var(--color-surface-raised) 100%
+  );
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s var(--ease-out-expo) infinite;
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block {
+    animation: none;
+    background: var(--color-surface-raised);
+  }
+}
+
 /* Badge dot (notificación) */
 .badge-dot {
   position: absolute;
