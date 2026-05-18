@@ -1,6 +1,12 @@
 import { WhoopClient } from './client';
 import { encryptToken } from './encryption';
-import { cycleToRow, recoveryToRow, sleepToRow, workoutToRow } from './mappers';
+import {
+  cycleToRow,
+  mapWhoopSportToType,
+  recoveryToRow,
+  sleepToRow,
+  workoutToRow,
+} from './mappers';
 
 export interface SyncOptions {
   /**
@@ -181,8 +187,13 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
     result.errors.push(`workouts fetch: ${e instanceof Error ? e.message : String(e)}`);
   }
 
-  // --- Auto-import workouts como training_sessions
-  // ignoreDuplicates: true → no sobreescribe notas/status que el usuario haya editado.
+  // --- Match workouts → training_sessions
+  // Lógica: (1) si ya existe sesión con ese whoop_workout_id → skip.
+  //         (2) Si el sport es deporte paralelo (padel, fútbol…) → INSERT
+  //             standalone con status='done' y type=normalizedType. No matchea.
+  //         (3) Si no, match exacto por fecha+tipo. Si falla, drift dentro de
+  //             la semana: mueve la sesión prescrita más cercana al día real
+  //             actualizando scheduled_for. Si no hay candidata → INSERT.
   try {
     const { data: workouts } = await opts.supabase
       .from('whoop_workouts')
@@ -191,29 +202,149 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
       .gte('start_at', since);
 
     if (workouts && workouts.length > 0) {
-      const sessionRows = workouts.map(
-        (w: {
-          whoop_id: string;
-          start_at: string;
-          end_at: string | null;
-          sport: string | null;
-        }) => ({
-          user_id: opts.userId,
-          whoop_workout_id: w.whoop_id,
-          scheduled_for: w.start_at.slice(0, 10),
-          type: w.sport ?? 'whoop',
-          status: 'done',
-          done_at: w.end_at,
-        }),
-      );
-      const { error: tsErr } = await opts.supabase
-        .from('training_sessions')
-        .upsert(sessionRows, {
-          onConflict: 'user_id,whoop_workout_id',
-          ignoreDuplicates: true,
-        });
-      if (tsErr) {
-        result.errors.push(`session_import: ${tsErr.message}`);
+      for (const w of workouts as Array<{
+        whoop_id: string;
+        start_at: string;
+        end_at: string | null;
+        sport: string | null;
+      }>) {
+        // 1. Skip si ya hay sesión con este whoop_workout_id.
+        const { data: existing } = await opts.supabase
+          .from('training_sessions')
+          .select('id')
+          .eq('user_id', opts.userId)
+          .eq('whoop_workout_id', w.whoop_id)
+          .maybeSingle();
+        if (existing?.id) {
+          continue;
+        }
+
+        const workoutDate = w.start_at.slice(0, 10);
+        const map = mapWhoopSportToType(w.sport);
+
+        // 2. Deporte paralelo → INSERT standalone, no toca plan.
+        if (map.isParallelSport) {
+          const { error: insErr } = await opts.supabase
+            .from('training_sessions')
+            .insert({
+              user_id: opts.userId,
+              whoop_workout_id: w.whoop_id,
+              scheduled_for: workoutDate,
+              type: map.normalizedType,
+              status: 'done',
+              done_at: w.end_at,
+            });
+          if (insErr) {
+            result.errors.push(`session_import_parallel: ${insErr.message}`);
+          }
+          continue;
+        }
+
+        // 3a. Match exacto: misma fecha, tipo compatible.
+        let candidatesQuery = opts.supabase
+          .from('training_sessions')
+          .select('id, scheduled_for, created_at')
+          .eq('user_id', opts.userId)
+          .eq('scheduled_for', workoutDate)
+          .is('whoop_workout_id', null)
+          .in('status', ['scheduled', 'partial'])
+          .order('created_at', { ascending: true });
+        if (map.matchableTypes.length > 0) {
+          candidatesQuery = candidatesQuery.in('type', map.matchableTypes);
+        }
+        const { data: exactCands } = await candidatesQuery;
+
+        let target: { id: string; scheduled_for: string } | null = null;
+        if (exactCands && exactCands.length > 0) {
+          target = exactCands[0] as { id: string; scheduled_for: string };
+        } else if (map.matchableTypes.length > 0) {
+          // 3b. Drift: misma semana (Mon..Sun), tipo compatible, scheduled.
+          const wd = new Date(workoutDate + 'T00:00:00');
+          const day = wd.getDay();
+          const diffToMon = day === 0 ? 6 : day - 1;
+          const mon = new Date(wd);
+          mon.setDate(wd.getDate() - diffToMon);
+          const sun = new Date(mon);
+          sun.setDate(mon.getDate() + 6);
+          const weekStart = mon.toISOString().slice(0, 10);
+          const weekEnd = sun.toISOString().slice(0, 10);
+          const { data: weekCands } = await opts.supabase
+            .from('training_sessions')
+            .select('id, scheduled_for')
+            .eq('user_id', opts.userId)
+            .gte('scheduled_for', weekStart)
+            .lte('scheduled_for', weekEnd)
+            .is('whoop_workout_id', null)
+            .eq('status', 'scheduled')
+            .in('type', map.matchableTypes);
+          if (weekCands && weekCands.length > 0) {
+            const list = weekCands as Array<{
+              id: string;
+              scheduled_for: string;
+            }>;
+            list.sort((a, b) => {
+              const da = Math.abs(
+                new Date(a.scheduled_for + 'T00:00:00').getTime() - wd.getTime(),
+              );
+              const db = Math.abs(
+                new Date(b.scheduled_for + 'T00:00:00').getTime() - wd.getTime(),
+              );
+              return da - db;
+            });
+            target = list[0]!;
+          }
+        }
+
+        if (target) {
+          const { error: upErr } = await opts.supabase
+            .from('training_sessions')
+            .update({
+              whoop_workout_id: w.whoop_id,
+              status: 'done',
+              done_at: w.end_at,
+              scheduled_for: workoutDate,
+            })
+            .eq('id', target.id);
+          if (upErr) {
+            result.errors.push(`session_match: ${upErr.message}`);
+          } else {
+            console.info(
+              '[whoop.match]',
+              JSON.stringify({
+                workout_id: w.whoop_id,
+                matched_session_id: target.id,
+                reason:
+                  target.scheduled_for === workoutDate
+                    ? 'matched_exact'
+                    : 'matched_drift',
+                rescheduled_from: target.scheduled_for,
+              }),
+            );
+          }
+        } else {
+          // 3c. Sin candidata: INSERT standalone.
+          const { error: insErr } = await opts.supabase
+            .from('training_sessions')
+            .insert({
+              user_id: opts.userId,
+              whoop_workout_id: w.whoop_id,
+              scheduled_for: workoutDate,
+              type: map.normalizedType,
+              status: 'done',
+              done_at: w.end_at,
+            });
+          if (insErr) {
+            result.errors.push(`session_insert: ${insErr.message}`);
+          } else {
+            console.info(
+              '[whoop.match]',
+              JSON.stringify({
+                workout_id: w.whoop_id,
+                reason: 'inserted_standalone',
+              }),
+            );
+          }
+        }
       }
     }
   } catch (e) {

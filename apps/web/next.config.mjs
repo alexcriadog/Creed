@@ -21,6 +21,20 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/chat',
+        destination: '/ia',
+        permanent: true,
+      },
+      {
+        source: '/chat/:path*',
+        destination: '/ia/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

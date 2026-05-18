@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Sheet } from './sheet';
+import { ChipButton } from './chip-button';
 import { Field, TextArea, Select, PrimaryButton, SecondaryButton } from './form-controls';
 import { createMeal } from '@/lib/actions/meals';
 
@@ -62,13 +63,7 @@ export function LogMealButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn-feedback rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
-      >
-        + Comida
-      </button>
+      <ChipButton icon="🥗" label="Comida" onClick={() => setOpen(true)} />
       <Sheet open={open} onClose={close} title="Registrar comida">
         <Field label="Tipo">
           <Select value={mealType} onChange={(e) => setMealType(e.target.value as MealType | '')}>

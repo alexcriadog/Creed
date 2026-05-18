@@ -6,13 +6,13 @@ import { usePathname } from 'next/navigation';
 interface NavItem {
   label: string;
   href: string;
-  icon: 'home' | 'plan' | 'data' | 'team';
+  icon: 'home' | 'plan' | 'ia' | 'team';
 }
 
 const ITEMS: NavItem[] = [
   { label: 'Hoy', href: '/', icon: 'home' },
-  { label: 'Plan', href: '/chat', icon: 'plan' },
-  { label: 'Datos', href: '/datos', icon: 'data' },
+  { label: 'Plan', href: '/plan', icon: 'plan' },
+  { label: 'IA', href: '/ia', icon: 'ia' },
   { label: 'Perfil', href: '/profile', icon: 'team' },
 ];
 
@@ -22,7 +22,8 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed bottom-4 left-1/2 z-40 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+      className="fixed left-1/2 z-40 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2"
+      style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
     >
       <div className="bottom-nav-pill flex items-center justify-around gap-1 px-3 py-2">
         {ITEMS.map((item) => {
@@ -99,10 +100,13 @@ function NavIcon({ name }: { name: NavItem['icon'] }) {
           <path d="M8 14h3M8 17h6" />
         </svg>
       );
-    case 'data':
+    case 'ia':
       return (
         <svg {...common}>
-          <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />
+          <path d="M21 12c0 4.97-4.03 9-9 9-1.53 0-2.97-.38-4.23-1.06L3 21l1.06-4.77A8.96 8.96 0 0 1 3 12c0-4.97 4.03-9 9-9s9 4.03 9 9z" />
+          <circle cx="9" cy="12" r="1" fill="currentColor" />
+          <circle cx="12" cy="12" r="1" fill="currentColor" />
+          <circle cx="15" cy="12" r="1" fill="currentColor" />
         </svg>
       );
     case 'team':

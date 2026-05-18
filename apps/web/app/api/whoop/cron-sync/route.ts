@@ -1,7 +1,9 @@
 /**
  * Vercel Cron — POST /api/whoop/cron-sync
  *
- * Llamado cada 6 horas por Vercel Cron (config en apps/web/vercel.json).
+ * Llamado cada 6 horas por Vercel Cron (schedule en apps/web/vercel.json).
+ * Red de seguridad: el webhook de Whoop es la fuente real-time, este cron
+ * captura lo que el webhook pierda.
  * Auth via Authorization: Bearer <CRON_SECRET>.
  * Itera todas las conexiones Whoop con status='connected' y lanza sync incremental
  * por usuario. Errores por usuario no abortan el lote.

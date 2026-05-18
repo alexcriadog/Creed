@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Sheet } from './sheet';
+import { ChipButton } from './chip-button';
 import { Field, TextInput, PrimaryButton, SecondaryButton } from './form-controls';
 import { logWeight } from '@/lib/actions/body-measurements';
 
@@ -44,13 +45,7 @@ export function LogWeightButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn-feedback rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
-      >
-        + Peso
-      </button>
+      <ChipButton icon="⚖️" label="Peso" onClick={() => setOpen(true)} />
       <Sheet open={open} onClose={close} title="Registrar peso">
         <Field label="Peso (kg)">
           <TextInput

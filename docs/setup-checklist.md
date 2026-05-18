@@ -114,6 +114,6 @@
   - Webhook entrante: `/api/whoop/webhook` con verificación HMAC-SHA256 base64 contra `WHOOP_WEBHOOK_SECRET`.
   - Dashboard real en `/`: RecoveryRing SVG + stats card (strain, sleep, HR), bar chart de recovery últimos 7 días, banner si Whoop atrasado >25h o status ≠ connected.
   - **Pendiente del autor**:
-    - Generar `WHOOP_WEBHOOK_SECRET` en developer.whoop.com cuando configures webhooks (luego `.env.local` + Vercel env vars + endpoint URL en developer.whoop.com).
+    - `WHOOP_WEBHOOK_SECRET` generado y puesto en `.env.local` (2026-05-18, sesión "ratio sync"). **TODO en prod**: copiar mismo valor a Vercel env vars + registrar URL `https://<vercel-url>/api/whoop/webhook` y mismo secret en developer.whoop.com → Webhooks.
     - Añadir `CRON_SECRET` y `WHOOP_TOKEN_ENCRYPTION_KEY` a Vercel env vars cuando deployes en prod.
 - ⬜ **Fase 4 — Registro manual** (alimentación, peso, entrenamiento sin Whoop).

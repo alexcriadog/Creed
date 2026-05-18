@@ -120,3 +120,58 @@ export function workoutToRow(w: WhoopWorkout): WorkoutRow {
     raw: w,
   };
 }
+
+// Mapea un sport_name de Whoop a:
+// - matchableTypes: tipos de training_sessions con los que puede matchear.
+//   Strength sports → cualquier push/pull/legs/full (el caller decide cuál).
+//   Cardio sports → ['cardio'].
+//   Deportes "paralelos" (padel, fútbol…) → [] y isParallelSport=true,
+//   para que el sync NO los matchee con el plan prescrito y los inserte
+//   como sesiones standalone.
+export function mapWhoopSportToType(sportName: string | null): {
+  matchableTypes: string[];
+  isParallelSport: boolean;
+  normalizedType: string;
+} {
+  const s = (sportName ?? '').toLowerCase().trim();
+  const STRENGTH = /(strength|weight|lift|powerlift|crossfit|functional)/;
+  const CARDIO =
+    /(running|run\b|jog|cycling|bike|biking|rowing|swim|hiit|cardio|elliptical|treadmill|stair|spin)/;
+  const PARALLEL =
+    /(padel|paddle|tennis|football|soccer|f[uú]tbol|basket|basketball|climb|escalada|golf|surf|skate|ski|snow|volley|paddle ?surf|sup)/;
+  const SOFT = /(yoga|pilates|stretch|mobility|meditation|sauna)/;
+
+  if (STRENGTH.test(s)) {
+    return {
+      matchableTypes: ['push', 'pull', 'legs', 'full'],
+      isParallelSport: false,
+      normalizedType: 'strength',
+    };
+  }
+  if (PARALLEL.test(s)) {
+    return {
+      matchableTypes: [],
+      isParallelSport: true,
+      normalizedType: s.split(/\s+/)[0] || s,
+    };
+  }
+  if (CARDIO.test(s)) {
+    return {
+      matchableTypes: ['cardio'],
+      isParallelSport: false,
+      normalizedType: 'cardio',
+    };
+  }
+  if (SOFT.test(s)) {
+    return {
+      matchableTypes: [],
+      isParallelSport: false,
+      normalizedType: s.split(/\s+/)[0] || s,
+    };
+  }
+  return {
+    matchableTypes: [],
+    isParallelSport: false,
+    normalizedType: s || 'whoop',
+  };
+}

@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { CreedLogo } from '@/components/creed-logo';
 import { IconSubmitButton } from '@/components/icon-submit-button';
+import { WhoopSyncButton } from '@/components/whoop-sync-button';
 import { setTheme } from '@/lib/actions/theme';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 interface AppHeaderProps {
   hasUnread?: boolean;
@@ -16,6 +18,22 @@ export async function AppHeader({ hasUnread = false }: AppHeaderProps) {
   const cookieStore = await cookies();
   const currentTheme = cookieStore.get('theme')?.value ?? 'auto';
   const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+  // Sync de Whoop solo se ofrece si existe conexión activa. Coste: 1 query por
+  // render del header. Si en algún momento es problemático, cacheamos.
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let whoopConnected = false;
+  if (user) {
+    const { data: whoop } = await supabase
+      .from('whoop_connections')
+      .select('status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    whoopConnected = whoop?.status === 'connected';
+  }
 
   return (
     <header className="mb-6 flex items-center justify-between">
@@ -53,6 +71,7 @@ export async function AppHeader({ hasUnread = false }: AppHeaderProps) {
             )}
           </IconSubmitButton>
         </form>
+        {whoopConnected && <WhoopSyncButton />}
         <button
           type="button"
           aria-label="Notificaciones"

@@ -327,26 +327,26 @@ Procesamiento de la Edge Function `whoop-webhook`:
 
 ### 9.2 Polling (red de seguridad)
 
-`pg_cron` invoca Edge Function `whoop-sync` cada 6 horas:
+**Implementación real:** Vercel Cron (no pg_cron). `apps/web/vercel.json` declara un job cada 6 horas que invoca `POST /api/whoop/cron-sync` con `Authorization: Bearer $CRON_SECRET`:
 
-```sql
-select cron.schedule(
-  'whoop-sync-every-6h',
-  '0 */6 * * *',
-  $$ select net.http_post(
-    url := '<edge function url>',
-    headers := …,
-    body := '{}'
-  ); $$
-);
+```json
+{
+  "crons": [
+    { "path": "/api/whoop/cron-sync", "schedule": "0 */6 * * *" }
+  ]
+}
 ```
 
-Por cada `whoop_connections` con `status='connected'`:
+El handler (`apps/web/app/api/whoop/cron-sync/route.ts`) itera todas las `whoop_connections` con `status='connected'` y, por cada usuario, llama a `syncWhoop()` con `since = last_synced_at − 1h` (margen de solapamiento por si Whoop actualiza registros recientes).
+
+Por cada conexión:
 
 1. Si `expires_at < now() + 5min` → refresh token (§6.3). Si falla → marcar `status` y siguiente.
-2. Para cada recurso, GET con `start=<last_synced_at>&end=<now>&limit=25`, paginado.
-3. Upsert idempotente.
+2. Para cada recurso, GET con `start=<since>&end=<now>&limit=25`, paginado.
+3. Upsert idempotente por `(user_id, whoop_id)`.
 4. Actualizar `last_synced_at`.
+
+Errores por usuario no abortan el lote: el endpoint devuelve un resumen `{ ran, ok, failed, results[] }`.
 
 ### 9.3 Idempotencia compartida
 

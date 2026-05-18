@@ -13,7 +13,12 @@ export interface ActionResult<T = void> {
 export interface ProposalRow {
   id: string;
   agent: string;
-  proposal_type: 'training_session' | 'meal_target' | 'weight_target';
+  proposal_type:
+    | 'training_session'
+    | 'meal_target'
+    | 'weight_target'
+    | 'training_program'
+    | 'session_update';
   payload: Record<string, unknown>;
   rationale: string | null;
   status: 'pending' | 'accepted' | 'rejected';
@@ -137,6 +142,147 @@ export async function acceptProposal(proposalId: string): Promise<ActionResult> 
         .update({ nutrition: merged })
         .eq('user_id', user.id);
       if (updErr) return { ok: false, error: updErr.message };
+    } else if (prop.proposal_type === 'session_update') {
+      const p = prop.payload as {
+        updates?: Array<{
+          session_id: string;
+          type?: string;
+          prescribed?: unknown;
+          notes?: string;
+        }>;
+      };
+      const updates = p.updates ?? [];
+      if (updates.length === 0) {
+        return { ok: false, error: 'invalid_payload: empty updates' };
+      }
+      // Solo aplicamos a sesiones del usuario que estén status=scheduled.
+      for (const u of updates) {
+        const patch: Record<string, unknown> = {};
+        if (u.type !== undefined) patch.type = u.type;
+        if (u.prescribed !== undefined) patch.prescribed = u.prescribed;
+        if (u.notes !== undefined) patch.notes = u.notes;
+        if (Object.keys(patch).length === 0) continue;
+        const { error: upErr } = await supabase
+          .from('training_sessions')
+          .update(patch)
+          .eq('id', u.session_id)
+          .eq('user_id', user.id)
+          .eq('status', 'scheduled');
+        if (upErr) return { ok: false, error: upErr.message };
+      }
+      revalidatePath('/plan');
+    } else if (prop.proposal_type === 'training_program') {
+      const p = prop.payload as {
+        start_date?: string;
+        period_weeks?: number;
+        goal?: string;
+        rationale?: string;
+        sessions?: Array<{
+          scheduled_for: string;
+          type?: string;
+          prescribed?: unknown;
+        }>;
+      };
+      if (
+        !p.start_date ||
+        !p.period_weeks ||
+        !Array.isArray(p.sessions) ||
+        p.sessions.length === 0
+      ) {
+        return {
+          ok: false,
+          error: 'invalid_payload: program needs start_date, period_weeks, sessions[]',
+        };
+      }
+      // 1. Supersede plan activo si existe.
+      await supabase
+        .from('training_plans')
+        .update({ status: 'superseded' })
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+      // 2. Calcular period_end = start_date + (period_weeks*7 - 1) días.
+      const startDate = new Date(p.start_date + 'T00:00:00');
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + p.period_weeks * 7 - 1);
+      const periodEnd = endDate.toISOString().slice(0, 10);
+      // 3. Crear nuevo plan activo.
+      const { data: plan, error: planErr } = await supabase
+        .from('training_plans')
+        .insert({
+          user_id: user.id,
+          week_start: p.start_date,
+          period_weeks: p.period_weeks,
+          period_end: periodEnd,
+          goal: p.goal ?? null,
+          rationale: p.rationale ?? null,
+          generated_by: 'trainer_agent',
+          status: 'active',
+        })
+        .select('id')
+        .single();
+      if (planErr) return { ok: false, error: planErr.message };
+      appliedToId = plan.id;
+      // 4. Crear sesiones. Si las sesiones recibidas cubren UNA semana modelo
+      //    (span < 7 días) y period_weeks > 1, replicamos el patrón a las N
+      //    semanas. Esto permite al coach ahorrar tokens enviando solo la
+      //    plantilla de una semana.
+      const sessionDates = p.sessions.map((s) =>
+        new Date(s.scheduled_for + 'T00:00:00').getTime(),
+      );
+      const minDate = Math.min(...sessionDates);
+      const maxDate = Math.max(...sessionDates);
+      const spanDays = (maxDate - minDate) / 86_400_000;
+      const isOneWeekTemplate = spanDays < 7 && p.period_weeks > 1;
+
+      const rows: Array<{
+        plan_id: string;
+        user_id: string;
+        scheduled_for: string;
+        type: string | null;
+        prescribed: unknown;
+        status: string;
+      }> = [];
+
+      const toIso = (d: Date): string => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      if (isOneWeekTemplate) {
+        for (let w = 0; w < p.period_weeks; w++) {
+          for (const s of p.sessions) {
+            const d = new Date(s.scheduled_for + 'T00:00:00');
+            d.setDate(d.getDate() + 7 * w);
+            rows.push({
+              plan_id: plan.id,
+              user_id: user.id,
+              scheduled_for: toIso(d),
+              type: s.type ?? null,
+              prescribed: s.prescribed ?? null,
+              status: 'scheduled',
+            });
+          }
+        }
+      } else {
+        for (const s of p.sessions) {
+          rows.push({
+            plan_id: plan.id,
+            user_id: user.id,
+            scheduled_for: s.scheduled_for,
+            type: s.type ?? null,
+            prescribed: s.prescribed ?? null,
+            status: 'scheduled',
+          });
+        }
+      }
+
+      const { error: sessErr } = await supabase
+        .from('training_sessions')
+        .insert(rows);
+      if (sessErr) return { ok: false, error: sessErr.message };
+      revalidatePath('/plan');
     } else if (prop.proposal_type === 'weight_target') {
       const p = prop.payload as WeightTargetPayload;
       if (!p.target_weight_kg) {
@@ -166,7 +312,7 @@ export async function acceptProposal(proposalId: string): Promise<ActionResult> 
     .eq('id', proposalId);
   if (markErr) return { ok: false, error: markErr.message };
 
-  revalidatePath('/chat');
+  revalidatePath('/ia');
   revalidatePath('/');
   return { ok: true };
 }
@@ -187,6 +333,6 @@ export async function rejectProposal(proposalId: string): Promise<ActionResult> 
     .eq('id', proposalId)
     .eq('status', 'pending');
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/chat');
+  revalidatePath('/ia');
   return { ok: true };
 }

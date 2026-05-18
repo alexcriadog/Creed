@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { Sheet } from './sheet';
+import { ChipButton } from './chip-button';
 import { Field, TextInput, Select, PrimaryButton, SecondaryButton } from './form-controls';
 import { createSession } from '@/lib/actions/training';
 
@@ -20,9 +21,10 @@ function todayIso(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function LogTrainingButton() {
+export function LogTrainingButton({ defaultDate }: { defaultDate?: string } = {}) {
+  const initialDate = defaultDate ?? todayIso();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(todayIso());
+  const [date, setDate] = useState(initialDate);
   const [type, setType] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -55,13 +57,7 @@ export function LogTrainingButton() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn-feedback rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-3 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
-      >
-        + Sesión
-      </button>
+      <ChipButton icon="🏋️" label="Entreno" onClick={() => setOpen(true)} />
       <Sheet open={open} onClose={close} title="Nueva sesión de entreno">
         <Field label="Fecha">
           <TextInput type="date" value={date} onChange={(e) => setDate(e.target.value)} />

@@ -7,6 +7,8 @@ const TYPE_LABEL: Record<ProposalRow['proposal_type'], string> = {
   training_session: 'Sesión propuesta',
   meal_target: 'Targets de macros',
   weight_target: 'Objetivo de peso',
+  training_program: 'Programa de entreno',
+  session_update: 'Ajustes al plan',
 };
 
 const STATUS_BADGE: Record<ProposalRow['status'], { label: string; color: string }> = {
@@ -203,6 +205,41 @@ function ProposalBody({ proposal }: { proposal: ProposalRow }) {
       </dl>
     );
   }
+  if (proposal.proposal_type === 'session_update') {
+    const p = proposal.payload as {
+      updates?: Array<{
+        session_id: string;
+        type?: string;
+        notes?: string;
+      }>;
+    };
+    const updates = p.updates ?? [];
+    return (
+      <div>
+        <p className="font-medium text-[color:var(--color-text-primary)]">
+          {updates.length} cambio{updates.length === 1 ? '' : 's'} en tu plan
+        </p>
+        {updates.length > 0 && (
+          <ul className="mt-2 ml-3 list-disc space-y-1 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)]">
+            {updates.slice(0, 4).map((u, i) => (
+              <li key={i}>
+                {u.type ? <strong>{u.type}</strong> : 'sesión'}
+                {u.notes ? ` — ${u.notes}` : ''}
+              </li>
+            ))}
+            {updates.length > 4 && (
+              <li className="text-[color:var(--color-text-muted)]">
+                +{updates.length - 4} más…
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
+    );
+  }
+  if (proposal.proposal_type === 'training_program') {
+    return <TrainingProgramBody payload={proposal.payload} />;
+  }
   if (proposal.proposal_type === 'weight_target') {
     const p = proposal.payload as WeightTargetPayload;
     return (
@@ -223,6 +260,154 @@ function ProposalBody({ proposal }: { proposal: ProposalRow }) {
     );
   }
   return null;
+}
+
+interface ProgramSession {
+  scheduled_for: string;
+  type?: string;
+  prescribed?: {
+    blocks?: Array<{
+      name?: string;
+      exercises?: Array<{
+        name?: string;
+        sets?: number;
+        reps?: number | string | null;
+        rpe?: number | null;
+        rest_s?: number | null;
+        notes?: string | null;
+      }>;
+    }>;
+  };
+}
+
+function TrainingProgramBody({
+  payload,
+}: {
+  payload: Record<string, unknown>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const p = payload as {
+    program_type?: string;
+    start_date?: string;
+    period_weeks?: number;
+    sessions_per_week?: number;
+    minutes_per_session?: number;
+    goal?: string;
+    sessions?: ProgramSession[];
+  };
+  const sessions = p.sessions ?? [];
+  const start = p.start_date
+    ? new Date(p.start_date + 'T00:00:00').toLocaleDateString('es-ES', {
+        day: 'numeric',
+        month: 'short',
+      })
+    : '—';
+  const weeks = p.period_weeks ?? 0;
+  const byType: Record<string, number> = {};
+  for (const s of sessions) {
+    const t = s.type ?? 'otro';
+    byType[t] = (byType[t] ?? 0) + 1;
+  }
+
+  // Detecta si es plantilla semanal (sessions cubren <7 días).
+  const dates = sessions.map((s) =>
+    new Date(s.scheduled_for + 'T00:00:00').getTime(),
+  );
+  const span =
+    dates.length >= 2 ? (Math.max(...dates) - Math.min(...dates)) / 86_400_000 : 0;
+  const isTemplate = span < 7 && weeks > 1;
+
+  return (
+    <div>
+      <p className="font-medium text-[color:var(--color-text-primary)]">
+        {weeks} semana{weeks === 1 ? '' : 's'} · desde {start} ·{' '}
+        {p.sessions_per_week ?? sessions.length} sesiones/sem
+        {p.minutes_per_session ? ` · ${p.minutes_per_session} min/sesión` : ''}
+      </p>
+      {p.program_type && (
+        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-[color:var(--color-text-muted)]">
+          tipo: {p.program_type}
+        </p>
+      )}
+      {p.goal && (
+        <p className="mt-1 text-[length:var(--text-sm)] text-[color:var(--color-text-secondary)]">
+          {p.goal}
+        </p>
+      )}
+      {Object.keys(byType).length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {Object.entries(byType).map(([t, n]) => (
+            <span
+              key={t}
+              className="rounded-[var(--radius-pill)] border border-[color:var(--color-border-default)] bg-[color:var(--color-surface-raised)] px-2 py-0.5 text-[length:var(--text-xs)] text-[color:var(--color-text-secondary)]"
+            >
+              {t} × {n}
+            </span>
+          ))}
+        </div>
+      )}
+      {isTemplate && (
+        <p className="mt-2 text-[10px] italic text-[color:var(--color-text-muted)]">
+          Plantilla de una semana — se replicará en las {weeks} semanas.
+        </p>
+      )}
+      {sessions.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="tap-feedback mt-3 inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-[color:var(--color-border-default)] px-3 py-1 text-[length:var(--text-xs)] font-medium text-[color:var(--color-text-secondary)] hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
+        >
+          <span aria-hidden>{expanded ? '▾' : '▸'}</span>
+          {expanded ? 'Ocultar detalle' : 'Ver detalle de los ejercicios'}
+        </button>
+      )}
+      {expanded && sessions.length > 0 && (
+        <div className="mt-3 space-y-3 rounded-[var(--radius-md)] border border-[color:var(--color-border-subtle)] bg-[color:var(--color-surface)] p-3">
+          {sessions.map((s, i) => {
+            const date = s.scheduled_for
+              ? new Date(s.scheduled_for + 'T00:00:00').toLocaleDateString(
+                  'es-ES',
+                  { weekday: 'short', day: 'numeric', month: 'short' },
+                )
+              : '—';
+            const blocks = s.prescribed?.blocks ?? [];
+            return (
+              <div key={i}>
+                <div className="mb-1 text-[length:var(--text-sm)] font-semibold text-[color:var(--color-text-primary)]">
+                  {date}
+                  {s.type ? ` · ${s.type}` : ''}
+                </div>
+                {blocks.map((b, j) => (
+                  <div key={j} className="mb-1.5">
+                    {b.name && (
+                      <div className="text-[10px] uppercase tracking-wider text-[color:var(--color-text-muted)]">
+                        {b.name}
+                      </div>
+                    )}
+                    <ul className="ml-3 list-disc text-[length:var(--text-xs)] text-[color:var(--color-text-secondary)]">
+                      {(b.exercises ?? []).map((ex, k) => (
+                        <li key={k}>
+                          <span className="font-medium text-[color:var(--color-text-primary)]">
+                            {ex.name}
+                          </span>
+                          {ex.sets
+                            ? ` · ${ex.sets}×${ex.reps ?? '?'}`
+                            : ''}
+                          {ex.rpe ? ` @RPE${ex.rpe}` : ''}
+                          {ex.rest_s ? ` · ${ex.rest_s}s descanso` : ''}
+                          {ex.notes ? ` — ${ex.notes}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

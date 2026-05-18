@@ -42,7 +42,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { data: meal, error: readErr } = await supabase
     .from('meals')
-    .select('id, raw_text, user_corrected')
+    .select('id, raw_text, user_corrected, photo_path')
     .eq('id', parsed.data.mealId)
     .single();
 
@@ -54,9 +54,31 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, skipped: 'user_corrected' });
   }
 
+  // Si hay foto, la descargamos del bucket (privado, RLS por user) y la
+  // convertimos a base64 para Groq vision. Si la descarga falla, fallback a
+  // texto.
+  let imageBase64: string | undefined;
+  let imageMimeType: string | undefined;
+  if (meal.photo_path) {
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from('meal-photos')
+      .download(meal.photo_path);
+    if (dlErr) {
+      console.warn('[meal-parser] photo_download_failed', dlErr.message);
+    } else if (blob) {
+      const buf = Buffer.from(await blob.arrayBuffer());
+      imageBase64 = buf.toString('base64');
+      imageMimeType = blob.type || 'image/jpeg';
+    }
+  }
+
   let result: Awaited<ReturnType<typeof parseMeal>>;
   try {
-    result = await parseMeal({ apiKey, rawText: meal.raw_text });
+    result = await parseMeal({
+      apiKey,
+      rawText: meal.raw_text,
+      ...(imageBase64 ? { imageBase64, imageMimeType } : {}),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown';
     console.error('[meal-parser] groq failed', message);

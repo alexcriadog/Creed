@@ -9,6 +9,7 @@ export const runtime = 'nodejs';
 
 const createSchema = z.object({
   agentRole: z.enum(['nutrition', 'training', 'general']),
+  mode: z.enum(['normal', 'onboarding']).optional(),
   title: z.string().trim().max(120).optional(),
 });
 
@@ -62,7 +63,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     .insert({
       user_id: user.id,
       agent_role: parsed.data.agentRole,
-      mode: 'normal',
+      mode: parsed.data.mode ?? 'normal',
       title: parsed.data.title ?? null,
     })
     .select('id, agent_role, mode, status, title, created_at, last_message_at')
