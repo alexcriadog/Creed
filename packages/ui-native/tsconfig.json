@@ -7,5 +7,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "tailwind-preset.js"]
+  "include": ["src", "tailwind-preset.js", "nativewind-env.d.ts"],
+  "exclude": ["src/**/*.test.tsx"]
 }

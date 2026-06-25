@@ -1,4 +1,4 @@
-import { Pressable, Text, ActivityIndicator, View } from 'react-native';
+import { Pressable, Text, ActivityIndicator } from 'react-native';
 
 type Props = {
   label: string;
@@ -22,9 +22,7 @@ export function Button({ label, onPress, loading = false, disabled = false, vari
       {loading ? (
         <ActivityIndicator color={isPrimary ? '#FCFCFD' : '#4F62E0'} />
       ) : (
-        <View>
-          <Text className={`text-base font-semibold ${isPrimary ? 'text-text-on-accent' : 'text-accent'}`}>{label}</Text>
-        </View>
+        <Text className={`text-base font-semibold ${isPrimary ? 'text-text-on-accent' : 'text-accent'}`}>{label}</Text>
       )}
     </Pressable>
   );
