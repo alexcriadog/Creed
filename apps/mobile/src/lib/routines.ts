@@ -93,13 +93,15 @@ export async function getRoutine(
   if (error) return null;
   if (!data) return null;
   const raw = data as any;
-  const exercises: RoutineExercise[] = (raw.routine_exercises ?? []).map((re: any) => ({
-    ...re,
-    name_en: re.exercises?.name_en ?? '',
-    name_es: re.exercises?.name_es ?? null,
-    image_url: re.exercises?.image_url ?? null,
-    primary_muscle: re.exercises?.primary_muscle ?? null,
-  }));
+  const exercises: RoutineExercise[] = (raw.routine_exercises ?? [])
+    .map((re: any) => ({
+      ...re,
+      name_en: re.exercises?.name_en ?? '',
+      name_es: re.exercises?.name_es ?? null,
+      image_url: re.exercises?.image_url ?? null,
+      primary_muscle: re.exercises?.primary_muscle ?? null,
+    }))
+    .sort((a: RoutineExercise, b: RoutineExercise) => a.position - b.position);
   return { ...raw, exercises } as Routine & { exercises: RoutineExercise[] };
 }
 

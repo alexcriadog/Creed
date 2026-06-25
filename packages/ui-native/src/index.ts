@@ -25,6 +25,9 @@ export type { FABProps } from './FAB';
 export { Input } from './Input';
 export type { InputProps } from './Input';
 
+export { NumberStepper } from './NumberStepper';
+export type { NumberStepperProps } from './NumberStepper';
+
 // ─── Selection ───────────────────────────────────────────────────────────────
 export { Chip } from './Chip';
 export type { ChipProps } from './Chip';
