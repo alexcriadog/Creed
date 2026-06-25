@@ -1,0 +1,22 @@
+{
+  "name": "@creed/ui-native",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tailwind-preset": "./tailwind-preset.js"
+  },
+  "scripts": {
+    "lint": "echo \"lint skipped\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"tests run in apps/mobile\""
+  },
+  "peerDependencies": {
+    "nativewind": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
