@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   View,
   StyleSheet,
   ScrollView,
@@ -36,9 +37,9 @@ import {
   type TargetField,
 } from '../../../components/routines/exercise-editor-row';
 
-const DEFAULTS: Record<TargetField, number> = {
+/** Numeric defaults for fields that are numbers. target_reps is text so excluded. */
+const NUMERIC_DEFAULTS: Record<Exclude<TargetField, 'target_reps'>, number> = {
   target_sets: 3,
-  target_reps: 10,
   target_rir: 2,
   rest_seconds: 90,
 };
@@ -51,7 +52,7 @@ function toEditor(re: {
   image_url: string | null;
   primary_muscle: string | null;
   target_sets: number | null;
-  target_reps: number | null;
+  target_reps: string | null;
   target_rir: number | null;
   rest_seconds: number | null;
 }): EditorExercise {
@@ -81,6 +82,7 @@ export default function RoutineEditor() {
   const [name, setName] = useState('');
   const [exercises, setExercises] = useState<EditorExercise[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const creatingRef = useRef(false);
 
   const slideName = useFadeSlideIn(0);
@@ -137,17 +139,18 @@ export default function RoutineEditor() {
   };
 
   // ── Targets (optimista) ─────────────────────────────────────────────────────
-  const handleChangeTarget = (rowId: string, field: TargetField, value: number) => {
+  const handleChangeTarget = (rowId: string, field: TargetField, value: number | string) => {
     setExercises((prev) =>
       prev.map((e) => (e.id === rowId ? { ...e, [field]: value } : e))
     );
-    updateRoutineExercise(rowId, { [field]: value }).catch(() => {});
+    updateRoutineExercise(rowId, { [field]: value } as any).catch(() => {});
   };
 
-  // ── Reordenar (swap local + persistir) ──────────────────────────────────────
+  // ── Reordenar (swap local + persistir con rollback) ─────────────────────────
   const move = (from: number, to: number) => {
     if (!routineId || to < 0 || to >= exercises.length) return;
     haptic('light');
+    const snapshot = exercises;
     // Calcula el nuevo orden fuera del updater (los updaters deben ser puros).
     const next = [...exercises];
     const [moved] = next.splice(from, 1);
@@ -156,14 +159,20 @@ export default function RoutineEditor() {
     reorderRoutineExercises(
       routineId,
       next.map((e) => e.id)
-    ).catch(() => {});
+    ).catch(() => {
+      setExercises(snapshot);
+    });
   };
 
-  // ── Eliminar (optimista) ────────────────────────────────────────────────────
+  // ── Eliminar (optimista con rollback) ──────────────────────────────────────
   const handleRemove = (rowId: string) => {
     haptic('medium');
+    const snapshot = exercises;
     setExercises((prev) => prev.filter((e) => e.id !== rowId));
-    removeRoutineExercise(rowId).catch(() => {});
+    removeRoutineExercise(rowId).catch(() => {
+      setExercises(snapshot);
+      Alert.alert('No se pudo eliminar', 'El ejercicio no pudo eliminarse. Inténtalo de nuevo.');
+    });
   };
 
   // ── Superserie (solo UI por ahora) ──────────────────────────────────────────
@@ -179,20 +188,28 @@ export default function RoutineEditor() {
 
   // ── Guardar (defaults a targets sin definir) + salir ────────────────────────
   const handleSave = async () => {
-    commitName();
-    // Rellena targets vacíos con defaults sensatos antes de salir.
-    await Promise.all(
-      exercises.map((e) => {
-        const patch: Partial<Record<TargetField, number>> = {};
-        (Object.keys(DEFAULTS) as TargetField[]).forEach((f) => {
-          if (e[f] === null) patch[f] = DEFAULTS[f];
-        });
-        if (Object.keys(patch).length === 0) return Promise.resolve();
-        return updateRoutineExercise(e.id, patch).catch(() => {});
-      })
-    );
-    haptic('success');
-    router.back();
+    if (saving) return;
+    setSaving(true);
+    try {
+      commitName();
+      // Rellena targets vacíos (numéricos) con defaults sensatos antes de salir.
+      await Promise.all(
+        exercises.map((e) => {
+          const patch: Partial<Record<Exclude<TargetField, 'target_reps'>, number>> = {};
+          (Object.keys(NUMERIC_DEFAULTS) as Array<keyof typeof NUMERIC_DEFAULTS>).forEach((f) => {
+            if (e[f] === null) patch[f] = NUMERIC_DEFAULTS[f];
+          });
+          if (Object.keys(patch).length === 0) return Promise.resolve();
+          return updateRoutineExercise(e.id, patch);
+        })
+      );
+      haptic('success');
+      router.back();
+    } catch (err) {
+      setSaving(false);
+      const msg = err instanceof Error ? err.message : 'Error al guardar';
+      Alert.alert('No se pudo guardar', msg);
+    }
   };
 
   const openPicker = () => {

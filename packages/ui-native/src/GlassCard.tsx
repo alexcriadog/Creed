@@ -11,12 +11,12 @@ import { StyleSheet, View, ViewProps } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { getColors, radii, shadows, spacing } from './theme';
 
-export type GlassCardTone = 'light' | 'dark' | 'prominent';
+export type GlassCardTone = 'light' | 'dark';
 
 export interface GlassCardProps extends ViewProps {
   /** Intensidad del blur: 0–100. Default 55. */
   intensity?: number;
-  /** Tono del tint de blurView. Default 'dark'. */
+  /** Tono del tint de blurView. Default 'light'. */
   tone?: GlassCardTone;
   /** Padding interno. Default spacing.card (20). */
   padding?: number;

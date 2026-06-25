@@ -26,6 +26,7 @@ import {
   radii,
   shadows,
 } from '@creed/ui-native';
+import { TextInput } from 'react-native';
 import { displayName } from '../../lib/exercises';
 
 export type EditorExercise = {
@@ -37,7 +38,8 @@ export type EditorExercise = {
   image_url: string | null;
   primary_muscle: string | null;
   target_sets: number | null;
-  target_reps: number | null;
+  /** Texto libre para rangos como "8-10". */
+  target_reps: string | null;
   target_rir: number | null;
   rest_seconds: number | null;
   /** Solo UI (agrupación visual). No se persiste aún. */
@@ -50,7 +52,8 @@ interface ExerciseEditorRowProps {
   item: EditorExercise;
   index: number;
   total: number;
-  onChangeTarget: (field: TargetField, value: number) => void;
+  /** Called with a string value for target_reps, number for all others. */
+  onChangeTarget: (field: TargetField, value: number | string) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
@@ -140,15 +143,22 @@ function ExerciseEditorRowBase({
             defaultOnFirst={3}
             onChange={(v) => onChangeTarget('target_sets', v)}
           />
-          <NumberStepper
-            testID={`reps-${item.id}`}
-            label="Reps"
-            value={item.target_reps}
-            min={1}
-            max={50}
-            defaultOnFirst={10}
-            onChange={(v) => onChangeTarget('target_reps', v)}
-          />
+          <View style={styles.repsField}>
+            <AppText variant="label" style={styles.repsLabel}>
+              Reps
+            </AppText>
+            <TextInput
+              testID={`reps-${item.id}`}
+              value={item.target_reps ?? ''}
+              onChangeText={(v) => onChangeTarget('target_reps', v)}
+              placeholder="8-10"
+              keyboardType="default"
+              returnKeyType="done"
+              style={styles.repsInput}
+              placeholderTextColor={lightColors.textMuted}
+              accessibilityLabel="Reps"
+            />
+          </View>
           <NumberStepper
             testID={`rir-${item.id}`}
             label="RIR"
@@ -250,6 +260,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     rowGap: spacing[3],
+  },
+  repsField: {
+    alignItems: 'center',
+    gap: spacing[1],
+    minWidth: 64,
+  },
+  repsLabel: {
+    color: lightColors.textMuted,
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  repsInput: {
+    width: 64,
+    textAlign: 'center',
+    fontSize: 15,
+    color: lightColors.textPrimary,
+    borderWidth: 1,
+    borderColor: lightColors.borderDefault,
+    borderRadius: radii.sm,
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2],
+    backgroundColor: lightColors.bgSurface,
+    minHeight: 36,
   },
   rowActions: {
     flexDirection: 'row',

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   View,
   StyleSheet,
   ScrollView,
@@ -150,11 +151,13 @@ function CreateProgram({ onCreated }: { onCreated: (p: Program) => void }) {
     if (trimmed.length === 0 || saving) return;
     setSaving(true);
     try {
-      const program = await createProgram({ name: trimmed, is_active: true });
+      const program = await createProgram({ name: trimmed });
       haptic('success');
       onCreated(program);
-    } catch {
+    } catch (err) {
       setSaving(false);
+      const msg = err instanceof Error ? err.message : 'Error al crear el programa';
+      Alert.alert('No se pudo crear', msg);
     }
   };
 
@@ -212,6 +215,7 @@ export default function ProgramScreen() {
   const [routinesById, setRoutinesById] = useState<Record<string, Routine>>({});
   const [assignments, setAssignments] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const slideHeader = useFadeSlideIn(0);
   const slideWeekLabel = useFadeSlideIn(80);
@@ -219,6 +223,7 @@ export default function ProgramScreen() {
   const load = useCallback(() => {
     let active = true;
     setLoading(true);
+    setLoadError(false);
     (async () => {
       // Independientes: en paralelo para evitar waterfall.
       const [activeProgram, routines] = await Promise.all([
@@ -245,9 +250,7 @@ export default function ProgramScreen() {
     })()
       .catch(() => {
         if (!active) return;
-        setProgram(null);
-        setRoutinesById({});
-        setAssignments({});
+        setLoadError(true);
       })
       .finally(() => active && setLoading(false));
 
@@ -291,6 +294,15 @@ export default function ProgramScreen() {
 
       {loading ? (
         <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+      ) : loadError ? (
+        <View style={styles.body}>
+          <View style={styles.errorWrap}>
+            <AppText variant="muted" style={styles.errorText}>
+              No se pudo cargar — toca para reintentar
+            </AppText>
+            <Button label="Reintentar" variant="primary" size="md" onPress={load} />
+          </View>
+        </View>
       ) : !program ? (
         <View style={styles.body}>
           <CreateProgram
@@ -504,6 +516,16 @@ const styles = StyleSheet.create({
   emptyBtn: {
     marginTop: spacing[2],
     alignSelf: 'stretch',
+  },
+  errorWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing[4],
+    paddingBottom: spacing[16],
+  },
+  errorText: {
+    textAlign: 'center',
   },
   orb: {
     position: 'absolute',

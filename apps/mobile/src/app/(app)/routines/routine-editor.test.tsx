@@ -14,7 +14,7 @@ const mockRoutine = {
       image_url: null,
       primary_muscle: 'chest',
       target_sets: 4,
-      target_reps: 8,
+      target_reps: '8',
       target_rir: 2,
       target_rpe: null,
       rest_seconds: 120,
@@ -28,7 +28,7 @@ const mockRoutine = {
       image_url: null,
       primary_muscle: 'shoulders',
       target_sets: 3,
-      target_reps: 10,
+      target_reps: '10',
       target_rir: 1,
       target_rpe: null,
       rest_seconds: 90,
@@ -79,10 +79,10 @@ test('el editor muestra los ejercicios de la rutina y sus targets', async () => 
   await waitFor(() => expect(screen.getByText('Bench Press')).toBeOnTheScreen());
   expect(screen.getByText('Overhead Press')).toBeOnTheScreen();
 
-  // Valores de target renderizados por los NumberSteppers
-  // Bench: 4 series · 8 reps · descanso 120s
+  // Valores de target
+  // Bench: 4 series (NumberStepper) · "8" reps (TextInput) · descanso 120s (NumberStepper)
   expect(screen.getByText('4')).toBeOnTheScreen();
-  expect(screen.getByText('8')).toBeOnTheScreen();
+  expect(screen.getByDisplayValue('8')).toBeOnTheScreen();
   expect(screen.getByText('120s')).toBeOnTheScreen();
   // Overhead: descanso 90s
   expect(screen.getByText('90s')).toBeOnTheScreen();

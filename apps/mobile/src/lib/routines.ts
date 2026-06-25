@@ -6,7 +6,10 @@ export type Program = {
   id: string;
   user_id: string;
   name: string;
-  is_active: boolean;
+  status: 'draft' | 'active' | 'archived';
+  goal?: string | null;
+  period_weeks?: number | null;
+  start_date?: string | null;
   created_at: string;
 };
 
@@ -26,7 +29,7 @@ export type RoutineExercise = {
   user_id: string;
   position: number;
   target_sets: number | null;
-  target_reps: number | null;
+  target_reps: string | null;
   target_rir: number | null;
   target_rpe: number | null;
   rest_seconds: number | null;
@@ -47,7 +50,7 @@ export type ProgramDay = {
 
 type RoutineExerciseTargets = {
   target_sets?: number;
-  target_reps?: number;
+  target_reps?: string;
   target_rir?: number;
   target_rpe?: number;
   rest_seconds?: number;
@@ -89,7 +92,7 @@ export async function getRoutine(
     .from('routines')
     .select(ROUTINE_WITH_EXERCISES_SELECT)
     .eq('id', id)
-    .single();
+    .maybeSingle();
   if (error) return null;
   if (!data) return null;
   const raw = data as any;
@@ -206,22 +209,26 @@ export async function getActiveProgram(): Promise<Program | null> {
   const { data, error } = await supabase
     .from('programs')
     .select('*')
-    .eq('is_active', true)
-    .single();
+    .eq('status', 'active')
+    .maybeSingle();
   if (error) return null;
-  return data as Program;
+  return data as Program | null;
 }
 
 export async function createProgram(input: {
   name: string;
-  is_active?: boolean;
+  status?: 'draft' | 'active' | 'archived';
+  goal?: string | null;
+  period_weeks?: number | null;
 }): Promise<Program> {
   const userId = await requireUser();
   const payload: Record<string, unknown> = {
     name: input.name,
     user_id: userId,
-    is_active: input.is_active ?? false,
+    status: input.status ?? 'active',
   };
+  if (input.goal != null) payload.goal = input.goal;
+  if (input.period_weeks != null) payload.period_weeks = input.period_weeks;
   const { data, error } = await supabase
     .from('programs')
     .insert([payload])

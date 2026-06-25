@@ -17,7 +17,7 @@ export function Divider({ color, style, ...props }: DividerProps) {
     <View
       style={[
         styles.divider,
-        { backgroundColor: color ?? colors.borderSubtle },
+        { backgroundColor: color ?? colors.borderDefault },
         style,
       ]}
       {...props}

@@ -25,6 +25,7 @@ Object.assign(mockBuilder, {
   eq: mockEq,
   order: mockOrder,
   single: mockSingle,
+  maybeSingle: mockSingle, // maybeSingle shares the same terminal mock
   insert: mockInsert,
   update: mockUpdate,
   delete: mockDelete,
@@ -70,6 +71,8 @@ beforeEach(() => {
   // Restore builder chaining after clearAllMocks
   mockSelect.mockReturnValue(mockBuilder);
   mockEq.mockReturnValue(mockBuilder);
+  // Restore maybeSingle (same terminal mock as single)
+  mockBuilder.maybeSingle = mockSingle;
 });
 
 // ── listRoutines ─────────────────────────────────────────────────────────────
@@ -177,7 +180,7 @@ test('addRoutineExercise inserts into routine_exercises with user_id and targets
     data: { id: 're-1', routine_id: 'r1', exercise_id: 'ex-1', target_sets: 3, user_id: 'user-123' },
     error: null,
   });
-  const result = await addRoutineExercise('r1', 'ex-1', { target_sets: 3, target_reps: 10 });
+  const result = await addRoutineExercise('r1', 'ex-1', { target_sets: 3, target_reps: '8-10' });
   expect(mockFrom).toHaveBeenCalledWith('routine_exercises');
   expect(mockInsert).toHaveBeenCalledWith(
     expect.arrayContaining([
@@ -185,7 +188,7 @@ test('addRoutineExercise inserts into routine_exercises with user_id and targets
         routine_id: 'r1',
         exercise_id: 'ex-1',
         target_sets: 3,
-        target_reps: 10,
+        target_reps: '8-10',
         user_id: 'user-123',
       }),
     ])
@@ -245,35 +248,41 @@ test('reorderRoutineExercises does nothing for empty array', async () => {
 
 // ── getActiveProgram ─────────────────────────────────────────────────────────
 
-test('getActiveProgram queries programs filtered by is_active=true', async () => {
-  mockSingle.mockResolvedValue({ data: { id: 'prog-1', name: 'Strength' }, error: null });
+test('getActiveProgram queries programs filtered by status=active', async () => {
+  mockSingle.mockResolvedValue({ data: { id: 'prog-1', name: 'Strength', status: 'active' }, error: null });
   const result = await getActiveProgram();
   expect(mockFrom).toHaveBeenCalledWith('programs');
-  expect(mockEq).toHaveBeenCalledWith('is_active', true);
-  expect(result).toMatchObject({ id: 'prog-1' });
+  expect(mockEq).toHaveBeenCalledWith('status', 'active');
+  expect(result).toMatchObject({ id: 'prog-1', status: 'active' });
 });
 
-test('getActiveProgram returns null when no active program', async () => {
-  mockSingle.mockResolvedValue({ data: null, error: { message: 'no rows' } });
+test('getActiveProgram returns null when no active program (0 rows)', async () => {
+  mockSingle.mockResolvedValue({ data: null, error: null });
+  const result = await getActiveProgram();
+  expect(result).toBeNull();
+});
+
+test('getActiveProgram returns null on DB error', async () => {
+  mockSingle.mockResolvedValue({ data: null, error: { message: 'db error' } });
   const result = await getActiveProgram();
   expect(result).toBeNull();
 });
 
 // ── createProgram ────────────────────────────────────────────────────────────
 
-test('createProgram inserts with user_id', async () => {
+test('createProgram inserts with user_id and status:active by default', async () => {
   mockSingle.mockResolvedValue({
-    data: { id: 'prog-new', name: 'Hypertrophy', user_id: 'user-123' },
+    data: { id: 'prog-new', name: 'Hypertrophy', user_id: 'user-123', status: 'active' },
     error: null,
   });
   const prog = await createProgram({ name: 'Hypertrophy' });
   expect(mockFrom).toHaveBeenCalledWith('programs');
   expect(mockInsert).toHaveBeenCalledWith(
     expect.arrayContaining([
-      expect.objectContaining({ name: 'Hypertrophy', user_id: 'user-123' }),
+      expect.objectContaining({ name: 'Hypertrophy', user_id: 'user-123', status: 'active' }),
     ])
   );
-  expect(prog).toMatchObject({ id: 'prog-new' });
+  expect(prog).toMatchObject({ id: 'prog-new', status: 'active' });
 });
 
 test('createProgram throws if no authenticated user', async () => {

@@ -109,6 +109,7 @@ export default function AssignDayScreen() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [currentRoutineId, setCurrentRoutineId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const slideIntro = useFadeSlideIn(0);
@@ -116,6 +117,7 @@ export default function AssignDayScreen() {
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setLoadError(false);
     (async () => {
       const list = await listRoutines();
       let assignedId: string | null = null;
@@ -129,8 +131,7 @@ export default function AssignDayScreen() {
     })()
       .catch(() => {
         if (!active) return;
-        setRoutines([]);
-        setCurrentRoutineId(null);
+        setLoadError(true);
       })
       .finally(() => active && setLoading(false));
 
@@ -173,6 +174,35 @@ export default function AssignDayScreen() {
 
         {loading ? (
           <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+        ) : loadError ? (
+          <View style={styles.emptyWrap}>
+            <AppText variant="muted" style={styles.emptyCopy}>
+              No se pudo cargar — toca para reintentar
+            </AppText>
+            <View style={styles.emptyBtn}>
+              <Button
+                label="Reintentar"
+                variant="primary"
+                size="md"
+                onPress={() => {
+                  setLoading(true);
+                  setLoadError(false);
+                  listRoutines()
+                    .then(async (list) => {
+                      let assignedId: string | null = null;
+                      if (programId) {
+                        const days = await listProgramDays(String(programId));
+                        assignedId = days.find((d) => d.weekday === dayIndex)?.routine_id ?? null;
+                      }
+                      setRoutines(list);
+                      setCurrentRoutineId(assignedId);
+                    })
+                    .catch(() => setLoadError(true))
+                    .finally(() => setLoading(false));
+                }}
+              />
+            </View>
+          </View>
         ) : routines.length === 0 ? (
           <View style={styles.emptyWrap}>
             <View style={styles.emptyIcon}>

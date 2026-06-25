@@ -144,12 +144,14 @@ export default function RoutinesScreen() {
   const router = useRouter();
   const [cards, setCards] = useState<RoutineCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const slideHeading = useFadeSlideIn(0);
 
   const load = useCallback(() => {
     let active = true;
     setLoading(true);
+    setLoadError(false);
     listRoutines()
       .then(async (routines) => {
         const enriched = await Promise.all(
@@ -173,7 +175,9 @@ export default function RoutinesScreen() {
         );
         if (active) setCards(enriched);
       })
-      .catch(() => active && setCards([]))
+      .catch(() => {
+        if (active) setLoadError(true);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -209,6 +213,13 @@ export default function RoutinesScreen() {
 
         {loading ? (
           <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+        ) : loadError ? (
+          <View style={styles.errorWrap}>
+            <AppText variant="muted" style={styles.errorText}>
+              No se pudo cargar — toca para reintentar
+            </AppText>
+            <Button label="Reintentar" variant="primary" size="md" onPress={load} />
+          </View>
         ) : cards.length === 0 ? (
           <EmptyState onCreate={goCreate} />
         ) : (
@@ -330,6 +341,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing[5],
     bottom: spacing[8],
+  },
+  errorWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing[4],
+    paddingBottom: spacing[16],
+  },
+  errorText: {
+    textAlign: 'center',
   },
   orb: {
     position: 'absolute',
