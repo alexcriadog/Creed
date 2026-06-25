@@ -1,16 +1,25 @@
 import '../../global.css';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
+import { Slot } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from '../lib/auth-context';
+import { supabase } from '../lib/supabase';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+export default function RootLayout() {
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') supabase.auth.startAutoRefresh();
+      else supabase.auth.stopAutoRefresh();
+    });
+    return () => sub.remove();
+  }, []);
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <Slot />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
