@@ -9,7 +9,7 @@
  * que se limpia al desmontar.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   View,
@@ -113,6 +113,9 @@ export default function LiveSession() {
 
   const [session, setSession] = useState<SessionWithSets | null>(null);
   const [sets, setSets] = useState<SessionSet[]>([]);
+  // Ref kept in sync with sets state — allows snapshot capture outside updaters
+  // so that Strict Mode double-invocation does not corrupt the snapshot.
+  const setsRef = useRef<SessionSet[]>([]);
   const [routineName, setRoutineName] = useState<string | null>(null);
   const [targets, setTargets] = useState<Record<string, ExerciseTarget>>({});
   const [loading, setLoading] = useState(true);
@@ -169,22 +172,22 @@ export default function LiveSession() {
     };
   }, [sessionId]);
 
+  // Keep ref in sync — must happen every render, before handlers read it.
+  setsRef.current = sets;
+
   const groups = useMemo(() => groupByExercise(sets), [sets]);
 
   const totalSets = sets.length;
   const doneSets = useMemo(() => sets.filter((s) => s.completed).length, [sets]);
 
   // ── Editar campo numérico (optimista + rollback) ────────────────────────────
-  // El snapshot se captura DENTRO del updater (estado actual en el momento del
-  // procesado) para no perder cambios concurrentes en el rollback.
+  // Snapshot se captura desde la ref (lectura síncrona fuera del updater) para
+  // evitar que el double-invoke de Strict Mode corrompa el rollback.
   const handleChangeSet = useCallback((setId: string, patch: SetPatch) => {
     // No persistir contra ids temporales aún no reconciliados (no-op en DB).
     if (setId.startsWith('temp-')) return;
-    let snapshot: SessionSet[] = [];
-    setSets((prev) => {
-      snapshot = prev;
-      return prev.map((s) => (s.id === setId ? { ...s, ...patch } : s));
-    });
+    const snapshot = setsRef.current;
+    setSets((prev) => prev.map((s) => (s.id === setId ? { ...s, ...patch } : s)));
     updateSet(setId, patch).catch(() => {
       setSets(() => snapshot);
       Alert.alert(
@@ -195,23 +198,22 @@ export default function LiveSession() {
   }, []);
 
   // ── Marcar/desmarcar serie (optimista + rollback) ───────────────────────────
+  // Snapshot + next values computed from the ref (outside the updater) to avoid
+  // side-effect capture inside the setState updater (Strict Mode safe).
   const handleToggleComplete = useCallback((setId: string) => {
     if (setId.startsWith('temp-')) return;
-    let snapshot: SessionSet[] = [];
-    let nextCompleted = false;
-    let performedAt: string | null = null;
-    setSets((prev) => {
-      snapshot = prev;
-      const target = prev.find((s) => s.id === setId);
-      if (!target) return prev;
-      nextCompleted = !target.completed;
-      performedAt = nextCompleted ? new Date().toISOString() : null;
-      return prev.map((s) =>
+    const snapshot = setsRef.current;
+    const target = snapshot.find((s) => s.id === setId);
+    if (!target) return;
+    const nextCompleted = !target.completed;
+    const performedAt = nextCompleted ? new Date().toISOString() : null;
+    setSets((prev) =>
+      prev.map((s) =>
         s.id === setId
           ? { ...s, completed: nextCompleted, performed_at: performedAt }
           : s
-      );
-    });
+      )
+    );
     updateSet(setId, {
       completed: nextCompleted,
       performed_at: performedAt,
@@ -227,13 +229,15 @@ export default function LiveSession() {
   // ── Añadir serie (optimista con id temporal + reconciliación) ───────────────
   const handleAddSet = useCallback(
     (group: ExerciseGroup) => {
+      // Guard: no añadir si la sesión aún no está cargada.
+      if (!session) return;
       const nextNumber =
         group.sets.reduce((max, s) => Math.max(max, s.set_number), 0) + 1;
       const tempId = `temp-${group.exerciseId}-${Date.now()}`;
       const optimistic: SessionSet = {
         id: tempId,
         session_id: sessionId,
-        user_id: session?.user_id ?? '',
+        user_id: session.user_id,
         exercise_id: group.exerciseId,
         routine_exercise_id: group.routineExerciseId,
         set_number: nextNumber,
@@ -286,7 +290,9 @@ export default function LiveSession() {
 
   // ── Finalizar entreno ───────────────────────────────────────────────────────
   const handleFinish = useCallback(() => {
+    // Guard: double-tap protection and already-finished sessions.
     if (finishing) return;
+    if (session?.status !== 'in_progress') return;
 
     const run = async () => {
       setFinishing(true);
@@ -313,7 +319,7 @@ export default function LiveSession() {
       return;
     }
     run();
-  }, [finishing, doneSets, totalSets, sessionId, router]);
+  }, [finishing, session, doneSets, totalSets, sessionId, router]);
 
   // ── Render states ──────────────────────────────────────────────────────────
   if (loading) {

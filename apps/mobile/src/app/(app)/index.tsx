@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Dumbbell, CalendarDays, CalendarRange, ChevronRight } from 'lucide-react-native';
+import { Dumbbell, CalendarDays, CalendarRange, ChevronRight, ClipboardList } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import {
   AppText, Button, GlassCard, Header, Divider,
@@ -16,7 +16,8 @@ export default function Home() {
   const slideHero = useFadeSlideIn(80);
   const slideActions = useFadeSlideIn(160);
   const slideProgram = useFadeSlideIn(220);
-  const slideSignOut = useFadeSlideIn(300);
+  const slideHistory = useFadeSlideIn(270);
+  const slideSignOut = useFadeSlideIn(340);
 
   return (
     <View style={styles.root}>
@@ -134,6 +135,38 @@ export default function Home() {
                   </AppText>
                 </View>
                 <ChevronRight size={22} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              </LinearGradient>
+            </View>
+          </Pressable>
+        </Animated.View>
+
+        {/* Historial — mis sesiones pasadas */}
+        <Animated.View style={slideHistory}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir historial de sesiones"
+            onPress={() => router.push('/(app)/history' as any)}
+            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
+          >
+            <View style={[styles.historyCard, shadows.sm]}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.80)', 'rgba(255,255,255,0.60)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.historyGradient, { borderRadius: radii.xl }]}
+              >
+                <View style={styles.historyIconWrap}>
+                  <ClipboardList size={24} color={lightColors.accent} strokeWidth={1.8} />
+                </View>
+                <View style={styles.historyText}>
+                  <AppText variant="heading" style={styles.historyTitle}>
+                    Historial
+                  </AppText>
+                  <AppText variant="muted" style={styles.historySub}>
+                    Revisa tus sesiones pasadas.
+                  </AppText>
+                </View>
+                <ChevronRight size={20} color={lightColors.textMuted} strokeWidth={1.8} />
               </LinearGradient>
             </View>
           </Pressable>
@@ -258,6 +291,37 @@ const styles = StyleSheet.create({
   },
   divider: {
     marginBottom: spacing[3],
+  },
+  historyCard: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: lightColors.borderDefault,
+  },
+  historyGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[4],
+    padding: spacing[4],
+  },
+  historyIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.md,
+    backgroundColor: lightColors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyText: {
+    flex: 1,
+    gap: 2,
+  },
+  historyTitle: {
+    color: lightColors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  historySub: {
+    fontSize: 13,
   },
   orb: {
     position: 'absolute',
