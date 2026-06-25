@@ -26,6 +26,12 @@ importers:
       '@expo/ui':
         specifier: ~56.0.18
         version: 56.0.18(tstgcectzfhf7hivnhrzw4vetq)
+      '@react-native-async-storage/async-storage':
+        specifier: ^3.1.1
+        version: 3.1.1(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
+      '@supabase/supabase-js':
+        specifier: ^2.105.4
+        version: 2.105.4
       expo:
         specifier: ~56.0.12
         version: 56.0.12(@babel/core@7.29.0)(@expo/dom-webview@56.0.5)(@expo/metro-runtime@56.0.15)(expo-router@56.2.11)(react-dom@19.2.3(react@19.2.3))(react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-native-worklets@0.8.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)(typescript@6.0.3)
@@ -89,6 +95,9 @@ importers:
       react-native-screens:
         specifier: 4.25.2
         version: 4.25.2(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)
+      react-native-url-polyfill:
+        specifier: ^3.0.0
+        version: 3.0.0(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))
       react-native-web:
         specifier: ~0.21.0
         version: 0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1952,6 +1961,12 @@ packages:
       '@types/react':
         optional: true
 
+  '@react-native-async-storage/async-storage@3.1.1':
+    resolution: {integrity: sha512-z+PnLz1n6ECKhgoHZHkfc+dijXZEyZnNFSajbtE0NEbsJhmX8x9GlOeiMQIKX2E4DUqPSgfIh4FYBv1M49KgPQ==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   '@react-native-masked-view/masked-view@0.3.2':
     resolution: {integrity: sha512-XwuQoW7/GEgWRMovOQtX3A4PrXhyaZm0lVUiY8qJDvdngjLms9Cpdck6SmGAUNqQwcj2EadHC1HwL0bEyoa/SQ==}
     peerDependencies:
@@ -3056,6 +3071,9 @@ packages:
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
+  buffer@5.7.1:
+    resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
@@ -4230,6 +4248,12 @@ packages:
 
   icu-minify@4.11.1:
     resolution: {integrity: sha512-C0tsPVuvyNp+++qWJP+mty/KLLStjerOZqu3W1xWLJkChEDbDi9Taoj6blK7L/onxbuVzwgH6k9Sf+rOV6lOvw==}
+
+  idb@8.0.3:
+    resolution: {integrity: sha512-LtwtVyVYO5BqRvcsKuB2iUMnHwPVByPCXFXOpuU96IZPPoPN6xjOGxZQ74pgSVVLQWtUOYgyeL4GE98BY5D3wg==}
+
+  ieee754@1.2.1:
+    resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -5602,6 +5626,11 @@ packages:
       react: '*'
       react-native: '>=0.82.0'
 
+  react-native-url-polyfill@3.0.0:
+    resolution: {integrity: sha512-aA5CiuUCUb/lbrliVCJ6lZ17/RpNJzvTO/C7gC/YmDQhTUoRD5q5HlJfwLWcxz4VgAhHwXKzhxH+wUN24tAdqg==}
+    peerDependencies:
+      react-native: '*'
+
   react-native-web@0.21.2:
     resolution: {integrity: sha512-SO2t9/17zM4iEnFvlu2DA9jqNbzNhoUP+AItkoCOyFmDMOhUnBBznBDCYN92fGdfAkfQlWzPoez6+zLxFNsZEg==}
     peerDependencies:
@@ -6577,6 +6606,10 @@ packages:
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
 
+  webidl-conversions@5.0.0:
+    resolution: {integrity: sha512-VlZwKPCkYKxQgeSbH5EyngOmRp7Ww7I9rQLERETtf5ofd9pGeswWiOtogpEO850jziPRarreGxn5QIiTqpb2wA==}
+    engines: {node: '>=8'}
+
   webidl-conversions@7.0.0:
     resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
     engines: {node: '>=12'}
@@ -6595,6 +6628,10 @@ packages:
 
   whatwg-url-minimum@0.1.2:
     resolution: {integrity: sha512-XPEm0XFQWNVG292lII1PrRRJl3sItrs7CettZ4ncYxuDVpLyy+NwlGyut2hXI0JswcJUxeCH+CyOJK0ZzAXD6A==}
+
+  whatwg-url-without-unicode@8.0.0-3:
+    resolution: {integrity: sha512-HoKuzZrUlgpz35YO27XgD28uh/WJH4B0+3ttFqRo//lmq+9T/mIOJ6kqmINI9HpUpz1imRC/nR/lxKpJiv0uig==}
+    engines: {node: '>=10'}
 
   whatwg-url@11.0.0:
     resolution: {integrity: sha512-RKT8HExMpoYx4igMiVMY83lN6UeITKJlBQ+vR/8ZJ8OCdSiN3RwCq+9gH0+Xzj0+5IrM6i4j/6LuvzbZIQgEcQ==}
@@ -8618,6 +8655,12 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
+  '@react-native-async-storage/async-storage@3.1.1(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      idb: 8.0.3
+      react: 19.2.3
+      react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3)
+
   '@react-native-masked-view/masked-view@0.3.2(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3))(react@19.2.3)':
     dependencies:
       react: 19.2.3
@@ -8772,7 +8815,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -9829,6 +9874,11 @@ snapshots:
       node-int64: 0.4.0
 
   buffer-from@1.1.2: {}
+
+  buffer@5.7.1:
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
 
   bytes@3.1.2: {}
 
@@ -11195,6 +11245,10 @@ snapshots:
   icu-minify@4.11.1:
     dependencies:
       '@formatjs/icu-messageformat-parser': 3.5.7
+
+  idb@8.0.3: {}
+
+  ieee754@1.2.1: {}
 
   ignore@5.3.2: {}
 
@@ -12916,6 +12970,11 @@ snapshots:
       react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3)
       warn-once: 0.1.1
 
+  react-native-url-polyfill@3.0.0(react-native@0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3)):
+    dependencies:
+      react-native: 0.85.3(@babel/core@7.29.0)(@react-native/jest-preset@0.85.3(@babel/core@7.29.0)(react@19.2.3))(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.3)
+      whatwg-url-without-unicode: 8.0.0-3
+
   react-native-web@0.21.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       '@babel/runtime': 7.29.2
@@ -14132,6 +14191,8 @@ snapshots:
 
   webidl-conversions@3.0.1: {}
 
+  webidl-conversions@5.0.0: {}
+
   webidl-conversions@7.0.0: {}
 
   whatwg-encoding@2.0.0:
@@ -14143,6 +14204,12 @@ snapshots:
   whatwg-mimetype@3.0.0: {}
 
   whatwg-url-minimum@0.1.2: {}
+
+  whatwg-url-without-unicode@8.0.0-3:
+    dependencies:
+      buffer: 5.7.1
+      punycode: 2.3.1
+      webidl-conversions: 5.0.0
 
   whatwg-url@11.0.0:
     dependencies:
