@@ -13,6 +13,7 @@ import { Plus, Check } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import {
   AppText,
+  Button,
   Input,
   Header,
   GlassCard,
@@ -31,6 +32,7 @@ import {
   removeRoutineExercise,
   reorderRoutineExercises,
 } from '../../../lib/routines';
+import { startSession } from '../../../lib/sessions';
 import {
   ExerciseEditorRow,
   type EditorExercise,
@@ -83,6 +85,7 @@ export default function RoutineEditor() {
   const [exercises, setExercises] = useState<EditorExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [starting, setStarting] = useState(false);
   const creatingRef = useRef(false);
 
   const slideName = useFadeSlideIn(0);
@@ -217,6 +220,24 @@ export default function RoutineEditor() {
     router.push(`/(app)/routines/exercise-picker?routineId=${routineId}` as any);
   };
 
+  // ── Empezar entreno → crear sesión y navegar a la sesión en vivo ────────────
+  const handleStart = async () => {
+    if (!routineId || starting) return;
+    setStarting(true);
+    try {
+      // Persistimos el nombre antes de salir del editor.
+      commitName();
+      const session = await startSession(routineId);
+      haptic('success');
+      router.push(`/(app)/session/${session.id}` as any);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al empezar';
+      Alert.alert('No se pudo empezar', msg);
+    } finally {
+      setStarting(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.root, styles.center]}>
@@ -271,6 +292,17 @@ export default function RoutineEditor() {
             returnKeyType="done"
           />
         </Animated.View>
+
+        {/* Empezar entreno — CTA prominente (solo si hay ejercicios) */}
+        {exercises.length > 0 ? (
+          <Animated.View style={slideName}>
+            <Button
+              label={starting ? 'Empezando…' : 'Empezar entreno'}
+              onPress={handleStart}
+              loading={starting}
+            />
+          </Animated.View>
+        ) : null}
 
         {/* Lista de ejercicios */}
         <Animated.View style={[styles.list, slideList]}>

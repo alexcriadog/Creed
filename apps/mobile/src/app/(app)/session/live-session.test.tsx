@@ -1,0 +1,146 @@
+// jest hoisting: mock-prefixed vars are safe to reference before imports.
+
+// ── Mocked SessionWithSets ───────────────────────────────────────────────────
+const mockSession = {
+  id: 'sess-1',
+  user_id: 'user-123',
+  routine_id: 'routine-1',
+  source: 'manual',
+  status: 'in_progress',
+  started_at: '2026-06-25T10:00:00.000Z',
+  completed_at: null,
+  created_at: '2026-06-25T10:00:00.000Z',
+  sets: [
+    {
+      id: 'set-a1',
+      session_id: 'sess-1',
+      user_id: 'user-123',
+      exercise_id: 'ex-A',
+      routine_exercise_id: 're-1',
+      set_number: 1,
+      reps: 10,
+      weight_kg: 80,
+      rir: 2,
+      rpe: null,
+      is_warmup: false,
+      completed: false,
+      performed_at: null,
+      created_at: '2026-06-25T10:00:00.000Z',
+      name_en: 'Bench Press',
+      name_es: null,
+      image_url: null,
+      primary_muscle: 'chest',
+    },
+    {
+      id: 'set-a2',
+      session_id: 'sess-1',
+      user_id: 'user-123',
+      exercise_id: 'ex-A',
+      routine_exercise_id: 're-1',
+      set_number: 2,
+      reps: null,
+      weight_kg: null,
+      rir: null,
+      rpe: null,
+      is_warmup: false,
+      completed: false,
+      performed_at: null,
+      created_at: '2026-06-25T10:00:00.000Z',
+      name_en: 'Bench Press',
+      name_es: null,
+      image_url: null,
+      primary_muscle: 'chest',
+    },
+    {
+      id: 'set-b1',
+      session_id: 'sess-1',
+      user_id: 'user-123',
+      exercise_id: 'ex-B',
+      routine_exercise_id: 're-2',
+      set_number: 1,
+      reps: null,
+      weight_kg: null,
+      rir: null,
+      rpe: null,
+      is_warmup: false,
+      completed: true,
+      performed_at: '2026-06-25T10:05:00.000Z',
+      name_en: 'Overhead Press',
+      name_es: null,
+      image_url: null,
+      primary_muscle: 'shoulders',
+    },
+  ],
+};
+
+const mockRoutine = {
+  id: 'routine-1',
+  name: 'Push Day',
+  exercises: [
+    { exercise_id: 'ex-A', target_sets: 3, target_reps: '8-10', target_rir: 2 },
+    { exercise_id: 'ex-B', target_sets: 2, target_reps: '10-12', target_rir: 1 },
+  ],
+};
+
+jest.mock('../../../lib/sessions', () => ({
+  __esModule: true,
+  getSession: jest.fn(async () => mockSession),
+  updateSet: jest.fn().mockResolvedValue(undefined),
+  addSet: jest.fn(),
+  completeSession: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../../../lib/routines', () => ({
+  __esModule: true,
+  getRoutine: jest.fn(async () => mockRoutine),
+}));
+
+jest.mock('../../../lib/exercises', () => ({
+  __esModule: true,
+  displayName: (e: any) => e.name_es ?? e.name_en,
+}));
+
+// expo-router: id param + router stub.
+jest.mock('expo-router', () => ({
+  useLocalSearchParams: () => ({ id: 'sess-1' }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+}));
+
+// safe-area stub so Header renders without a provider.
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: any) => children,
+  SafeAreaView: ({ children }: any) => children,
+}));
+
+import { render, screen, waitFor } from '@testing-library/react-native';
+import LiveSession from './[id]';
+
+test('la sesión muestra los ejercicios y sus filas de serie con peso/reps', async () => {
+  await render(<LiveSession />);
+
+  // Nombres de ejercicios (agrupados).
+  await waitFor(() =>
+    expect(screen.getByText('Bench Press')).toBeOnTheScreen()
+  );
+  expect(screen.getByText('Overhead Press')).toBeOnTheScreen();
+
+  // Nombre de la rutina en el hero.
+  expect(screen.getByText('Push Day')).toBeOnTheScreen();
+
+  // Inputs de peso y reps por serie (testID por id de set).
+  expect(screen.getByTestId('weight-set-a1')).toBeOnTheScreen();
+  expect(screen.getByTestId('reps-set-a1')).toBeOnTheScreen();
+  expect(screen.getByTestId('weight-set-a2')).toBeOnTheScreen();
+  expect(screen.getByTestId('weight-set-b1')).toBeOnTheScreen();
+
+  // Valores precargados del set 1 de Bench.
+  expect(screen.getByDisplayValue('80')).toBeOnTheScreen();
+  expect(screen.getByDisplayValue('10')).toBeOnTheScreen();
+
+  // Check toggle por serie.
+  expect(screen.getByTestId('check-set-a1')).toBeOnTheScreen();
+
+  // CTA de finalizar.
+  expect(screen.getByText('Finalizar entreno')).toBeOnTheScreen();
+});

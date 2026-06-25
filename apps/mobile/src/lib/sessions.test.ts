@@ -274,6 +274,61 @@ test('startSession uses DEFAULT_TARGET_SETS=3 when target_sets is null', async (
   expect(setsInsertCall.map((s: any) => s.set_number).sort()).toEqual([1, 2, 3]);
 });
 
+test('startSession deletes the session when set pre-fill fails (I1 atomicity)', async () => {
+  const mockSession = {
+    id: 'sess-orphan',
+    user_id: 'user-123',
+    routine_id: 'routine-fail',
+    source: 'manual',
+    status: 'in_progress',
+    started_at: '2026-06-25T10:00:00.000Z',
+    completed_at: null,
+    created_at: '2026-06-25T10:00:00.000Z',
+  };
+  mockSingle.mockResolvedValue({ data: mockSession, error: null });
+
+  mockGetRoutine.mockResolvedValue({
+    id: 'routine-fail',
+    name: 'Push',
+    exercises: [
+      {
+        id: 're-1',
+        exercise_id: 'ex-A',
+        routine_id: 'routine-fail',
+        position: 0,
+        target_sets: 2,
+        target_reps: '8-10',
+        target_rir: null,
+        target_rpe: null,
+        rest_seconds: null,
+        name_en: 'Bench Press',
+        name_es: null,
+        image_url: null,
+        primary_muscle: 'chest',
+        user_id: 'user-123',
+      },
+    ],
+  });
+
+  // First insert = session (chains to single). Second insert = sets batch → fails.
+  let insertCallCount = 0;
+  mockInsert.mockImplementation(() => {
+    insertCallCount++;
+    if (insertCallCount === 1) return mockBuilder;
+    return { error: { message: 'Sets insert failed' } };
+  });
+
+  // Capture the rollback delete().eq() chain.
+  const mockDeleteEq = jest.fn().mockResolvedValue({ data: [], error: null });
+  mockDelete.mockReturnValue({ ...mockBuilder, eq: mockDeleteEq });
+
+  await expect(startSession('routine-fail')).rejects.toThrow('Sets insert failed');
+
+  // The orphan session must be deleted.
+  expect(mockDelete).toHaveBeenCalled();
+  expect(mockDeleteEq).toHaveBeenCalledWith('id', 'sess-orphan');
+});
+
 test('startSession throws if no authenticated user', async () => {
   mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
   await expect(startSession('r1')).rejects.toThrow();
@@ -343,6 +398,32 @@ test('getSession returns session with embedded sets and exercise display fields'
     name_en: 'Bench Press',
     primary_muscle: 'chest',
   });
+});
+
+test('getSession orders sets by set_number within stable exercise groups (M1)', async () => {
+  // Rows arrive interleaved and out of set_number order. Expected result:
+  // exercises grouped by first appearance (ex-A before ex-B), and within each
+  // group sorted by set_number ascending.
+  mockMaybeSingle.mockResolvedValue({
+    data: {
+      id: 'sess-ord',
+      user_id: 'user-123',
+      status: 'in_progress',
+      sets: [
+        { id: 'a2', exercise_id: 'ex-A', set_number: 2, completed: false, exercises: { name_en: 'Bench', name_es: null, image_url: null, primary_muscle: 'chest' } },
+        { id: 'b1', exercise_id: 'ex-B', set_number: 1, completed: false, exercises: { name_en: 'OHP', name_es: null, image_url: null, primary_muscle: 'shoulders' } },
+        { id: 'a1', exercise_id: 'ex-A', set_number: 1, completed: false, exercises: { name_en: 'Bench', name_es: null, image_url: null, primary_muscle: 'chest' } },
+        { id: 'b2', exercise_id: 'ex-B', set_number: 2, completed: false, exercises: { name_en: 'OHP', name_es: null, image_url: null, primary_muscle: 'shoulders' } },
+      ],
+    },
+    error: null,
+  });
+
+  const result = await getSession('sess-ord');
+  expect(result).not.toBeNull();
+  // ex-A appears first (its first row was index 0), so its sets come first,
+  // ordered 1,2; then ex-B's sets ordered 1,2.
+  expect(result!.sets.map((s) => s.id)).toEqual(['a1', 'a2', 'b1', 'b2']);
 });
 
 test('getSession returns null when session not found', async () => {

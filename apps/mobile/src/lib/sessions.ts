@@ -72,7 +72,10 @@ export async function startSession(routineId: string): Promise<Session> {
   if (sessionError) throw new Error(sessionError.message);
   const session = sessionData as Session;
 
-  // Pre-create sets from the routine's exercises
+  // Pre-create sets from the routine's exercises.
+  // I1 (atomicity): if the session row was created but the sets pre-fill fails,
+  // delete the just-created session so we never leave an orphan in_progress
+  // session with no sets behind.
   const routine = await getRoutine(routineId);
   if (routine && routine.exercises.length > 0) {
     const setRows: Record<string, unknown>[] = [];
@@ -97,7 +100,12 @@ export async function startSession(routineId: string): Promise<Session> {
     }
     if (setRows.length > 0) {
       const { error: setsError } = await supabase.from('sets').insert(setRows);
-      if (setsError) throw new Error(setsError.message);
+      if (setsError) {
+        // Roll back the session so the user is not stuck with an empty,
+        // un-resumable in_progress session.
+        await supabase.from('sessions').delete().eq('id', session.id);
+        throw new Error(setsError.message);
+      }
     }
   }
 
@@ -129,19 +137,27 @@ export async function getSession(id: string): Promise<SessionWithSets | null> {
   if (!data) return null;
 
   const raw = data as any;
-  const sets: SessionSet[] = ((raw.sets ?? []) as any[])
-    .map((s: any) => ({
-      ...s,
-      name_en: s.exercises?.name_en ?? '',
-      name_es: s.exercises?.name_es ?? null,
-      image_url: s.exercises?.image_url ?? null,
-      primary_muscle: s.exercises?.primary_muscle ?? null,
-    }))
-    .sort((a: SessionSet, b: SessionSet) => {
-      if (a.exercise_id < b.exercise_id) return -1;
-      if (a.exercise_id > b.exercise_id) return 1;
-      return a.set_number - b.set_number;
-    });
+  const mapped: SessionSet[] = ((raw.sets ?? []) as any[]).map((s: any) => ({
+    ...s,
+    name_en: s.exercises?.name_en ?? '',
+    name_es: s.exercises?.name_es ?? null,
+    image_url: s.exercises?.image_url ?? null,
+    primary_muscle: s.exercises?.primary_muscle ?? null,
+  }));
+
+  // M1 (ordering): group exercises in a stable order (by the order each
+  // exercise first appears, which mirrors the pre-fill/position order) and,
+  // within each exercise, order sets by set_number — never by exercise_id UUID.
+  const firstSeen = new Map<string, number>();
+  mapped.forEach((s, i) => {
+    if (!firstSeen.has(s.exercise_id)) firstSeen.set(s.exercise_id, i);
+  });
+  const sets = [...mapped].sort((a, b) => {
+    const ga = firstSeen.get(a.exercise_id) ?? 0;
+    const gb = firstSeen.get(b.exercise_id) ?? 0;
+    if (ga !== gb) return ga - gb;
+    return a.set_number - b.set_number;
+  });
 
   return { ...raw, sets } as SessionWithSets;
 }

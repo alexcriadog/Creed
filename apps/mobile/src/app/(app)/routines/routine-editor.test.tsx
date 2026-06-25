@@ -52,6 +52,13 @@ jest.mock('../../../lib/exercises', () => ({
   displayName: (e: any) => e.name_es ?? e.name_en,
 }));
 
+// sessions is imported by [id].tsx for "Empezar entreno"; mock it so the real
+// module (and its supabase env requirement) is not loaded under test.
+jest.mock('../../../lib/sessions', () => ({
+  __esModule: true,
+  startSession: jest.fn(),
+}));
+
 // expo-router: id param + immediate focus effect.
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'r1' }),
