@@ -7,7 +7,7 @@ const mockSelect = jest.fn(() => mockBuilder);
 Object.assign(mockBuilder, { select: mockSelect, ilike: mockIlike, eq: mockEq, limit: mockLimit, order: mockOrder });
 const mockFrom = jest.fn(() => mockBuilder);
 
-jest.mock('./supabase', () => ({ supabase: { from: (...a: unknown[]) => mockFrom(...a) } }));
+jest.mock('./supabase', () => ({ supabase: { from: (table: string) => (mockFrom as any)(table) } }));
 
 import { listExercises, displayName } from './exercises';
 
