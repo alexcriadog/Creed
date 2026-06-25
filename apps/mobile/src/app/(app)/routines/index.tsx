@@ -183,6 +183,7 @@ export default function RoutinesScreen() {
   // Recargar al volver al foco (tras crear/editar en el editor)
   useFocusEffect(load);
 
+  // 'new' is a sentinel id: [id].tsx checks id==='new' and creates a draft routine.
   const goCreate = () => router.push('/(app)/routines/new' as any);
 
   return (

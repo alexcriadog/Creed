@@ -89,19 +89,25 @@ export default function RoutineEditor() {
   // ── Crear borrador si entramos como 'new' ───────────────────────────────────
   useEffect(() => {
     if (id !== 'new' || routineId || creatingRef.current) return;
+    let active = true;
     creatingRef.current = true;
     createRoutine({ name: 'Nueva rutina' })
       .then((r) => {
+        if (!active) return;
         setRoutineId(r.id);
         setName(r.name);
         setLoading(false);
       })
       .catch(() => {
+        if (!active) return;
         // No pudimos crear el borrador: no dejamos un editor que no persiste.
         // Volvemos atrás en vez de mostrar un formulario inerte.
         setLoading(false);
         router.back();
       });
+    return () => {
+      active = false;
+    };
   }, [id, routineId, router]);
 
   // ── Cargar rutina (y recargar al volver del picker) ─────────────────────────

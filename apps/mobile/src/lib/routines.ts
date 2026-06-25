@@ -118,9 +118,11 @@ export async function createRoutine(input: {
 
   const { data, error } = await supabase
     .from('routines')
-    .insert([payload]);
+    .insert([payload])
+    .select()
+    .single();
   if (error) throw new Error(error.message);
-  return ((data as unknown) as any[])[0] as Routine;
+  return data as Routine;
 }
 
 export async function updateRoutine(
@@ -158,9 +160,11 @@ export async function addRoutineExercise(
   };
   const { data, error } = await supabase
     .from('routine_exercises')
-    .insert([payload]);
+    .insert([payload])
+    .select()
+    .single();
   if (error) throw new Error(error.message);
-  return ((data as unknown) as any[])[0] as RoutineExercise;
+  return data as RoutineExercise;
 }
 
 export async function updateRoutineExercise(
@@ -220,9 +224,11 @@ export async function createProgram(input: {
   };
   const { data, error } = await supabase
     .from('programs')
-    .insert([payload]);
+    .insert([payload])
+    .select()
+    .single();
   if (error) throw new Error(error.message);
-  return ((data as unknown) as any[])[0] as Program;
+  return data as Program;
 }
 
 // ── Program days ──────────────────────────────────────────────────────────────

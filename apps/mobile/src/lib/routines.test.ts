@@ -9,8 +9,9 @@ const mockGetUser = jest.fn().mockResolvedValue({
 // ── chainable query builder ──────────────────────────────────────────────────
 const mockSingle = jest.fn().mockResolvedValue({ data: null, error: null });
 const mockOrder = jest.fn().mockResolvedValue({ data: [], error: null });
-const mockInsert = jest.fn().mockResolvedValue({ data: [{}], error: null });
-const mockUpsert = jest.fn().mockResolvedValue({ data: [{}], error: null });
+// insert/upsert return the builder so .select().single() can be chained
+const mockInsert = jest.fn(() => mockBuilder);
+const mockUpsert = jest.fn(() => mockBuilder);
 const mockUpdate = jest.fn().mockResolvedValue({ data: [{}], error: null });
 const mockDelete = jest.fn().mockResolvedValue({ data: [], error: null });
 
@@ -60,10 +61,11 @@ beforeEach(() => {
   // Reset all mock return values to sensible defaults
   mockOrder.mockResolvedValue({ data: [], error: null });
   mockSingle.mockResolvedValue({ data: null, error: null });
-  mockInsert.mockResolvedValue({ data: [{}], error: null });
+  // insert/upsert chain to .select().single() — terminal is mockSingle
+  mockInsert.mockReturnValue(mockBuilder);
+  mockUpsert.mockReturnValue(mockBuilder);
   mockUpdate.mockResolvedValue({ data: [{}], error: null });
   mockDelete.mockResolvedValue({ data: [], error: null });
-  mockUpsert.mockResolvedValue({ data: [{}], error: null });
   mockGetUser.mockResolvedValue({ data: { user: { id: 'user-123' } }, error: null });
   // Restore builder chaining after clearAllMocks
   mockSelect.mockReturnValue(mockBuilder);
@@ -114,8 +116,8 @@ test('getRoutine queries with the correct id and selects routine_exercises neste
 // ── createRoutine ────────────────────────────────────────────────────────────
 
 test('createRoutine inserts with user_id from getUser', async () => {
-  mockInsert.mockResolvedValue({
-    data: [{ id: 'r-new', name: 'Legs', user_id: 'user-123' }],
+  mockSingle.mockResolvedValue({
+    data: { id: 'r-new', name: 'Legs', user_id: 'user-123' },
     error: null,
   });
   const routine = await createRoutine({ name: 'Legs' });
@@ -134,8 +136,8 @@ test('createRoutine throws if no authenticated user', async () => {
 });
 
 test('createRoutine includes program_id when programId is provided', async () => {
-  mockInsert.mockResolvedValue({
-    data: [{ id: 'r-new', name: 'Pull', program_id: 'prog-1', user_id: 'user-123' }],
+  mockSingle.mockResolvedValue({
+    data: { id: 'r-new', name: 'Pull', program_id: 'prog-1', user_id: 'user-123' },
     error: null,
   });
   await createRoutine({ name: 'Pull', programId: 'prog-1' });
@@ -171,8 +173,8 @@ test('deleteRoutine deletes from routines by id', async () => {
 // ── addRoutineExercise ───────────────────────────────────────────────────────
 
 test('addRoutineExercise inserts into routine_exercises with user_id and targets', async () => {
-  mockInsert.mockResolvedValue({
-    data: [{ id: 're-1', routine_id: 'r1', exercise_id: 'ex-1', target_sets: 3, user_id: 'user-123' }],
+  mockSingle.mockResolvedValue({
+    data: { id: 're-1', routine_id: 'r1', exercise_id: 'ex-1', target_sets: 3, user_id: 'user-123' },
     error: null,
   });
   const result = await addRoutineExercise('r1', 'ex-1', { target_sets: 3, target_reps: 10 });
@@ -260,8 +262,8 @@ test('getActiveProgram returns null when no active program', async () => {
 // ── createProgram ────────────────────────────────────────────────────────────
 
 test('createProgram inserts with user_id', async () => {
-  mockInsert.mockResolvedValue({
-    data: [{ id: 'prog-new', name: 'Hypertrophy', user_id: 'user-123' }],
+  mockSingle.mockResolvedValue({
+    data: { id: 'prog-new', name: 'Hypertrophy', user_id: 'user-123' },
     error: null,
   });
   const prog = await createProgram({ name: 'Hypertrophy' });
