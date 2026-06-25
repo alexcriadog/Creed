@@ -1,10 +1,55 @@
 import { useEffect, useState } from 'react';
-import { FlatList, TextInput, View, Image, Pressable, ActivityIndicator } from 'react-native';
+import { FlatList, View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { Screen, AppText } from '@creed/ui-native';
+import {
+  AppText, Input, Chip, Badge, GlassCard, Header,
+  useFadeSlideIn, usePressScale, lightColors, spacing, radii, shadows,
+} from '@creed/ui-native';
 import { listExercises, displayName, type Exercise } from '../../../lib/exercises';
 
 const MUSCLES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'abs'];
+
+const MUSCLE_LABEL: Record<string, string> = {
+  chest: 'Pecho', back: 'Espalda', shoulders: 'Hombros',
+  biceps: 'Bíceps', triceps: 'Tríceps', quads: 'Cuádriceps',
+  hamstrings: 'Isquios', glutes: 'Glúteos', abs: 'Abdomen',
+};
+
+function ExerciseRow({ item, onPress }: { item: Exercise; onPress: () => void }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+
+  return (
+    <Animated.View style={[animatedStyle, shadows.sm]}>
+      <GlassCard intensity={40} tone="light" padding={spacing[3]}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          style={styles.row}
+        >
+          {item.image_url ? (
+            <Image
+              source={{ uri: item.image_url }}
+              style={styles.thumb}
+              contentFit="cover"
+              transition={200}
+            />
+          ) : (
+            <View style={styles.thumbPlaceholder} />
+          )}
+          <View style={styles.rowText}>
+            <AppText variant="body" style={styles.rowTitle}>{displayName(item)}</AppText>
+            {item.primary_muscle ? (
+              <Badge label={item.primary_muscle} tone="accent" size="sm" />
+            ) : null}
+          </View>
+        </Pressable>
+      </GlassCard>
+    </Animated.View>
+  );
+}
 
 export default function ExercisesScreen() {
   const router = useRouter();
@@ -12,6 +57,10 @@ export default function ExercisesScreen() {
   const [muscle, setMuscle] = useState<string | null>(null);
   const [items, setItems] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const slideSearch = useFadeSlideIn(0);
+  const slideChips = useFadeSlideIn(60);
+  const slideList = useFadeSlideIn(120);
 
   useEffect(() => {
     let active = true;
@@ -26,56 +75,119 @@ export default function ExercisesScreen() {
   }, [search, muscle]);
 
   return (
-    <Screen className="gap-4">
-      <AppText variant="title">Ejercicios</AppText>
-      <TextInput
-        testID="search-input"
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Buscar ejercicio…"
-        className="h-12 rounded-lg border border-border px-4 text-text-primary"
-      />
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={MUSCLES}
-        keyExtractor={(m) => m}
-        className="max-h-10"
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => setMuscle(muscle === item ? null : item)}
-            className={`mr-2 h-9 rounded-pill px-4 justify-center ${muscle === item ? 'bg-accent' : 'bg-surface border border-border'}`}
-          >
-            <AppText className={muscle === item ? 'text-text-on-accent' : 'text-text-secondary'}>{item}</AppText>
-          </Pressable>
-        )}
-      />
-      {loading ? (
-        <ActivityIndicator color="#4F62E0" />
-      ) : (
-        <FlatList
-          data={items}
-          keyExtractor={(e) => e.id}
-          contentContainerClassName="gap-2 pb-8"
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(app)/exercises/${item.id}`)}
-              className="flex-row items-center gap-3 bg-surface border border-border rounded-lg p-3 active:opacity-80"
-            >
-              {item.image_url ? (
-                <Image source={{ uri: item.image_url }} className="w-12 h-12 rounded-md" />
-              ) : (
-                <View className="w-12 h-12 rounded-md bg-canvas-tint" />
+    <View style={styles.root}>
+      <Header title="Ejercicios" withSafeArea />
+
+      <View style={styles.body}>
+        {/* Search input */}
+        <Animated.View style={[styles.searchWrap, slideSearch]}>
+          <Input
+            testID="search-input"
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Buscar ejercicio…"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+        </Animated.View>
+
+        {/* Filter chips — horizontal scroll, no height clip */}
+        <Animated.View style={slideChips}>
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={MUSCLES}
+            keyExtractor={(m) => m}
+            contentContainerStyle={styles.chipsContent}
+            renderItem={({ item }) => (
+              <Chip
+                label={MUSCLE_LABEL[item] ?? item}
+                selected={muscle === item}
+                onPress={(selected) => setMuscle(selected ? item : null)}
+              />
+            )}
+          />
+        </Animated.View>
+
+        {/* Exercise list */}
+        <Animated.View style={[styles.listWrap, slideList]}>
+          {loading ? (
+            <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+          ) : (
+            <FlatList
+              data={items}
+              keyExtractor={(e) => e.id}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <ExerciseRow
+                  item={item}
+                  onPress={() => router.push(`/(app)/exercises/${item.id}`)}
+                />
               )}
-              <View className="flex-1">
-                <AppText>{displayName(item)}</AppText>
-                <AppText variant="muted">{item.primary_muscle ?? ''}</AppText>
-              </View>
-            </Pressable>
+              ListEmptyComponent={
+                <AppText variant="muted" style={styles.empty}>Sin resultados.</AppText>
+              }
+            />
           )}
-          ListEmptyComponent={<AppText variant="muted">Sin resultados.</AppText>}
-        />
-      )}
-    </Screen>
+        </Animated.View>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: lightColors.bgCanvas,
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing[5],
+    gap: spacing[4],
+    paddingTop: spacing[4],
+  },
+  searchWrap: {},
+  chipsContent: {
+    gap: spacing[2],
+    paddingVertical: spacing[1],
+  },
+  listWrap: {
+    flex: 1,
+  },
+  listContent: {
+    gap: spacing[2],
+    paddingBottom: spacing[10],
+  },
+  spinner: {
+    marginTop: spacing[8],
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.md,
+    backgroundColor: lightColors.bgCanvasTint,
+  },
+  thumbPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.md,
+    backgroundColor: lightColors.bgCanvasTint,
+  },
+  rowText: {
+    flex: 1,
+    gap: spacing[1],
+  },
+  rowTitle: {
+    fontWeight: '600',
+  },
+  empty: {
+    textAlign: 'center',
+    marginTop: spacing[8],
+  },
+});
