@@ -24,7 +24,7 @@ export function Header({
   withSafeArea = true,
 }: HeaderProps) {
   const insets = useSafeAreaInsets();
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   return (
     <View

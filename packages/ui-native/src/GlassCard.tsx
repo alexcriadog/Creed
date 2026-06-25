@@ -24,46 +24,49 @@ export interface GlassCardProps extends ViewProps {
 
 export function GlassCard({
   intensity = 55,
-  tone = 'dark',
+  tone = 'light',
   padding = spacing.card,
   style,
   children,
   ...props
 }: GlassCardProps) {
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   return (
+    // Outer view: carries shadow + borderRadius, NO overflow (iOS shadow would be clipped otherwise)
     <View
       style={[
-        styles.wrapper,
+        styles.outerWrapper,
         shadows.md,
         {
           borderRadius: radii.lg,
-          borderColor: colors.borderSubtle,
         },
         style,
       ]}
       {...props}
     >
-      <BlurView
-        intensity={intensity}
-        tint={tone}
-        style={[StyleSheet.absoluteFill, { borderRadius: radii.lg, overflow: 'hidden' }]}
-      />
-      {/* Overlay tint para dar profundidad */}
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          {
-            borderRadius: radii.lg,
-            backgroundColor: colors.bgSurface,
-            borderWidth: 1,
-            borderColor: colors.borderSubtle,
-          },
-        ]}
-        pointerEvents="none"
-      />
-      <View style={{ padding, zIndex: 1 }}>{children}</View>
+      {/* Inner view: clips BlurView to rounded corners */}
+      <View style={[styles.innerWrapper, { borderRadius: radii.lg }]}>
+        <BlurView
+          intensity={intensity}
+          tint={tone}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Overlay tint para dar profundidad */}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: colors.bgSurface,
+              borderWidth: 1,
+              borderColor: colors.borderSubtle,
+              borderRadius: radii.lg,
+            },
+          ]}
+          pointerEvents="none"
+        />
+        <View style={{ padding, zIndex: 1 }}>{children}</View>
+      </View>
     </View>
   );
 }
@@ -72,7 +75,7 @@ export function GlassCard({
 export function Surface({ style, ...props }: GlassCardProps) {
   return (
     <GlassCard
-      tone="dark"
+      tone="light"
       intensity={40}
       style={style}
       {...props}
@@ -81,8 +84,10 @@ export function Surface({ style, ...props }: GlassCardProps) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  // No overflow here — iOS would clip the shadow
+  outerWrapper: {},
+  // overflow hidden here clips BlurView to rounded corners
+  innerWrapper: {
     overflow: 'hidden',
-    borderWidth: 1,
   },
 });

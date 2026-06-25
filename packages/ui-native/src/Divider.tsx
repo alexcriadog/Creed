@@ -11,7 +11,7 @@ export interface DividerProps extends ViewProps {
 }
 
 export function Divider({ color, style, ...props }: DividerProps) {
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   return (
     <View

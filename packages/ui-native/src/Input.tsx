@@ -19,7 +19,7 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
 
 export function Input({ label, error, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   const borderColor = error
     ? colors.statusRed

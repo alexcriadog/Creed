@@ -36,7 +36,7 @@ export function Button({
   size = 'md',
 }: ButtonProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const colors = getColors('dark');
+  const colors = getColors('light');
   const inactive = loading || disabled;
 
   const handlePress = () => {

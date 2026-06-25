@@ -19,7 +19,7 @@ export interface ChipProps {
 
 export function Chip({ label, selected = false, onPress, testID }: ChipProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   const handlePress = () => {
     haptic('light');

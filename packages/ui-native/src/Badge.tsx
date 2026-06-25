@@ -22,13 +22,13 @@ export interface BadgeProps {
 }
 
 export function Badge({ label, tone = 'default', size = 'sm' }: BadgeProps) {
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   const toneStyles: Record<BadgeTone, { bg: string; text: string; border: string }> = {
     green: {
       bg: `${colors.statusGreen}22`,
       text: colors.statusGreen,
-      border: `${colors.statusAmber}44`,
+      border: `${colors.statusGreen}44`,
     },
     amber: {
       bg: `${colors.statusAmber}22`,

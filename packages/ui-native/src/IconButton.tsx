@@ -35,7 +35,7 @@ export function IconButton({
   disabled = false,
 }: IconButtonProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const colors = getColors('dark');
+  const colors = getColors('light');
 
   const bgColor =
     variant === 'accent'

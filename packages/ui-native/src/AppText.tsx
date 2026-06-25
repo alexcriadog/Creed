@@ -20,7 +20,7 @@ export interface AppTextProps extends TextProps {
   variant?: AppTextVariant;
 }
 
-const colors = getColors('dark');
+const colors = getColors('light');
 
 const variantStyles = StyleSheet.create({
   display: {
