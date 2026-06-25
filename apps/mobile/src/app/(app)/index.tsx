@@ -1,7 +1,7 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Dumbbell, CalendarDays, LogOut } from 'lucide-react-native';
+import { Dumbbell, CalendarDays, CalendarRange, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import {
   AppText, Button, GlassCard, Header, Divider,
@@ -15,7 +15,8 @@ export default function Home() {
   const slideHeader = useFadeSlideIn(0);
   const slideHero = useFadeSlideIn(80);
   const slideActions = useFadeSlideIn(160);
-  const slideSignOut = useFadeSlideIn(240);
+  const slideProgram = useFadeSlideIn(220);
+  const slideSignOut = useFadeSlideIn(300);
 
   return (
     <View style={styles.root}>
@@ -93,7 +94,7 @@ export default function Home() {
                 <CalendarDays size={28} color={lightColors.accent} strokeWidth={1.8} />
               </View>
               <AppText variant="heading" style={styles.ctaTitle}>Rutinas</AppText>
-              <AppText variant="muted" style={styles.ctaSub}>Próximamente</AppText>
+              <AppText variant="muted" style={styles.ctaSub}>Mis planes</AppText>
               <View style={styles.ctaBtn}>
                 <Button
                   label="Ver"
@@ -104,6 +105,38 @@ export default function Home() {
               </View>
             </LinearGradient>
           </View>
+        </Animated.View>
+
+        {/* Programa — horario semanal (CTA ancho) */}
+        <Animated.View style={slideProgram}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir programa semanal"
+            onPress={() => router.push('/(app)/program' as any)}
+            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
+          >
+            <View style={[styles.programCard, shadows.md]}>
+              <LinearGradient
+                colors={['#4F62E0', '#3D4FCC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.programGradient, { borderRadius: radii.xl }]}
+              >
+                <View style={styles.programIconWrap}>
+                  <CalendarRange size={26} color="#FCFCFD" strokeWidth={1.9} />
+                </View>
+                <View style={styles.programText}>
+                  <AppText variant="heading" style={styles.programTitle}>
+                    Tu programa
+                  </AppText>
+                  <AppText variant="body" style={styles.programSub}>
+                    Organiza tu semana de entreno, día a día.
+                  </AppText>
+                </View>
+                <ChevronRight size={22} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              </LinearGradient>
+            </View>
+          </Pressable>
         </Animated.View>
 
         <Animated.View style={slideSignOut}>
@@ -192,6 +225,36 @@ const styles = StyleSheet.create({
   },
   ctaBtn: {
     marginTop: spacing[3],
+  },
+  programCard: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
+  },
+  programGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[4],
+    padding: spacing[5],
+  },
+  programIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  programText: {
+    flex: 1,
+    gap: 2,
+  },
+  programTitle: {
+    color: '#FCFCFD',
+    letterSpacing: -0.2,
+  },
+  programSub: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 14,
   },
   divider: {
     marginBottom: spacing[3],
