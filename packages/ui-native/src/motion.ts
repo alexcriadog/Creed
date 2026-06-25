@@ -15,6 +15,7 @@ import {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
+import type { AnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import type { ViewStyle } from 'react-native';
 import { duration } from './theme';
@@ -23,7 +24,7 @@ import { duration } from './theme';
 
 export type PressScaleResult = {
   /** AnimatedStyle para aplicar a un Animated.View */
-  animatedStyle: ViewStyle;
+  animatedStyle: AnimatedStyle<ViewStyle>;
   /** Llamar al inicio del toque (onPressIn) */
   onPressIn: () => void;
   /** Llamar al final del toque (onPressOut) */
@@ -63,7 +64,7 @@ export function usePressScale(): PressScaleResult {
     scale.value = withSpring(1, springConfig);
   };
 
-  return { animatedStyle: animatedStyle as unknown as ViewStyle, onPressIn, onPressOut };
+  return { animatedStyle, onPressIn, onPressOut };
 }
 
 // ─── Fade + slide entrance ────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ export function usePressScale(): PressScaleResult {
  *   const style1 = useFadeSlideIn(60);
  *   const style2 = useFadeSlideIn(120);
  */
-export function useFadeSlideIn(delayMs = 0): ViewStyle {
+export function useFadeSlideIn(delayMs = 0): AnimatedStyle<ViewStyle> {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(12);
 
@@ -103,7 +104,7 @@ export function useFadeSlideIn(delayMs = 0): ViewStyle {
   return useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }],
-  })) as unknown as ViewStyle;
+  }));
 }
 
 // ─── Haptics ──────────────────────────────────────────────────────────────────

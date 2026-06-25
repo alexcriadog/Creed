@@ -1,5 +1,6 @@
-import { View, ViewProps } from 'react-native';
-
-export function Surface({ className = '', ...props }: ViewProps) {
-  return <View className={`bg-surface border border-border rounded-lg p-5 ${className}`} {...props} />;
-}
+/**
+ * Surface.tsx — re-exporta Surface (alias de GlassCard) para compatibilidad.
+ * El componente real vive en GlassCard.tsx.
+ */
+export { Surface, GlassCard } from './GlassCard';
+export type { GlassCardProps, GlassCardTone } from './GlassCard';
