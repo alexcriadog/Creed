@@ -3,10 +3,14 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { Slot } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '../lib/auth-context';
 import { supabase } from '../lib/supabase';
+import { useAppFonts } from '../lib/use-fonts';
 
 export default function RootLayout() {
+  const { fontsLoaded, fontError } = useAppFonts();
+
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') supabase.auth.startAutoRefresh();
@@ -15,11 +19,18 @@ export default function RootLayout() {
     return () => sub.remove();
   }, []);
 
+  // Mantener splash hasta que las fuentes carguen (o fallo — mostramos app igualmente)
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <Slot />
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <Slot />
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
