@@ -8,7 +8,7 @@ export type Session = {
   user_id: string;
   routine_id: string | null;
   source: 'manual' | string;
-  status: 'in_progress' | 'completed' | 'cancelled' | string;
+  status: 'planned' | 'in_progress' | 'completed' | 'skipped';
   started_at: string;
   completed_at: string | null;
   created_at: string;

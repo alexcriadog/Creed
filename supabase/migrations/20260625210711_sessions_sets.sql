@@ -33,7 +33,8 @@ create table public.sets (
   is_warmup           boolean not null default false,
   completed           boolean not null default false,
   performed_at        timestamptz,
-  notes               text
+  notes               text,
+  created_at          timestamptz not null default now()
 );
 create index sets_session_idx on public.sets (session_id);
 
