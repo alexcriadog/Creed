@@ -2,7 +2,7 @@
   "name": "creed",
   "version": "0.0.0",
   "private": true,
-  "description": "Plataforma personal de coaching f\u00edsico con Whoop + dos agentes AI",
+  "description": "Plataforma personal de coaching físico con Whoop + dos agentes AI",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
@@ -23,11 +23,17 @@
     "db:status": ".bin/supabase status",
     "db:reset": ".bin/supabase db reset",
     "db:migration:new": ".bin/supabase migration new",
-    "db:gen:types": ".bin/supabase gen types typescript --local > packages/db/src/database.types.ts"
+    "db:gen:types": ".bin/supabase gen types typescript --local > packages/db/src/database.types.ts",
+    "db:seed:exercises": "tsx scripts/import-exercises.ts"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "@types/ws": "^8.18.1",
+    "dotenv": "^17.4.2",
     "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
     "turbo": "^2.9.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
   }
 }
