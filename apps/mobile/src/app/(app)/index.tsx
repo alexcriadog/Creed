@@ -123,11 +123,11 @@ export default function Home() {
           </View>
         </Animated.View>
 
-        {/* Programa — horario semanal (CTA ancho) */}
+        {/* Programa — sus rutinas (CTA ancho) */}
         <Animated.View style={slideProgram}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Abrir programa semanal"
+            accessibilityLabel="Abrir programa"
             onPress={() => router.push('/(app)/program' as any)}
             style={({ pressed }) => [pressed && { opacity: 0.94 }]}
           >
