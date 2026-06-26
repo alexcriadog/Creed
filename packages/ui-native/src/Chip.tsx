@@ -1,14 +1,16 @@
 /**
- * Chip — etiqueta seleccionable con toggle.
+ * Chip — etiqueta seleccionable con toggle (v3 dark atlético).
  *
- * Activo:   fondo accent soft + borde accent + texto accent
- * Inactivo: fondo glass + borde subtle + texto secondary
+ * Activo:   wash de acento + borde acento + texto acento
+ * Inactivo: surface2 + hairline + texto secondary
+ *
+ * API preservada: { label, selected?, onPress?, testID? }.
  */
 
 import { Pressable, Text, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { usePressScale, haptic } from './motion';
-import { getColors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
+import { colors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
 
 export interface ChipProps {
   label: string;
@@ -19,7 +21,6 @@ export interface ChipProps {
 
 export function Chip({ label, selected = false, onPress, testID }: ChipProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const colors = getColors('light');
 
   const handlePress = () => {
     haptic('light');
@@ -40,8 +41,8 @@ export function Chip({ label, selected = false, onPress, testID }: ChipProps) {
           styles.chip,
           {
             borderRadius: radii.pill,
-            borderColor: selected ? colors.accent : colors.borderDefault,
-            backgroundColor: selected ? colors.accentSoft : colors.bgSurfaceRaised,
+            borderColor: selected ? colors.accent : colors.hairline,
+            backgroundColor: selected ? colors.accentSoft : colors.surface2,
           },
         ]}
       >

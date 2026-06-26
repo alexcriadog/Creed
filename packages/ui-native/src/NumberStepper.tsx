@@ -1,16 +1,18 @@
 /**
- * NumberStepper — control compacto −/valor/+ con háptica.
+ * NumberStepper — control compacto −/valor/+ (v3 dark atlético) con háptica.
  *
  * Pensado para editar targets (sets, reps, RIR/RPE, descanso) inline.
- * - Botones circulares con feedback de opacidad al pulsar.
+ * - Controles surface2 + hairline; iconos lima; valor tabular grande.
  * - Háptica 'light' en cada paso; clamp a [min, max].
  * - `value === null` muestra placeholder "—" y arranca en `defaultOnFirst`.
+ *
+ * API preservada: { label, value, onChange, min?, max?, step?, suffix?, defaultOnFirst?, testID? }.
  */
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Minus, Plus } from 'lucide-react-native';
 import { haptic } from './motion';
-import { getColors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
+import { colors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
 
 export interface NumberStepperProps {
   /** Etiqueta superior (p.ej. "Series"). */
@@ -44,7 +46,6 @@ export function NumberStepper({
   defaultOnFirst,
   testID,
 }: NumberStepperProps) {
-  const colors = getColors('light');
   const base = defaultOnFirst ?? min;
 
   const apply = (delta: number) => {
@@ -60,15 +61,13 @@ export function NumberStepper({
 
   return (
     <View style={styles.wrap} testID={testID}>
-      <Text
-        style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.sansMedium }]}
-      >
+      <Text style={[styles.label, { color: colors.textSecondary, fontFamily: fontFamily.sansMedium }]}>
         {label}
       </Text>
       <View
         style={[
           styles.controls,
-          { backgroundColor: colors.bgSurfaceRaised, borderColor: colors.borderSubtle },
+          { backgroundColor: colors.surface2, borderColor: colors.hairline },
         ]}
       >
         <Pressable
@@ -80,12 +79,10 @@ export function NumberStepper({
           hitSlop={{ top: 8, bottom: 8, left: 6, right: 2 }}
           style={({ pressed }) => [styles.btn, (pressed || atMin) && { opacity: 0.4 }]}
         >
-          <Minus size={16} color={colors.accent} strokeWidth={2.4} />
+          <Minus size={16} color={colors.accent} strokeWidth={2.6} />
         </Pressable>
 
-        <Text
-          style={[styles.value, { color: colors.textPrimary, fontFamily: fontFamily.sansSemibold }]}
-        >
+        <Text style={[styles.value, { color: colors.textPrimary, fontFamily: fontFamily.display }]}>
           {display}
         </Text>
 
@@ -98,7 +95,7 @@ export function NumberStepper({
           hitSlop={{ top: 8, bottom: 8, left: 2, right: 6 }}
           style={({ pressed }) => [styles.btn, (pressed || atMax) && { opacity: 0.4 }]}
         >
-          <Plus size={16} color={colors.accent} strokeWidth={2.4} />
+          <Plus size={16} color={colors.accent} strokeWidth={2.6} />
         </Pressable>
       </View>
     </View>
@@ -121,20 +118,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radii.pill,
     paddingHorizontal: 4,
-    height: 38,
+    height: 40,
   },
   btn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
-    minWidth: 40,
+    minWidth: 44,
     textAlign: 'center',
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold,
+    fontSize: fontSize.lg,
+    fontVariant: ['tabular-nums'],
     paddingHorizontal: spacing[1],
   },
 });

@@ -1,5 +1,8 @@
 /**
- * Input — campo de texto con label superior, focus ring y estado de error.
+ * Input — campo de texto v3 (dark atlético): surface2, label superior,
+ * focus → borde acento, estado de error → borde danger.
+ *
+ * API preservada: { label?, error?, ...TextInputProps }.
  */
 
 import { useState } from 'react';
@@ -10,7 +13,7 @@ import {
   Text,
   StyleSheet,
 } from 'react-native';
-import { getColors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
+import { colors, radii, spacing, fontSize, fontFamily, fontWeight } from './theme';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -19,26 +22,23 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
 
 export function Input({ label, error, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
-  const colors = getColors('light');
 
   const borderColor = error
-    ? colors.statusRed
+    ? colors.danger
     : focused
     ? colors.accent
-    : colors.borderDefault;
+    : colors.hairlineStrong;
+
+  const labelColor = error
+    ? colors.danger
+    : focused
+    ? colors.accent
+    : colors.textSecondary;
 
   return (
     <View style={styles.container}>
       {label ? (
-        <Text
-          style={[
-            styles.label,
-            {
-              color: error ? colors.statusRed : focused ? colors.accent : colors.textSecondary,
-              fontFamily: fontFamily.sansMedium,
-            },
-          ]}
-        >
+        <Text style={[styles.label, { color: labelColor, fontFamily: fontFamily.sansMedium }]}>
           {label}
         </Text>
       ) : null}
@@ -49,18 +49,12 @@ export function Input({ label, error, ...props }: InputProps) {
             borderColor,
             borderWidth: focused ? 2 : 1,
             borderRadius: radii.md,
-            backgroundColor: colors.bgSurface,
+            backgroundColor: colors.surface2,
           },
         ]}
       >
         <TextInput
-          style={[
-            styles.input,
-            {
-              color: colors.textPrimary,
-              fontFamily: fontFamily.sans,
-            },
-          ]}
+          style={[styles.input, { color: colors.textPrimary, fontFamily: fontFamily.sans }]}
           placeholderTextColor={colors.textMuted}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -70,10 +64,7 @@ export function Input({ label, error, ...props }: InputProps) {
       </View>
       {error ? (
         <Text
-          style={[
-            styles.errorText,
-            { color: colors.statusRed, fontFamily: fontFamily.sans },
-          ]}
+          style={[styles.errorText, { color: colors.danger, fontFamily: fontFamily.sans }]}
           accessibilityRole="alert"
         >
           {error}
@@ -99,7 +90,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
-    minHeight: 48,
+    minHeight: 52,
   },
   errorText: {
     fontSize: fontSize.xs,

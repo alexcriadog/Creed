@@ -1,14 +1,21 @@
 /**
- * IconButton — botón circular para iconos con press-scale y háptica.
+ * IconButton — botón circular para iconos (v3 dark atlético) con press-spring + háptica.
+ *
+ * Variantes:
+ *   glass  → surface2 + hairline (default; el back/close circular del header)
+ *   accent → wash de acento + borde acento
+ *   ghost  → transparente
  *
  * Pasa el icono como children:
- *   <IconButton onPress={...}><X color={...} size={20} /></IconButton>
+ *   <IconButton onPress={...}><ChevronLeft color={colors.textPrimary} size={22} /></IconButton>
+ *
+ * API preservada: { onPress, children, size?, hapticKind?, variant?, ... }.
  */
 
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { usePressScale, haptic, HapticKind } from './motion';
-import { getColors, shadows } from './theme';
+import { colors, shadows } from './theme';
 
 export interface IconButtonProps {
   onPress: () => void;
@@ -35,17 +42,20 @@ export function IconButton({
   disabled = false,
 }: IconButtonProps) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const colors = getColors('light');
 
   const bgColor =
     variant === 'accent'
       ? colors.accentSoft
       : variant === 'glass'
-      ? colors.bgSurfaceRaised
+      ? colors.surface2
       : 'transparent';
 
   const borderColor =
-    variant === 'ghost' ? 'transparent' : colors.borderSubtle;
+    variant === 'accent'
+      ? colors.accent
+      : variant === 'ghost'
+      ? 'transparent'
+      : colors.hairline;
 
   const handlePress = () => {
     if (disabled) return;

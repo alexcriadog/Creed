@@ -21,6 +21,9 @@ export type { IconButtonProps } from './IconButton';
 export { FAB } from './FAB';
 export type { FABProps } from './FAB';
 
+export { SwipeToFinish } from './SwipeToFinish';
+export type { SwipeToFinishProps } from './SwipeToFinish';
+
 // ─── Form ─────────────────────────────────────────────────────────────────────
 export { Input } from './Input';
 export type { InputProps } from './Input';

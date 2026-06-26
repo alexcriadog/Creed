@@ -22,8 +22,9 @@ import Animated, {
 import { Check } from 'lucide-react-native';
 import {
   AppText,
+  colors,
+  glow,
   haptic,
-  lightColors,
   spacing,
 } from '@creed/ui-native';
 
@@ -116,7 +117,7 @@ function RailPillBase({ index, state, isCurrent, onPress }: RailPillProps) {
       hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
       style={styles.pillWrap}
     >
-      {/* Anillo de énfasis (current) — animado, detrás de la pastilla */}
+      {/* Anillo de énfasis (current) — animado, detrás de la pastilla, con glow */}
       <Animated.View pointerEvents="none" style={[styles.ring, ringStyle]} />
 
       <View
@@ -127,7 +128,7 @@ function RailPillBase({ index, state, isCurrent, onPress }: RailPillProps) {
         ]}
       >
         {done ? (
-          <Check size={18} color={lightColors.textOnAccent} strokeWidth={3} />
+          <Check size={18} color={colors.onAccent} strokeWidth={3} />
         ) : (
           <AppText
             variant="label"
@@ -167,7 +168,8 @@ const styles = StyleSheet.create({
     height: RING_SIZE,
     borderRadius: RING_SIZE / 2,
     borderWidth: 2,
-    borderColor: lightColors.accent,
+    borderColor: colors.accent,
+    ...glow('soft'),
   },
   pill: {
     width: SEG_WIDTH,
@@ -175,23 +177,23 @@ const styles = StyleSheet.create({
     borderRadius: SEG_WIDTH / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: lightColors.bgSurfaceRaised,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: lightColors.borderDefault,
+    borderColor: colors.hairline,
   },
   pillDone: {
-    backgroundColor: lightColors.accent,
-    borderColor: lightColors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   pillCurrent: {
-    backgroundColor: lightColors.accentSoft,
-    borderColor: lightColors.accent,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent,
   },
   pillLabel: {
-    color: lightColors.textMuted,
+    color: colors.textMuted,
     fontWeight: '700',
   },
   pillLabelCurrent: {
-    color: lightColors.accent,
+    color: colors.accent,
   },
 });

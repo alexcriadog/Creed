@@ -1,25 +1,21 @@
 /**
- * Divider — separador horizontal sutil.
+ * Divider — separador horizontal hairline (v3 dark atlético).
+ *
+ * API preservada: { color?, ...ViewProps }. Por defecto usa el hairline del theme.
  */
 
 import { View, StyleSheet, ViewProps } from 'react-native';
-import { getColors } from './theme';
+import { colors } from './theme';
 
 export interface DividerProps extends ViewProps {
-  /** Color override. Por defecto usa borderSubtle del theme. */
+  /** Color override. Por defecto usa `hairline` del theme. */
   color?: string;
 }
 
 export function Divider({ color, style, ...props }: DividerProps) {
-  const colors = getColors('light');
-
   return (
     <View
-      style={[
-        styles.divider,
-        { backgroundColor: color ?? colors.borderDefault },
-        style,
-      ]}
+      style={[styles.divider, { backgroundColor: color ?? colors.hairline }, style]}
       {...props}
     />
   );

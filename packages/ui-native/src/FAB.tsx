@@ -1,15 +1,17 @@
 /**
- * FAB — Floating Action Button circular con gradiente accent, sombra elevada y háptica.
+ * FAB — Floating Action Button circular (v3 dark atlético): relleno lima + glow
+ * + press-spring + háptica. Icono onAccent (casi negro) para contraste sobre lima.
  *
  * Pasa el icono como children:
- *   <FAB onPress={...}><Plus color="#FCFCFD" size={24} /></FAB>
+ *   <FAB onPress={...}><Plus color={colors.onAccent} size={24} /></FAB>
+ *
+ * API preservada: { onPress, children, size?, hapticKind?, ... }.
  */
 
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { usePressScale, haptic, HapticKind } from './motion';
-import { gradients, shadows } from './theme';
+import { colors, glow } from './theme';
 
 export interface FABProps {
   onPress: () => void;
@@ -47,7 +49,7 @@ export function FAB({
         {
           opacity: disabled ? 0.45 : 1,
           borderRadius: size / 2,
-          ...shadows.lg,
+          ...glow('strong'),
         },
       ]}
     >
@@ -61,17 +63,19 @@ export function FAB({
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <LinearGradient
-          colors={gradients.accent}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+        <View
           style={[
             styles.container,
-            { width: size, height: size, borderRadius: size / 2 },
+            {
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              backgroundColor: colors.accent,
+            },
           ]}
         >
-          <View style={styles.inner}>{children}</View>
-        </LinearGradient>
+          {children}
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -79,10 +83,6 @@ export function FAB({
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inner: {
     alignItems: 'center',
     justifyContent: 'center',
   },
