@@ -1,3 +1,9 @@
+/**
+ * Exercise picker — dark atlético v3.
+ * Canvas negro + Input dark + filas dark surface1 + barra inferior dark.
+ * Lógica preservada: listExercises, addRoutineExercise optimista, filtros.
+ */
+
 import { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -15,17 +21,19 @@ import {
   Input,
   Chip,
   Badge,
-  GlassCard,
   Header,
   Button,
   useFadeSlideIn,
   usePressScale,
   haptic,
-  lightColors,
+  colors,
+  gradients,
+  shadows,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { listExercises, displayName, type Exercise } from '../../../lib/exercises';
 import { addRoutineExercise } from '../../../lib/routines';
 
@@ -65,58 +73,56 @@ function PickerRow({
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
 
   return (
-    <Animated.View style={[animatedStyle, shadows.sm]}>
-      <GlassCard intensity={40} tone="light" padding={spacing[3]}>
-        <Pressable
-          onPress={onAdd}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-          disabled={added}
-          accessibilityRole="button"
-          accessibilityLabel={`Añadir ${displayName(item)}`}
-          style={styles.row}
-        >
-          {item.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
-              style={styles.thumb}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <View style={styles.thumbPlaceholder} />
-          )}
-          <View style={styles.rowText}>
-            <AppText variant="body" style={styles.rowTitle} numberOfLines={1}>
-              {displayName(item)}
-            </AppText>
-            {item.primary_muscle ? (
-              <Badge label={item.primary_muscle} tone="accent" size="sm" />
-            ) : null}
-          </View>
+    <Animated.View style={[animatedStyle, styles.rowCard, shadows.sm]}>
+      <Pressable
+        onPress={onAdd}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        disabled={added}
+        accessibilityRole="button"
+        accessibilityLabel={`Añadir ${displayName(item)}`}
+        style={styles.row}
+      >
+        {item.image_url ? (
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.thumb}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View style={styles.thumbPlaceholder} />
+        )}
+        <View style={styles.rowText}>
+          <AppText variant="body" style={styles.rowTitle} numberOfLines={1}>
+            {displayName(item)}
+          </AppText>
+          {item.primary_muscle ? (
+            <Badge label={item.primary_muscle} tone="accent" size="sm" />
+          ) : null}
+        </View>
 
-          {/* Estado añadido vs añadir */}
-          <View
-            style={[
-              styles.addPill,
-              {
-                backgroundColor: added
-                  ? lightColors.statusGreen + '22'
-                  : lightColors.accentSoft,
-                borderColor: added
-                  ? lightColors.statusGreen + '55'
-                  : lightColors.accent + '44',
-              },
-            ]}
-          >
-            {added ? (
-              <Check size={18} color={lightColors.statusGreen} strokeWidth={2.4} />
-            ) : (
-              <Plus size={18} color={lightColors.accent} strokeWidth={2.4} />
-            )}
-          </View>
-        </Pressable>
-      </GlassCard>
+        {/* Estado añadido vs añadir */}
+        <View
+          style={[
+            styles.addPill,
+            {
+              backgroundColor: added
+                ? 'rgba(52,179,107,0.15)'
+                : colors.accentSoft,
+              borderColor: added
+                ? 'rgba(52,179,107,0.40)'
+                : 'rgba(198,255,58,0.30)',
+            },
+          ]}
+        >
+          {added ? (
+            <Check size={18} color="#3EC97A" strokeWidth={2.4} />
+          ) : (
+            <Plus size={18} color={colors.accent} strokeWidth={2.4} />
+          )}
+        </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -167,6 +173,15 @@ export default function ExercisePicker() {
 
   return (
     <View style={styles.root}>
+      {/* Fondo dark atlético */}
+      <LinearGradient
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
       <Header title="Añadir ejercicio" onBack={() => router.back()} withSafeArea />
 
       <View style={styles.body}>
@@ -200,7 +215,7 @@ export default function ExercisePicker() {
 
         <Animated.View style={[styles.listWrap, slideList]}>
           {loading ? (
-            <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+            <ActivityIndicator color={colors.accent} style={styles.spinner} />
           ) : (
             <FlatList
               data={items}
@@ -235,7 +250,7 @@ export default function ExercisePicker() {
             : `${addedCount} añadidos`}
         </AppText>
         <View style={styles.doneBtn}>
-          <Button label="Hecho" variant="primary" size="md" onPress={() => router.back()} />
+          <Button label="Hecho" variant="accent" size="md" onPress={() => router.back()} />
         </View>
       </View>
     </View>
@@ -245,7 +260,7 @@ export default function ExercisePicker() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   body: {
     flex: 1,
@@ -267,29 +282,39 @@ const styles = StyleSheet.create({
   spinner: {
     marginTop: spacing[8],
   },
+  // Exercise row — dark surface1 card
+  rowCard: {
+    borderRadius: radii.md,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    overflow: 'hidden',
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
+    padding: spacing[3],
   },
   thumb: {
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
   },
   thumbPlaceholder: {
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
   },
   rowText: {
     flex: 1,
     gap: spacing[1],
   },
   rowTitle: {
-    fontWeight: '600',
+    fontFamily: fontFamily.sansSemibold,
+    color: colors.textPrimary,
   },
   addPill: {
     width: 38,
@@ -303,6 +328,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing[8],
   },
+  // Footer — dark surface1 con hairline
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -311,8 +337,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing[3],
     paddingBottom: spacing[8],
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: lightColors.borderSubtle,
-    backgroundColor: lightColors.bgSurfaceStrong,
+    borderTopColor: colors.hairline,
+    backgroundColor: colors.surface1,
   },
   doneBtn: {
     minWidth: 120,

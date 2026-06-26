@@ -1,3 +1,10 @@
+/**
+ * Editor de rutina — dark atlético v3.
+ * Canvas negro + orbe lima. Input dark, cards dark surface1.
+ * CTA "Empezar entreno" accent lima. "Añadir ejercicio" barra inferior lima.
+ * Lógica preservada: crear borrador, targets, reordenar, eliminar, startSession.
+ */
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -16,13 +23,15 @@ import {
   Button,
   Input,
   Header,
-  GlassCard,
   useFadeSlideIn,
   haptic,
-  lightColors,
+  colors,
+  gradients,
+  glow,
+  shadows,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
 import {
   getRoutine,
@@ -241,21 +250,15 @@ export default function RoutineEditor() {
   if (loading) {
     return (
       <View style={[styles.root, styles.center]}>
-        <ActivityIndicator color={lightColors.accent} size="large" />
+        <Background />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[styles.orb, styles.orbTop]} />
+      <Background />
 
       <Header
         title="Editor"
@@ -269,7 +272,7 @@ export default function RoutineEditor() {
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={({ pressed }) => [styles.saveBtn, pressed && { opacity: 0.6 }]}
           >
-            <Check size={22} color={lightColors.accent} strokeWidth={2.4} />
+            <Check size={22} color={colors.accent} strokeWidth={2.4} />
           </Pressable>
         }
       />
@@ -280,7 +283,7 @@ export default function RoutineEditor() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Nombre editable */}
+        {/* Nombre editable — Input dark */}
         <Animated.View style={slideName}>
           <Input
             label="Nombre de la rutina"
@@ -293,11 +296,12 @@ export default function RoutineEditor() {
           />
         </Animated.View>
 
-        {/* Empezar entreno — CTA prominente (solo si hay ejercicios) */}
+        {/* Empezar entreno — CTA prominente lima (solo si hay ejercicios) */}
         {exercises.length > 0 ? (
           <Animated.View style={slideName}>
             <Button
               label={starting ? 'Empezando…' : 'Empezar entreno'}
+              variant="accent"
               onPress={handleStart}
               loading={starting}
             />
@@ -307,7 +311,7 @@ export default function RoutineEditor() {
         {/* Lista de ejercicios */}
         <Animated.View style={[styles.list, slideList]}>
           {exercises.length === 0 ? (
-            <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+            <View style={styles.emptyCard}>
               <View style={styles.emptyInner}>
                 <AppText variant="heading" style={styles.emptyTitle}>
                   Rutina vacía
@@ -316,7 +320,7 @@ export default function RoutineEditor() {
                   Añade ejercicios desde el catálogo para empezar a construir tu sesión.
                 </AppText>
               </View>
-            </GlassCard>
+            </View>
           ) : (
             exercises.map((item, index) => (
               <ExerciseEditorRow
@@ -337,35 +341,51 @@ export default function RoutineEditor() {
         </Animated.View>
       </ScrollView>
 
-      {/* CTA añadir ejercicio — barra inferior prominente */}
+      {/* CTA añadir ejercicio — barra inferior prominente lima */}
       <View style={styles.addBar}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Añadir ejercicio"
           onPress={openPicker}
-          style={({ pressed }) => [pressed && { opacity: 0.92 }]}
+          style={({ pressed }) => [pressed && { opacity: 0.88 }]}
         >
-          <LinearGradient
-            colors={['#4F62E0', '#3D4FCC']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.addBtn, shadows.lg]}
-          >
-            <Plus size={22} color="#FCFCFD" strokeWidth={2.4} />
-            <AppText variant="body" style={styles.addLabel}>
+          <View style={[styles.addBtn, shadows.lg]}>
+            <Plus size={22} color={colors.onAccent} strokeWidth={2.4} />
+            <AppText style={styles.addLabel}>
               Añadir ejercicio
             </AppText>
-          </LinearGradient>
+          </View>
         </Pressable>
       </View>
     </View>
   );
 }
 
+/** Fondo dark atlético: gradiente de atmósfera + orbe de glow lima muy tenue. */
+function Background() {
+  return (
+    <>
+      <LinearGradient
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.6, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.8, y: 0.6 }}
+        style={[styles.orb, styles.orbTopLeft]}
+      />
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   center: {
     justifyContent: 'center',
@@ -390,17 +410,27 @@ const styles = StyleSheet.create({
   list: {
     gap: spacing[3],
   },
+  // Empty state — dark card
+  emptyCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[6],
+  },
   emptyInner: {
     gap: spacing[2],
     alignItems: 'center',
   },
   emptyTitle: {
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   emptyCopy: {
     textAlign: 'center',
     lineHeight: 22,
   },
+  // Add exercise bar — lima accent fill
   addBar: {
     position: 'absolute',
     left: spacing[5],
@@ -414,20 +444,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
+    backgroundColor: colors.accent,
+    ...glow('soft'),
   },
   addLabel: {
-    color: '#FCFCFD',
-    fontWeight: '600',
+    fontFamily: fontFamily.display,
+    fontSize: 17,
+    color: colors.onAccent,
+    letterSpacing: -0.2,
   },
+  // Background orb
   orb: {
     position: 'absolute',
     borderRadius: 9999,
   },
-  orbTop: {
+  orbTopLeft: {
     width: 300,
     height: 300,
     top: -110,
     left: -80,
-    backgroundColor: 'rgba(139,157,255,0.16)',
   },
 });

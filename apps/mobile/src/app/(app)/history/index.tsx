@@ -1,5 +1,5 @@
 /**
- * Historial de sesiones — lista cronológica inversa.
+ * Historial de sesiones — lista cronológica inversa — dark atlético v3.
  *
  * Muestra todas las sesiones del usuario con:
  * - Fecha (relativa si < 7 días, absoluta si más antigua)
@@ -26,13 +26,16 @@ import { useRouter } from 'expo-router';
 import {
   AppText,
   Badge,
-  GlassCard,
   Header,
   useFadeSlideIn,
-  lightColors,
+  usePressScale,
+  colors,
+  gradients,
+  glow,
+  shadows,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
 import { listSessions, type Session } from '../../../lib/sessions';
 
@@ -84,17 +87,20 @@ interface SessionCardProps {
 
 function SessionCard({ item, index, onPress }: SessionCardProps) {
   const enter = useFadeSlideIn(index * 60);
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
   const isInProgress = item.status === 'in_progress';
 
   return (
-    <Animated.View style={[enter, shadows.sm]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Abrir sesión ${item.routine_name ?? 'Sesión libre'}`}
-        onPress={onPress}
-        style={({ pressed }) => [pressed && { opacity: 0.88 }]}
-      >
-        <GlassCard intensity={46} tone="light" padding={spacing[4]}>
+    <Animated.View style={enter}>
+      <Animated.View style={[animatedStyle, styles.cardOuter, shadows.md]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir sesión ${item.routine_name ?? 'Sesión libre'}`}
+          onPress={onPress}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          style={styles.cardInner}
+        >
           <View style={styles.cardRow}>
             {/* Left: info */}
             <View style={styles.cardInfo}>
@@ -111,7 +117,7 @@ function SessionCard({ item, index, onPress }: SessionCardProps) {
                   {formatSessionDate(item.started_at)}
                 </AppText>
                 <AppText variant="muted" style={styles.cardDot}>·</AppText>
-                <AppText variant="muted" style={styles.cardSets}>
+                <AppText style={styles.cardSets}>
                   {item.set_count} {item.set_count === 1 ? 'serie' : 'series'}
                 </AppText>
               </View>
@@ -120,12 +126,12 @@ function SessionCard({ item, index, onPress }: SessionCardProps) {
             {/* Right: chevron */}
             <ChevronRight
               size={18}
-              color={lightColors.textMuted}
+              color={colors.textMuted}
               strokeWidth={1.8}
             />
           </View>
-        </GlassCard>
-      </Pressable>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -136,19 +142,17 @@ function EmptyState() {
   const enter = useFadeSlideIn(80);
   return (
     <Animated.View style={enter}>
-      <GlassCard intensity={42} tone="light" padding={spacing[8]}>
-        <View style={styles.emptyInner}>
-          <View style={styles.emptyIcon}>
-            <ClipboardList size={32} color={lightColors.accent} strokeWidth={1.5} />
-          </View>
-          <AppText variant="heading" style={styles.emptyTitle}>
-            Sin sesiones
-          </AppText>
-          <AppText variant="muted" style={styles.emptyCopy}>
-            Completa tu primer entreno y aparecerá aquí.
-          </AppText>
+      <View style={styles.emptyCard}>
+        <View style={styles.emptyIcon}>
+          <ClipboardList size={32} color={colors.accent} strokeWidth={1.5} />
         </View>
-      </GlassCard>
+        <AppText variant="heading" style={styles.emptyTitle}>
+          Sin sesiones
+        </AppText>
+        <AppText variant="muted" style={styles.emptyCopy}>
+          Completa tu primer entreno y aparecerá aquí.
+        </AppText>
+      </View>
     </Animated.View>
   );
 }
@@ -192,25 +196,31 @@ export default function HistoryList() {
 
   return (
     <View style={styles.root}>
-      {/* Ambient background */}
+      {/* Fondo dark atlético: gradiente de atmósfera */}
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
+      {/* Orbe lima tenue — esquina superior derecha */}
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.15, y: 0.6 }}
+        style={[styles.orb, styles.orbTopRight]}
+      />
 
       <Header title="Historial" onBack={() => router.back()} withSafeArea />
 
       {loading ? (
         <View style={[styles.fill, styles.center]}>
-          <ActivityIndicator color={lightColors.accent} size="large" />
+          <ActivityIndicator color={colors.accent} size="large" />
         </View>
       ) : loadError ? (
         <View style={[styles.fill, styles.center, styles.padH]}>
-          <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+          <View style={styles.errorCard}>
             <View style={styles.emptyInner}>
               <AppText variant="heading" style={styles.emptyTitle}>
                 Error al cargar
@@ -219,7 +229,7 @@ export default function HistoryList() {
                 No se pudo cargar el historial. Inténtalo de nuevo.
               </AppText>
             </View>
-          </GlassCard>
+          </View>
         </View>
       ) : (
         <ScrollView
@@ -229,7 +239,7 @@ export default function HistoryList() {
         >
           {/* Section header */}
           <Animated.View style={slideHeader}>
-            <AppText variant="muted" style={styles.sectionLabel}>
+            <AppText style={styles.sectionLabel}>
               {sessions.length === 0
                 ? 'Tus entrenos aparecerán aquí'
                 : `${sessions.length} ${sessions.length === 1 ? 'sesión' : 'sesiones'}`}
@@ -257,7 +267,7 @@ export default function HistoryList() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   fill: {
     flex: 1,
@@ -280,11 +290,22 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 13,
+    fontFamily: fontFamily.sansSemibold,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: lightColors.textMuted,
-    fontWeight: '600',
+    color: colors.textMuted,
     marginBottom: spacing[1],
+  },
+  // Session card — dark surface1
+  cardOuter: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    overflow: 'hidden',
+  },
+  cardInner: {
+    padding: spacing[4],
   },
   cardRow: {
     flexDirection: 'row',
@@ -302,8 +323,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardTitle: {
-    fontWeight: '600',
-    color: lightColors.textPrimary,
+    fontFamily: fontFamily.sansSemibold,
+    color: colors.textPrimary,
     flexShrink: 1,
   },
   cardMeta: {
@@ -316,10 +337,31 @@ const styles = StyleSheet.create({
   },
   cardDot: {
     fontSize: 13,
-    color: lightColors.textMuted,
+    color: colors.textMuted,
   },
   cardSets: {
     fontSize: 13,
+    fontFamily: fontFamily.sansMedium,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
+  },
+  // Empty / error cards
+  emptyCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[8],
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  errorCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[6],
+    width: '100%',
   },
   emptyInner: {
     gap: spacing[3],
@@ -329,12 +371,13 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: radii.xl,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyTitle: {
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   emptyCopy: {
     textAlign: 'center',
@@ -344,11 +387,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 9999,
   },
-  orbTop: {
-    width: 300,
-    height: 300,
-    top: -100,
-    right: -80,
-    backgroundColor: 'rgba(139,157,255,0.14)',
+  orbTopRight: {
+    width: 360,
+    height: 360,
+    top: -120,
+    right: -90,
   },
 });

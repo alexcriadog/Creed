@@ -1,5 +1,6 @@
 /**
  * ExerciseEditorRow — fila editable de un ejercicio dentro del builder.
+ * Dark atlético v3: surface1 card + hairline, controles en colors v3.
  *
  * Muestra: thumb (expo-image) + nombre + steppers de targets (sets × reps,
  * RIR, descanso) + controles de reordenar (▲▼) y eliminar (🗑).
@@ -9,24 +10,23 @@
  */
 
 import { memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TextInput } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { ArrowUp, ArrowDown, Trash2, Link2 } from 'lucide-react-native';
 import {
   AppText,
   Badge,
-  GlassCard,
   IconButton,
   NumberStepper,
   Divider,
   useFadeSlideIn,
-  lightColors,
+  colors,
+  shadows,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
-import { TextInput } from 'react-native';
 import { displayName } from '../../lib/exercises';
 
 export type EditorExercise = {
@@ -74,139 +74,137 @@ function ExerciseEditorRowBase({
   const inSuperset = item.superset_group !== null;
 
   return (
-    <Animated.View style={[enter, shadows.md]}>
-      <GlassCard intensity={48} tone="light" padding={spacing[4]}>
-        {/* Cabecera: thumb + nombre + acciones de orden */}
-        <View style={styles.header}>
-          {item.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
-              style={styles.thumb}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <View style={styles.thumbPlaceholder}>
-              <AppText variant="label" style={styles.thumbIndex}>
-                {index + 1}
-              </AppText>
-            </View>
-          )}
-
-          <View style={styles.titleBlock}>
-            <AppText variant="body" style={styles.title} numberOfLines={2}>
-              {displayName(item)}
+    <Animated.View style={[enter, styles.card, shadows.md]}>
+      {/* Cabecera: thumb + nombre + acciones de orden */}
+      <View style={styles.header}>
+        {item.image_url ? (
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.thumb}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View style={styles.thumbPlaceholder}>
+            <AppText style={styles.thumbIndex}>
+              {index + 1}
             </AppText>
-            <View style={styles.metaRow}>
-              {item.primary_muscle ? (
-                <Badge label={item.primary_muscle} tone="accent" size="sm" />
-              ) : null}
-              {inSuperset ? (
-                <Badge label={`SS ${item.superset_group! + 1}`} tone="amber" size="sm" />
-              ) : null}
-            </View>
           </View>
+        )}
 
-          {/* Reorder ▲▼ (fallback robusto a drag) */}
-          <View style={styles.orderControls}>
-            <IconButton
-              size={34}
-              variant="ghost"
-              accessibilityLabel="Subir ejercicio"
-              disabled={index === 0}
-              onPress={onMoveUp}
-            >
-              <ArrowUp size={18} color={lightColors.textSecondary} strokeWidth={2} />
-            </IconButton>
-            <IconButton
-              size={34}
-              variant="ghost"
-              accessibilityLabel="Bajar ejercicio"
-              disabled={index === total - 1}
-              onPress={onMoveDown}
-            >
-              <ArrowDown size={18} color={lightColors.textSecondary} strokeWidth={2} />
-            </IconButton>
+        <View style={styles.titleBlock}>
+          <AppText variant="body" style={styles.title} numberOfLines={2}>
+            {displayName(item)}
+          </AppText>
+          <View style={styles.metaRow}>
+            {item.primary_muscle ? (
+              <Badge label={item.primary_muscle} tone="accent" size="sm" />
+            ) : null}
+            {inSuperset ? (
+              <Badge label={`SS ${item.superset_group! + 1}`} tone="amber" size="sm" />
+            ) : null}
           </View>
         </View>
 
-        <Divider color={lightColors.borderDefault} style={styles.divider} />
-
-        {/* Targets */}
-        <View style={styles.targets}>
-          <NumberStepper
-            testID={`sets-${item.id}`}
-            label="Series"
-            value={item.target_sets}
-            min={1}
-            max={20}
-            defaultOnFirst={3}
-            onChange={(v) => onChangeTarget('target_sets', v)}
-          />
-          <View style={styles.repsField}>
-            <AppText variant="label" style={styles.repsLabel}>
-              Reps
-            </AppText>
-            <TextInput
-              testID={`reps-${item.id}`}
-              value={item.target_reps ?? ''}
-              onChangeText={(v) => onChangeTarget('target_reps', v)}
-              placeholder="8-10"
-              keyboardType="default"
-              returnKeyType="done"
-              style={styles.repsInput}
-              placeholderTextColor={lightColors.textMuted}
-              accessibilityLabel="Reps"
-            />
-          </View>
-          <NumberStepper
-            testID={`rir-${item.id}`}
-            label="RIR"
-            value={item.target_rir}
-            min={0}
-            max={10}
-            defaultOnFirst={2}
-            onChange={(v) => onChangeTarget('target_rir', v)}
-          />
-          <NumberStepper
-            testID={`rest-${item.id}`}
-            label="Descanso"
-            value={item.rest_seconds}
-            min={0}
-            max={600}
-            step={15}
-            suffix="s"
-            defaultOnFirst={90}
-            onChange={(v) => onChangeTarget('rest_seconds', v)}
-          />
-        </View>
-
-        {/* Acciones de fila */}
-        <View style={styles.rowActions}>
+        {/* Reorder ▲▼ (fallback robusto a drag) */}
+        <View style={styles.orderControls}>
           <IconButton
-            size={36}
-            variant={inSuperset ? 'accent' : 'glass'}
-            accessibilityLabel="Agrupar en superserie"
-            hapticKind="medium"
-            onPress={onToggleSuperset}
+            size={34}
+            variant="ghost"
+            accessibilityLabel="Subir ejercicio"
+            disabled={index === 0}
+            onPress={onMoveUp}
           >
-            <Link2
-              size={18}
-              color={inSuperset ? lightColors.accent : lightColors.textSecondary}
-              strokeWidth={2}
-            />
+            <ArrowUp size={18} color={colors.textSecondary} strokeWidth={2} />
           </IconButton>
           <IconButton
-            size={36}
-            variant="glass"
-            accessibilityLabel="Quitar ejercicio"
-            hapticKind="medium"
-            onPress={onRemove}
+            size={34}
+            variant="ghost"
+            accessibilityLabel="Bajar ejercicio"
+            disabled={index === total - 1}
+            onPress={onMoveDown}
           >
-            <Trash2 size={18} color={lightColors.statusRed} strokeWidth={2} />
+            <ArrowDown size={18} color={colors.textSecondary} strokeWidth={2} />
           </IconButton>
         </View>
-      </GlassCard>
+      </View>
+
+      <Divider style={styles.divider} />
+
+      {/* Targets */}
+      <View style={styles.targets}>
+        <NumberStepper
+          testID={`sets-${item.id}`}
+          label="Series"
+          value={item.target_sets}
+          min={1}
+          max={20}
+          defaultOnFirst={3}
+          onChange={(v) => onChangeTarget('target_sets', v)}
+        />
+        <View style={styles.repsField}>
+          <AppText style={styles.repsLabel}>
+            Reps
+          </AppText>
+          <TextInput
+            testID={`reps-${item.id}`}
+            value={item.target_reps ?? ''}
+            onChangeText={(v) => onChangeTarget('target_reps', v)}
+            placeholder="8-10"
+            keyboardType="default"
+            returnKeyType="done"
+            style={styles.repsInput}
+            placeholderTextColor={colors.textMuted}
+            accessibilityLabel="Reps"
+          />
+        </View>
+        <NumberStepper
+          testID={`rir-${item.id}`}
+          label="RIR"
+          value={item.target_rir}
+          min={0}
+          max={10}
+          defaultOnFirst={2}
+          onChange={(v) => onChangeTarget('target_rir', v)}
+        />
+        <NumberStepper
+          testID={`rest-${item.id}`}
+          label="Descanso"
+          value={item.rest_seconds}
+          min={0}
+          max={600}
+          step={15}
+          suffix="s"
+          defaultOnFirst={90}
+          onChange={(v) => onChangeTarget('rest_seconds', v)}
+        />
+      </View>
+
+      {/* Acciones de fila */}
+      <View style={styles.rowActions}>
+        <IconButton
+          size={36}
+          variant={inSuperset ? 'accent' : 'glass'}
+          accessibilityLabel="Agrupar en superserie"
+          hapticKind="medium"
+          onPress={onToggleSuperset}
+        >
+          <Link2
+            size={18}
+            color={inSuperset ? colors.accent : colors.textSecondary}
+            strokeWidth={2}
+          />
+        </IconButton>
+        <IconButton
+          size={36}
+          variant="glass"
+          accessibilityLabel="Quitar ejercicio"
+          hapticKind="medium"
+          onPress={onRemove}
+        >
+          <Trash2 size={18} color={colors.danger} strokeWidth={2} />
+        </IconButton>
+      </View>
     </Animated.View>
   );
 }
@@ -214,6 +212,14 @@ function ExerciseEditorRowBase({
 export const ExerciseEditorRow = memo(ExerciseEditorRowBase);
 
 const styles = StyleSheet.create({
+  // Card — dark surface1 con hairline
+  card: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[4],
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -223,26 +229,28 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
   },
   thumbPlaceholder: {
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   thumbIndex: {
-    color: lightColors.accent,
-    fontWeight: '600',
+    fontFamily: fontFamily.display,
+    fontSize: 20,
+    color: colors.accent,
   },
   titleBlock: {
     flex: 1,
     gap: spacing[1],
   },
   title: {
-    fontWeight: '600',
+    fontFamily: fontFamily.sansSemibold,
+    color: colors.textPrimary,
   },
   metaRow: {
     flexDirection: 'row',
@@ -267,22 +275,24 @@ const styles = StyleSheet.create({
     minWidth: 64,
   },
   repsLabel: {
-    color: lightColors.textMuted,
+    fontFamily: fontFamily.sansSemibold,
     fontSize: 11,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   repsInput: {
     width: 64,
     textAlign: 'center',
+    fontFamily: fontFamily.sansMedium,
     fontSize: 15,
-    color: lightColors.textPrimary,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: lightColors.borderDefault,
+    borderColor: colors.hairlineStrong,
     borderRadius: radii.sm,
     paddingHorizontal: spacing[2],
     paddingVertical: spacing[2],
-    backgroundColor: lightColors.bgSurface,
+    backgroundColor: colors.surface2,
     minHeight: 36,
   },
   rowActions: {

@@ -1,9 +1,7 @@
 /**
- * Detalle de sesión (solo lectura) — muestra los ejercicios y series
- * ejecutadas: peso × reps, RIR, duración total y fecha.
- *
- * Reutiliza la composición de la sesión en vivo pero sin ninguna edición.
- * Los campos de peso/reps/RIR se muestran como texto, no como inputs.
+ * Detalle de sesión (solo lectura) — dark atlético v3.
+ * Muestra ejercicios y series: peso × reps, RIR, duración, fecha.
+ * Lógica preservada: getSession/getRoutine, estados de carga/error.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -20,14 +18,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   AppText,
   Badge,
-  GlassCard,
   Header,
   Divider,
   useFadeSlideIn,
-  lightColors,
+  colors,
+  gradients,
+  glow,
+  shadows,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
 import {
   getSession,
@@ -94,28 +94,28 @@ function ReadOnlySetRow({ set }: ReadOnlySetRowProps) {
     <View style={[styles.setRow, done && styles.setRowDone]}>
       {/* Nº de serie */}
       <View style={styles.colSet}>
-        <AppText variant="label" style={styles.setNumber}>
+        <AppText style={styles.setNumber}>
           {set.set_number}
         </AppText>
       </View>
 
       {/* Peso */}
       <View style={[styles.colNum, styles.cellCenter]}>
-        <AppText variant="body" style={styles.cellValue}>
+        <AppText style={styles.cellValue}>
           {set.weight_kg != null ? String(set.weight_kg) : '—'}
         </AppText>
       </View>
 
       {/* Reps */}
       <View style={[styles.colNum, styles.cellCenter]}>
-        <AppText variant="body" style={styles.cellValue}>
+        <AppText style={styles.cellValue}>
           {set.reps != null ? String(set.reps) : '—'}
         </AppText>
       </View>
 
       {/* RIR */}
       <View style={[styles.colNum, styles.cellCenter]}>
-        <AppText variant="body" style={styles.cellValue}>
+        <AppText style={styles.cellValue}>
           {set.rir != null ? String(set.rir) : '—'}
         </AppText>
       </View>
@@ -141,8 +141,8 @@ function ExerciseCard({ group, index }: ExerciseCardProps) {
   const doneCount = group.sets.filter((s) => s.completed).length;
 
   return (
-    <Animated.View style={[enter, shadows.md]}>
-      <GlassCard intensity={48} tone="light" padding={spacing[4]}>
+    <Animated.View style={enter}>
+      <View style={[styles.exerciseCard, shadows.md]}>
         {/* Cabecera del ejercicio */}
         <View style={styles.exHeader}>
           {head?.image_url ? (
@@ -154,7 +154,7 @@ function ExerciseCard({ group, index }: ExerciseCardProps) {
             />
           ) : (
             <View style={styles.thumbPlaceholder}>
-              <AppText variant="label" style={styles.thumbIndex}>
+              <AppText style={styles.thumbIndex}>
                 {index + 1}
               </AppText>
             </View>
@@ -173,31 +173,23 @@ function ExerciseCard({ group, index }: ExerciseCardProps) {
 
           {/* Progreso del ejercicio */}
           <View style={styles.exProgress}>
-            <AppText variant="heading" style={styles.exProgressValue}>
+            <AppText style={styles.exProgressValue}>
               {doneCount}
-              <AppText variant="muted" style={styles.exProgressTotal}>
+              <AppText style={styles.exProgressTotal}>
                 {`/${group.sets.length}`}
               </AppText>
             </AppText>
           </View>
         </View>
 
-        <Divider color={lightColors.borderDefault} style={styles.divider} />
+        <Divider style={styles.divider} />
 
         {/* Cabecera de columnas */}
         <View style={styles.colHead}>
-          <AppText variant="label" style={[styles.colLabel, styles.colSet]}>
-            Serie
-          </AppText>
-          <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
-            Kg
-          </AppText>
-          <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
-            Reps
-          </AppText>
-          <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
-            RIR
-          </AppText>
+          <AppText style={[styles.colLabel, styles.colSet]}>Serie</AppText>
+          <AppText style={[styles.colLabel, styles.colNum]}>Kg</AppText>
+          <AppText style={[styles.colLabel, styles.colNum]}>Reps</AppText>
+          <AppText style={[styles.colLabel, styles.colNum]}>RIR</AppText>
           <View style={styles.colCheck} />
         </View>
 
@@ -207,7 +199,7 @@ function ExerciseCard({ group, index }: ExerciseCardProps) {
             <ReadOnlySetRow key={set.id} set={set} />
           ))}
         </View>
-      </GlassCard>
+      </View>
     </Animated.View>
   );
 }
@@ -218,13 +210,18 @@ function Background() {
   return (
     <>
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.6 }}
+        style={[styles.orb, styles.orbTop]}
+      />
     </>
   );
 }
@@ -294,7 +291,7 @@ export default function SessionDetail() {
     return (
       <View style={[styles.root, styles.center]}>
         <Background />
-        <ActivityIndicator color={lightColors.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -304,8 +301,8 @@ export default function SessionDetail() {
       <View style={styles.root}>
         <Background />
         <Header title="Sesión" onBack={() => router.back()} withSafeArea />
-        <View style={[styles.center, styles.fill]}>
-          <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+        <View style={[styles.center, styles.fill, styles.padH]}>
+          <View style={styles.errorCard}>
             <View style={styles.emptyInner}>
               <AppText variant="heading" style={styles.emptyTitle}>
                 No se pudo cargar
@@ -314,13 +311,14 @@ export default function SessionDetail() {
                 No encontramos esta sesión o hubo un error al cargarla.
               </AppText>
             </View>
-          </GlassCard>
+          </View>
         </View>
       </View>
     );
   }
 
   const progressPct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
+  const isCompleted = session.status === 'completed';
 
   return (
     <View style={styles.root}>
@@ -335,45 +333,44 @@ export default function SessionDetail() {
       >
         {/* Hero: nombre + resumen */}
         <Animated.View style={[slideHero, shadows.md]}>
-          <GlassCard intensity={52} tone="light" padding={spacing[5]}>
-            <AppText variant="muted" style={styles.heroEyebrow}>
-              {session.status === 'completed' ? 'Sesión completada' : 'Entrenamiento en curso'}
+          <View style={styles.heroCard}>
+            {/* Eyebrow */}
+            <AppText style={styles.heroEyebrow}>
+              {isCompleted ? 'Sesión completada' : 'Entrenamiento en curso'}
             </AppText>
-            <AppText variant="title" style={styles.heroTitle} numberOfLines={2}>
+            <AppText style={styles.heroTitle} numberOfLines={2}>
               {routineName ?? (session.routine_id ? 'Entrenamiento' : 'Sesión libre')}
             </AppText>
 
             {/* Meta: fecha + duración */}
             <View style={styles.heroMetaRow}>
               <View style={styles.metaPill}>
-                <AppText variant="label" style={styles.metaPillText}>
+                <AppText style={styles.metaPillText}>
                   {formatAbsoluteDate(session.started_at)}
                 </AppText>
               </View>
               <View style={styles.metaPill}>
-                <AppText variant="label" style={styles.metaPillText}>
+                <AppText style={[styles.metaPillText, styles.metaDuration]}>
                   {formatDuration(session.started_at, session.completed_at)}
                 </AppText>
               </View>
             </View>
 
             {/* Progreso global */}
-            <View style={styles.heroMeta}>
-              <View style={styles.progressPill}>
-                <AppText variant="label" style={styles.progressText}>
-                  {`${doneSets} / ${totalSets} series`}
-                </AppText>
-              </View>
+            <View style={styles.heroStats}>
+              <AppText style={styles.statDone}>{doneSets}</AppText>
+              <AppText style={styles.statTotal}>{` / ${totalSets}`}</AppText>
+              <AppText style={styles.statUnit}> series</AppText>
             </View>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
             </View>
-          </GlassCard>
+          </View>
         </Animated.View>
 
         {/* Ejercicios */}
         {groups.length === 0 ? (
-          <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+          <View style={styles.emptyExCard}>
             <View style={styles.emptyInner}>
               <AppText variant="heading" style={styles.emptyTitle}>
                 Sin series
@@ -382,7 +379,7 @@ export default function SessionDetail() {
                 Esta sesión no tiene series registradas.
               </AppText>
             </View>
-          </GlassCard>
+          </View>
         ) : (
           groups.map((group, index) => (
             <ExerciseCard key={group.exerciseId} group={group} index={index} />
@@ -396,7 +393,7 @@ export default function SessionDetail() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   fill: {
     flex: 1,
@@ -404,6 +401,9 @@ const styles = StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  padH: {
+    paddingHorizontal: spacing[5],
   },
   scroll: {
     flex: 1,
@@ -414,62 +414,104 @@ const styles = StyleSheet.create({
     paddingBottom: 64,
     gap: spacing[4],
   },
+  // Hero card
+  heroCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[5],
+    gap: spacing[3],
+  },
   heroEyebrow: {
-    fontSize: 12,
+    fontSize: 11,
+    fontFamily: fontFamily.sansSemibold,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    color: lightColors.accent,
-    fontWeight: '600',
+    color: colors.accent,
   },
   heroTitle: {
-    marginTop: spacing[1],
+    fontFamily: fontFamily.display,
+    fontSize: 26,
+    color: colors.textPrimary,
+    letterSpacing: -0.8,
+    lineHeight: 30,
   },
   heroMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing[2],
-    marginTop: spacing[3],
-  },
-  heroMeta: {
-    flexDirection: 'row',
-    marginTop: spacing[3],
   },
   metaPill: {
     paddingHorizontal: spacing[3],
     paddingVertical: 5,
     borderRadius: radii.pill,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: lightColors.borderSubtle,
+    borderColor: colors.hairline,
   },
   metaPillText: {
-    color: lightColors.textSecondary,
-    fontWeight: '500',
+    fontFamily: fontFamily.sansMedium,
+    fontSize: 13,
+    color: colors.textSecondary,
     textTransform: 'capitalize',
   },
-  progressPill: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: 5,
-    borderRadius: radii.pill,
-    backgroundColor: lightColors.bgSurfaceRaised,
-    borderWidth: 1,
-    borderColor: lightColors.borderSubtle,
+  metaDuration: {
+    fontFamily: fontFamily.display,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
   },
-  progressText: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
+  heroStats: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  statDone: {
+    fontFamily: fontFamily.display,
+    fontSize: 28,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  statTotal: {
+    fontFamily: fontFamily.displayMedium,
+    fontSize: 18,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  statUnit: {
+    fontFamily: fontFamily.sans,
+    fontSize: 14,
+    color: colors.textMuted,
   },
   progressTrack: {
-    marginTop: spacing[3],
     height: 6,
     borderRadius: radii.pill,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
   progressFill: {
     height: '100%',
     borderRadius: radii.pill,
-    backgroundColor: lightColors.accent,
+    backgroundColor: colors.accent,
+    ...glow('soft'),
+  },
+  // Error / empty cards
+  errorCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[6],
+    width: '100%',
+  },
+  emptyExCard: {
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[6],
   },
   emptyInner: {
     gap: spacing[2],
@@ -477,12 +519,20 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   emptyCopy: {
     textAlign: 'center',
     lineHeight: 22,
   },
   // Exercise card
+  exerciseCard: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface1,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    padding: spacing[4],
+  },
   exHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -492,26 +542,28 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
   },
   thumbPlaceholder: {
     width: 52,
     height: 52,
     borderRadius: radii.md,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   thumbIndex: {
-    color: lightColors.accent,
-    fontWeight: '600',
+    fontFamily: fontFamily.display,
+    fontSize: 20,
+    color: colors.accent,
   },
   titleBlock: {
     flex: 1,
     gap: spacing[1],
   },
   exTitle: {
-    fontWeight: '600',
+    fontFamily: fontFamily.sansSemibold,
+    color: colors.textPrimary,
   },
   metaRow: {
     flexDirection: 'row',
@@ -524,12 +576,16 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   exProgressValue: {
-    color: lightColors.textPrimary,
-    fontWeight: '700',
+    fontFamily: fontFamily.display,
+    fontSize: 22,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
   },
   exProgressTotal: {
+    fontFamily: fontFamily.displayMedium,
     fontSize: 15,
-    fontWeight: '500',
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
   },
   divider: {
     marginVertical: spacing[3],
@@ -542,8 +598,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing[2],
   },
   colLabel: {
+    fontFamily: fontFamily.sansSemibold,
     fontSize: 11,
-    color: lightColors.textMuted,
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -557,19 +614,23 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   setRowDone: {
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
   },
   setNumber: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
+    fontFamily: fontFamily.sansSemibold,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   cellCenter: {
     alignItems: 'center',
   },
   cellValue: {
+    fontFamily: fontFamily.sansMedium,
+    fontSize: 15,
     textAlign: 'center',
-    color: lightColors.textPrimary,
-    fontWeight: '500',
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
   },
   colSet: {
     width: 40,
@@ -586,10 +647,14 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: lightColors.borderDefault,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
   dotDone: {
-    backgroundColor: lightColors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+    ...glow('soft'),
   },
   rows: {
     gap: spacing[2],
@@ -599,10 +664,9 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   orbTop: {
-    width: 300,
-    height: 300,
-    top: -110,
-    right: -90,
-    backgroundColor: 'rgba(139,157,255,0.16)',
+    width: 360,
+    height: 360,
+    top: -130,
+    right: -110,
   },
 });
