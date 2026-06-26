@@ -1,11 +1,37 @@
+/**
+ * Home — dark atlético v3.
+ * Canvas negro + orbe lima. Greeting Space Grotesk. Hero CTA lima accent.
+ * Tarjetas dark surface1 con hairline + iconos lima. Staged motion.
+ * Lógica preservada: rutas de navegación + signOut.
+ */
+
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Dumbbell, CalendarDays, CalendarRange, ChevronRight, ClipboardList, Zap } from 'lucide-react-native';
+import {
+  Dumbbell,
+  CalendarDays,
+  CalendarRange,
+  ChevronRight,
+  ClipboardList,
+  Zap,
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import {
-  AppText, Button, Header, Divider,
-  useFadeSlideIn, lightColors, spacing, radii, shadows,
+  AppText,
+  Button,
+  Header,
+  Divider,
+  useFadeSlideIn,
+  usePressScale,
+  colors,
+  gradients,
+  glow,
+  spacing,
+  radii,
+  shadows,
+  fontFamily,
+  fontSize,
 } from '@creed/ui-native';
 import { signOut } from '../../lib/auth';
 
@@ -15,21 +41,27 @@ export default function Home() {
   const slideHeader = useFadeSlideIn(0);
   const slideHero = useFadeSlideIn(80);
   const slideActions = useFadeSlideIn(160);
-  const slideProgram = useFadeSlideIn(220);
-  const slideHistory = useFadeSlideIn(270);
-  const slideSignOut = useFadeSlideIn(340);
+  const slideProgram = useFadeSlideIn(230);
+  const slideHistory = useFadeSlideIn(290);
+  const slideSignOut = useFadeSlideIn(350);
 
   return (
     <View style={styles.root}>
-      {/* Ambient background */}
+      {/* Fondo dark atlético: gradiente de atmósfera */}
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
+      {/* Orbe lima tenue — esquina superior derecha */}
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.15, y: 0.6 }}
+        style={[styles.orb, styles.orbTopRight]}
+      />
 
       <Header title="Hoy" withSafeArea />
 
@@ -38,157 +70,59 @@ export default function Home() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting */}
+        {/* Greeting — Space Grotesk display */}
         <Animated.View style={[styles.greeting, slideHeader]}>
-          <AppText variant="display" style={styles.greetingText}>Hola</AppText>
+          <AppText style={styles.greetingDisplay}>Hola</AppText>
           <AppText variant="muted">Aquí vivirá tu día de entreno.</AppText>
         </Animated.View>
 
-        {/* Hero CTA — Empezar entreno */}
+        {/* Hero CTA — Empezar entreno, lima accent fill */}
         <Animated.View style={slideHero}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Empezar entreno"
-            onPress={() => router.push('/(app)/start' as any)}
-            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
-          >
-            <View style={[styles.heroCard, shadows.lg]}>
-              <LinearGradient
-                colors={['#4F62E0', '#3D4FCC']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.heroGradient, { borderRadius: radii.xl }]}
-              >
-                <View style={styles.heroIconWrap}>
-                  <Zap size={30} color="#FCFCFD" strokeWidth={1.8} />
-                </View>
-                <View style={styles.heroTextBlock}>
-                  <AppText variant="heading" style={styles.heroTitle}>
-                    Empezar entreno
-                  </AppText>
-                  <AppText variant="body" style={styles.heroSub}>
-                    Elige una rutina y empieza ahora.
-                  </AppText>
-                </View>
-                <ChevronRight size={24} color="rgba(255,255,255,0.85)" strokeWidth={2} />
-              </LinearGradient>
-            </View>
-          </Pressable>
+          <HeroCard onPress={() => router.push('/(app)/start' as any)} />
         </Animated.View>
 
-        {/* CTA cards */}
+        {/* CTA grid — Ejercicios + Rutinas */}
         <Animated.View style={[styles.ctaRow, slideActions]}>
-          {/* Exercises CTA */}
-          <View style={[styles.ctaCard, shadows.md]}>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.55)']}
-              style={[styles.ctaGradient, { borderRadius: radii.lg }]}
-            >
-              <View style={styles.ctaIconWrap}>
-                <Dumbbell size={28} color={lightColors.accent} strokeWidth={1.8} />
-              </View>
-              <AppText variant="heading" style={styles.ctaTitle}>Ejercicios</AppText>
-              <AppText variant="muted" style={styles.ctaSub}>Catálogo completo</AppText>
-              <View style={styles.ctaBtn}>
-                <Button
-                  label="Explorar"
-                  variant="primary"
-                  size="sm"
-                  onPress={() => router.push('/(app)/exercises')}
-                />
-              </View>
-            </LinearGradient>
-          </View>
-
-          {/* Routines CTA */}
-          <View style={[styles.ctaCard, shadows.md]}>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.55)']}
-              style={[styles.ctaGradient, { borderRadius: radii.lg }]}
-            >
-              <View style={styles.ctaIconWrap}>
-                <CalendarDays size={28} color={lightColors.accent} strokeWidth={1.8} />
-              </View>
-              <AppText variant="heading" style={styles.ctaTitle}>Rutinas</AppText>
-              <AppText variant="muted" style={styles.ctaSub}>Mis planes</AppText>
-              <View style={styles.ctaBtn}>
-                <Button
-                  label="Ver"
-                  variant="secondary"
-                  size="sm"
-                  onPress={() => router.push('/(app)/routines' as any)}
-                />
-              </View>
-            </LinearGradient>
-          </View>
+          <NavCard
+            icon={<Dumbbell size={26} color={colors.accent} strokeWidth={1.8} />}
+            title="Ejercicios"
+            sub="Catálogo completo"
+            onPress={() => router.push('/(app)/exercises')}
+            style={styles.ctaFlex}
+          />
+          <NavCard
+            icon={<CalendarDays size={26} color={colors.accent} strokeWidth={1.8} />}
+            title="Rutinas"
+            sub="Mis planes"
+            onPress={() => router.push('/(app)/routines' as any)}
+            style={styles.ctaFlex}
+          />
         </Animated.View>
 
-        {/* Programa — sus rutinas (CTA ancho) */}
+        {/* Programa */}
         <Animated.View style={slideProgram}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir programa"
+          <NavCard
+            icon={<CalendarRange size={24} color={colors.accent} strokeWidth={1.8} />}
+            title="Tu programa"
+            sub="Tus rutinas y plan."
             onPress={() => router.push('/(app)/program' as any)}
-            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
-          >
-            <View style={[styles.programCard, shadows.md]}>
-              <LinearGradient
-                colors={['#4F62E0', '#3D4FCC']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.programGradient, { borderRadius: radii.xl }]}
-              >
-                <View style={styles.programIconWrap}>
-                  <CalendarRange size={26} color="#FCFCFD" strokeWidth={1.9} />
-                </View>
-                <View style={styles.programText}>
-                  <AppText variant="heading" style={styles.programTitle}>
-                    Tu programa
-                  </AppText>
-                  <AppText variant="body" style={styles.programSub}>
-                    Tu programa y sus rutinas.
-                  </AppText>
-                </View>
-                <ChevronRight size={22} color="rgba(255,255,255,0.85)" strokeWidth={2} />
-              </LinearGradient>
-            </View>
-          </Pressable>
+            showChevron
+          />
         </Animated.View>
 
-        {/* Historial — mis sesiones pasadas */}
+        {/* Historial */}
         <Animated.View style={slideHistory}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Abrir historial de sesiones"
+          <NavCard
+            icon={<ClipboardList size={24} color={colors.accent} strokeWidth={1.8} />}
+            title="Historial"
+            sub="Revisa tus sesiones pasadas."
             onPress={() => router.push('/(app)/history' as any)}
-            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
-          >
-            <View style={[styles.historyCard, shadows.sm]}>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.80)', 'rgba(255,255,255,0.60)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.historyGradient, { borderRadius: radii.xl }]}
-              >
-                <View style={styles.historyIconWrap}>
-                  <ClipboardList size={24} color={lightColors.accent} strokeWidth={1.8} />
-                </View>
-                <View style={styles.historyText}>
-                  <AppText variant="heading" style={styles.historyTitle}>
-                    Historial
-                  </AppText>
-                  <AppText variant="muted" style={styles.historySub}>
-                    Revisa tus sesiones pasadas.
-                  </AppText>
-                </View>
-                <ChevronRight size={20} color={lightColors.textMuted} strokeWidth={1.8} />
-              </LinearGradient>
-            </View>
-          </Pressable>
+            showChevron
+          />
         </Animated.View>
 
         <Animated.View style={slideSignOut}>
-          <Divider color={lightColors.borderDefault} style={styles.divider} />
+          <Divider style={styles.divider} />
           <Button
             label="Cerrar sesión"
             variant="ghost"
@@ -201,10 +135,85 @@ export default function Home() {
   );
 }
 
+// ── Subcomponentes ────────────────────────────────────────────────────────────
+
+function HeroCard({ onPress }: { onPress: () => void }) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  return (
+    <Animated.View style={[animatedStyle, styles.heroWrap, glow('soft')]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel="Empezar entreno"
+        style={styles.heroCard}
+      >
+        {/* Lima accent fill — texto onAccent */}
+        <View style={[styles.heroGradient, { borderRadius: radii.xl }]}>
+          <View style={styles.heroIconWrap}>
+            <Zap size={30} color={colors.onAccent} strokeWidth={2} />
+          </View>
+          <View style={styles.heroTextBlock}>
+            <AppText style={styles.heroTitle}>Empezar entreno</AppText>
+            <AppText style={styles.heroSub}>Elige una rutina y empieza ahora.</AppText>
+          </View>
+          <ChevronRight size={24} color={colors.onAccent} strokeWidth={2.2} />
+        </View>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function NavCard({
+  icon,
+  title,
+  sub,
+  onPress,
+  showChevron = false,
+  style,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub: string;
+  onPress: () => void;
+  showChevron?: boolean;
+  style?: object;
+}) {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  return (
+    <Animated.View style={[animatedStyle, styles.navCardOuter, shadows.md, style]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        style={styles.navCardInner}
+      >
+        <View style={styles.navIconWrap}>{icon}</View>
+        <View style={styles.navTextBlock}>
+          <AppText variant="heading" style={styles.navTitle}>
+            {title}
+          </AppText>
+          <AppText variant="muted" style={styles.navSub}>
+            {sub}
+          </AppText>
+        </View>
+        {showChevron ? (
+          <ChevronRight size={20} color={colors.textMuted} strokeWidth={1.8} />
+        ) : null}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── Estilos ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   scroll: {
     flex: 1,
@@ -212,31 +221,53 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[10],
-    gap: spacing[5],
+    gap: spacing[4],
   },
+  orb: {
+    position: 'absolute',
+    borderRadius: radii.pill,
+  },
+  orbTopRight: {
+    width: 360,
+    height: 360,
+    top: -120,
+    right: -90,
+  },
+
+  // Greeting
   greeting: {
     paddingTop: spacing[5],
     gap: spacing[1],
   },
-  greetingText: {
+  greetingDisplay: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize['2xl'],
+    color: colors.textPrimary,
     letterSpacing: -1.5,
+    lineHeight: fontSize['2xl'] * 1.05,
+  },
+
+  // Hero CTA
+  heroWrap: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
   },
   heroCard: {
     borderRadius: radii.xl,
     overflow: 'hidden',
-    marginTop: spacing[2],
   },
   heroGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[4],
     padding: spacing[5],
+    backgroundColor: colors.accent,
   },
   heroIconWrap: {
     width: 56,
     height: 56,
     borderRadius: radii.lg,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(10,11,13,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,121 +276,62 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   heroTitle: {
-    color: '#FCFCFD',
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.lg,
+    color: colors.onAccent,
     letterSpacing: -0.3,
-    fontSize: 19,
+    lineHeight: fontSize.lg * 1.15,
   },
   heroSub: {
-    color: 'rgba(255,255,255,0.82)',
+    fontFamily: fontFamily.sans,
     fontSize: 14,
+    color: 'rgba(10,11,13,0.72)',
   },
+
+  // CTA row (grid 2 columnas)
   ctaRow: {
     flexDirection: 'row',
     gap: spacing[3],
   },
-  ctaCard: {
+  ctaFlex: {
     flex: 1,
+  },
+
+  // Nav cards dark
+  navCardOuter: {
     borderRadius: radii.lg,
-    overflow: 'hidden',
+    backgroundColor: colors.surface1,
     borderWidth: 1,
-    borderColor: lightColors.borderDefault,
-  },
-  ctaGradient: {
-    padding: spacing[4],
-    gap: spacing[2],
-    flex: 1,
-  },
-  ctaIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.md,
-    backgroundColor: lightColors.accentSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing[1],
-  },
-  ctaTitle: {
-    fontSize: 17,
-  },
-  ctaSub: {
-    fontSize: 13,
-  },
-  ctaBtn: {
-    marginTop: spacing[3],
-  },
-  programCard: {
-    borderRadius: radii.xl,
+    borderColor: colors.hairline,
     overflow: 'hidden',
   },
-  programGradient: {
+  navCardInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[4],
-    padding: spacing[5],
-  },
-  programIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: radii.lg,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  programText: {
-    flex: 1,
-    gap: 2,
-  },
-  programTitle: {
-    color: '#FCFCFD',
-    letterSpacing: -0.2,
-  },
-  programSub: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 14,
-  },
-  divider: {
-    marginBottom: spacing[3],
-  },
-  historyCard: {
-    borderRadius: radii.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: lightColors.borderDefault,
-  },
-  historyGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[4],
+    gap: spacing[3],
     padding: spacing[4],
   },
-  historyIconWrap: {
+  navIconWrap: {
     width: 44,
     height: 44,
     borderRadius: radii.md,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  historyText: {
+  navTextBlock: {
     flex: 1,
     gap: 2,
   },
-  historyTitle: {
-    color: lightColors.textPrimary,
+  navTitle: {
+    fontSize: 17,
     letterSpacing: -0.2,
   },
-  historySub: {
+  navSub: {
     fontSize: 13,
   },
-  orb: {
-    position: 'absolute',
-    borderRadius: 9999,
-  },
-  orbTop: {
-    width: 340,
-    height: 340,
-    top: -120,
-    right: -80,
-    backgroundColor: 'rgba(139,157,255,0.18)',
+
+  divider: {
+    marginBottom: spacing[3],
   },
 });

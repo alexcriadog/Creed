@@ -1,12 +1,14 @@
 import '../../global.css';
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, View } from 'react-native';
 import { Slot } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from '../lib/auth-context';
 import { supabase } from '../lib/supabase';
 import { useAppFonts } from '../lib/use-fonts';
+import { colors } from '@creed/ui-native';
 
 export default function RootLayout() {
   const { fontsLoaded, fontError } = useAppFonts();
@@ -25,10 +27,14 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.canvas }}>
+      {/* StatusBar light = iconos blancos/claros sobre fondo negro */}
+      <StatusBar style="light" />
       <SafeAreaProvider>
         <AuthProvider>
-          <Slot />
+          <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+            <Slot />
+          </View>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

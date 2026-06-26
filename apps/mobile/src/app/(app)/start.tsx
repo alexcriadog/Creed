@@ -1,3 +1,10 @@
+/**
+ * Start — selector de rutina, dark atlético v3.
+ * Canvas negro + orbe lima + Header v3 con back circular.
+ * Cada rutina: tarjeta dark surface1 con borde acento + play lima + press-spring.
+ * Lógica preservada: listRoutines + startSession + guard + Alert.
+ */
+
 import { useCallback, useState } from 'react';
 import {
   View,
@@ -9,7 +16,7 @@ import {
 } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play, ListChecks, ChevronRight } from 'lucide-react-native';
+import { Play, ListChecks } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
@@ -19,15 +26,19 @@ import {
   Button,
   useFadeSlideIn,
   usePressScale,
-  lightColors,
+  colors,
+  gradients,
+  glow,
   spacing,
   radii,
   shadows,
+  fontFamily,
+  fontSize,
 } from '@creed/ui-native';
 import { listRoutines, type Routine } from '../../lib/routines';
 import { startSession } from '../../lib/sessions';
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Subcomponentes ────────────────────────────────────────────────────────────
 
 function RoutineRow({
   item,
@@ -45,31 +56,34 @@ function RoutineRow({
 
   return (
     <Animated.View style={enter}>
-      <Animated.View style={[animatedStyle, shadows.md]}>
-        <GlassCard intensity={50} tone="light" padding={spacing[5]}>
-          <Pressable
-            onPress={onStart}
-            onPressIn={onPressIn}
-            onPressOut={onPressOut}
-            disabled={isStarting}
-            accessibilityRole="button"
-            accessibilityLabel={`Empezar rutina ${item.name}`}
-            style={styles.rowPressable}
-          >
-            <View style={styles.rowIconWrap}>
-              <Play size={22} color={lightColors.accent} strokeWidth={1.8} />
-            </View>
-            <View style={styles.rowTextBlock}>
-              <AppText variant="heading" style={styles.rowTitle} numberOfLines={1}>
-                {item.name}
-              </AppText>
-              <AppText variant="muted" style={styles.rowSub}>
-                Empezar
-              </AppText>
-            </View>
-            <ChevronRight size={20} color={lightColors.textMuted} strokeWidth={1.8} />
-          </Pressable>
-        </GlassCard>
+      <Animated.View style={[animatedStyle, styles.routineOuter, glow('soft')]}>
+        <Pressable
+          onPress={onStart}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          disabled={isStarting}
+          accessibilityRole="button"
+          accessibilityLabel={`Empezar rutina ${item.name}`}
+          style={styles.routineInner}
+        >
+          {/* Chip play lima */}
+          <View style={styles.playChip}>
+            <Play size={20} color={colors.onAccent} fill={colors.onAccent} strokeWidth={0} />
+          </View>
+
+          {/* Nombre y sub */}
+          <View style={styles.routineTextBlock}>
+            <AppText style={styles.routineTitle} numberOfLines={1}>
+              {item.name}
+            </AppText>
+            <AppText variant="muted" style={styles.routineSub}>
+              Empezar
+            </AppText>
+          </View>
+
+          {/* Flecha lima */}
+          <AppText style={styles.routineArrow}>›</AppText>
+        </Pressable>
       </Animated.View>
     </Animated.View>
   );
@@ -78,16 +92,13 @@ function RoutineRow({
 function EmptyState({ onNavigate }: { onNavigate: () => void }) {
   const enter = useFadeSlideIn(100);
   return (
-    <Animated.View style={[styles.emptyWrap, enter]}>
-      <View style={[styles.emptyCard, shadows.md]}>
-        <LinearGradient
-          colors={['rgba(255,255,255,0.78)', 'rgba(255,255,255,0.5)']}
-          style={[styles.emptyGradient, { borderRadius: radii.xl }]}
-        >
+    <Animated.View style={[styles.centerWrap, enter]}>
+      <GlassCard padding={spacing[6]}>
+        <View style={styles.emptyInner}>
           <View style={styles.emptyIconWrap}>
-            <ListChecks size={34} color={lightColors.accent} strokeWidth={1.6} />
+            <ListChecks size={34} color={colors.accent} strokeWidth={1.6} />
           </View>
-          <AppText variant="heading" style={styles.emptyTitle}>
+          <AppText variant="title" style={styles.emptyTitle}>
             Aún no tienes rutinas
           </AppText>
           <AppText variant="muted" style={styles.emptyCopy}>
@@ -96,13 +107,13 @@ function EmptyState({ onNavigate }: { onNavigate: () => void }) {
           <View style={styles.emptyBtn}>
             <Button
               label="Crear rutina"
-              variant="primary"
+              variant="accent"
               size="md"
               onPress={onNavigate}
             />
           </View>
-        </LinearGradient>
-      </View>
+        </View>
+      </GlassCard>
     </Animated.View>
   );
 }
@@ -110,16 +121,20 @@ function EmptyState({ onNavigate }: { onNavigate: () => void }) {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   const enter = useFadeSlideIn(100);
   return (
-    <Animated.View style={[styles.errorWrap, enter]}>
-      <AppText variant="muted" style={styles.errorText}>
-        No se pudo cargar las rutinas — toca para reintentar
-      </AppText>
-      <Button label="Reintentar" variant="primary" size="md" onPress={onRetry} />
+    <Animated.View style={[styles.centerWrap, enter]}>
+      <GlassCard padding={spacing[6]}>
+        <View style={styles.emptyInner}>
+          <AppText variant="muted" style={styles.emptyCopy}>
+            No se pudo cargar las rutinas — toca para reintentar
+          </AppText>
+          <Button label="Reintentar" variant="accent" size="md" onPress={onRetry} />
+        </View>
+      </GlassCard>
     </Animated.View>
   );
 }
 
-// ── Main screen ───────────────────────────────────────────────────────────────
+// ── Pantalla principal ────────────────────────────────────────────────────────
 
 export default function StartScreen() {
   const router = useRouter();
@@ -171,28 +186,37 @@ export default function StartScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Atmospheric background */}
+      {/* Fondo dark atlético */}
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
+      {/* Orbe lima tenue — esquina superior derecha */}
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.6 }}
+        style={[styles.orb, styles.orbTopRight]}
+      />
 
-      <Header title="Empezar entreno" onBack={() => router.back()} withSafeArea />
+      <Header
+        title="Empezar entreno"
+        onBack={() => router.back()}
+        withSafeArea
+      />
 
       <View style={styles.body}>
+        {/* Heading */}
         <Animated.View style={[styles.intro, slideHeading]}>
-          <AppText variant="title" style={styles.introTitle}>
-            Elige una rutina
-          </AppText>
+          <AppText style={styles.introTitle}>Elige una rutina</AppText>
           <AppText variant="muted">Selecciona y empieza en segundos.</AppText>
         </Animated.View>
 
         {loading ? (
-          <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+          <ActivityIndicator color={colors.accent} style={styles.spinner} size="large" />
         ) : loadError ? (
           <ErrorState onRetry={load} />
         ) : routines.length === 0 ? (
@@ -218,22 +242,38 @@ export default function StartScreen() {
   );
 }
 
+// ── Estilos ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   body: {
     flex: 1,
     paddingHorizontal: spacing[5],
     paddingTop: spacing[3],
   },
+  orb: {
+    position: 'absolute',
+    borderRadius: radii.pill,
+  },
+  orbTopRight: {
+    width: 360,
+    height: 360,
+    top: -120,
+    right: -90,
+  },
   intro: {
     gap: spacing[1],
     marginBottom: spacing[4],
   },
   introTitle: {
-    letterSpacing: -0.6,
+    fontFamily: fontFamily.display,
+    fontSize: fontSize['2xl'],
+    color: colors.textPrimary,
+    letterSpacing: -1,
+    lineHeight: fontSize['2xl'] * 1.05,
   },
   listContent: {
     gap: spacing[3],
@@ -242,42 +282,57 @@ const styles = StyleSheet.create({
   spinner: {
     marginTop: spacing[16],
   },
-  rowPressable: {
+
+  // Routine row card
+  routineOuter: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface1,
+    borderWidth: 1.5,
+    borderColor: colors.accent,
+    overflow: 'hidden',
+    ...shadows.md,
+  },
+  routineInner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
+    padding: spacing[4],
   },
-  rowIconWrap: {
+  playChip: {
     width: 44,
     height: 44,
     borderRadius: radii.md,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTextBlock: {
+  routineTextBlock: {
     flex: 1,
     gap: 2,
   },
-  rowTitle: {
+  routineTitle: {
+    fontFamily: fontFamily.sansSemibold,
+    fontSize: fontSize.base,
+    color: colors.textPrimary,
     letterSpacing: -0.2,
   },
-  rowSub: {
+  routineSub: {
     fontSize: 13,
   },
-  emptyWrap: {
+  routineArrow: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.xl,
+    color: colors.accent,
+    lineHeight: fontSize.xl * 1.1,
+  },
+
+  // Empty / error states
+  centerWrap: {
     flex: 1,
     justifyContent: 'center',
     paddingBottom: spacing[16],
   },
-  emptyCard: {
-    borderRadius: radii.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: lightColors.borderDefault,
-  },
-  emptyGradient: {
-    padding: spacing[6],
+  emptyInner: {
     alignItems: 'center',
     gap: spacing[3],
   },
@@ -285,7 +340,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: radii.xl,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[1],
@@ -300,26 +355,5 @@ const styles = StyleSheet.create({
   emptyBtn: {
     marginTop: spacing[3],
     alignSelf: 'stretch',
-  },
-  errorWrap: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing[4],
-    paddingBottom: spacing[16],
-  },
-  errorText: {
-    textAlign: 'center',
-  },
-  orb: {
-    position: 'absolute',
-    borderRadius: 9999,
-  },
-  orbTop: {
-    width: 320,
-    height: 320,
-    top: -120,
-    right: -90,
-    backgroundColor: 'rgba(139,157,255,0.16)',
   },
 });

@@ -1,11 +1,27 @@
+/**
+ * Login — dark atlético v3.
+ * Canvas negro + orbe glow lima tenue. Wordmark Space Grotesk.
+ * Tarjeta dark surface1. Botón accent (lima). Motion escalonado.
+ * Lógica preservada: sendOtp + router.push a verify.
+ */
+
 import { useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  AppText, Button, Input, GlassCard,
-  useFadeSlideIn, lightColors, spacing,
+  AppText,
+  Button,
+  Input,
+  GlassCard,
+  useFadeSlideIn,
+  colors,
+  gradients,
+  spacing,
+  radii,
+  fontFamily,
+  fontSize,
 } from '@creed/ui-native';
 import { sendOtp } from '../../lib/auth';
 
@@ -15,8 +31,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const slideTitle = useFadeSlideIn(0);
-  const slideCard = useFadeSlideIn(80);
+  const slideBrand = useFadeSlideIn(0);
+  const slideCard = useFadeSlideIn(90);
 
   async function onSubmit() {
     setLoading(true);
@@ -29,36 +45,42 @@ export default function Login() {
 
   return (
     <View style={styles.root}>
-      {/* Atmospheric gradient background */}
+      {/* Fondo dark atlético: gradiente de atmósfera */}
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FDF5EE']}
+        colors={gradients.canvasV3}
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Ambient orbs */}
-      <View style={[styles.orb, styles.orbTopLeft]} />
-      <View style={[styles.orb, styles.orbBottomRight]} />
+      {/* Orbe lima tenue — esquina superior derecha */}
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.7 }}
+        style={[styles.orb, styles.orbTopRight]}
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.kav}
       >
         <View style={styles.center}>
-          {/* Brand / title */}
-          <Animated.View style={[styles.brand, slideTitle]}>
-            <AppText variant="display" style={styles.brandName}>Creed</AppText>
+          {/* Wordmark */}
+          <Animated.View style={[styles.brand, slideBrand]}>
+            <AppText style={styles.wordmark}>CREED</AppText>
             <AppText variant="muted" style={styles.tagline}>
               Tu entrenamiento, elevado.
             </AppText>
           </Animated.View>
 
-          {/* Glass form card */}
-          <Animated.View style={slideCard}>
-            <GlassCard intensity={60} tone="light" padding={spacing[6]}>
+          {/* Formulario en tarjeta dark surface1 */}
+          <Animated.View style={[styles.cardWrap, slideCard]}>
+            <GlassCard padding={spacing[6]}>
               <View style={styles.formInner}>
-                <AppText variant="heading" style={styles.formTitle}>Entra en Creed</AppText>
+                <AppText variant="heading" style={styles.formTitle}>
+                  Entra en Creed
+                </AppText>
                 <AppText variant="muted" style={styles.formSub}>
                   Te enviamos un código de 6 dígitos a tu email.
                 </AppText>
@@ -77,6 +99,7 @@ export default function Login() {
                   label="Enviar código"
                   onPress={onSubmit}
                   loading={loading}
+                  variant="accent"
                   size="md"
                 />
               </View>
@@ -91,6 +114,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: colors.canvas,
   },
   kav: {
     flex: 1,
@@ -105,13 +129,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing[2],
   },
-  brandName: {
-    letterSpacing: -2,
-    color: lightColors.accent,
+  wordmark: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.display,
+    color: colors.accent,
+    letterSpacing: 6,
+    lineHeight: fontSize.display * 1.05,
   },
   tagline: {
     fontSize: 16,
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
+    color: colors.textSecondary,
+  },
+  cardWrap: {
+    width: '100%',
   },
   formInner: {
     gap: spacing[4],
@@ -124,20 +155,12 @@ const styles = StyleSheet.create({
   },
   orb: {
     position: 'absolute',
-    borderRadius: 9999,
+    borderRadius: radii.pill,
   },
-  orbTopLeft: {
-    width: 280,
-    height: 280,
-    top: -80,
-    left: -80,
-    backgroundColor: 'rgba(139,157,255,0.25)',
-  },
-  orbBottomRight: {
-    width: 220,
-    height: 220,
-    bottom: -60,
-    right: -60,
-    backgroundColor: 'rgba(255,180,130,0.20)',
+  orbTopRight: {
+    width: 360,
+    height: 360,
+    top: -130,
+    right: -110,
   },
 });
