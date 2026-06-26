@@ -53,8 +53,6 @@ import {
   reorderRoutineExercises,
   getActiveProgram,
   createProgram,
-  setProgramDay,
-  listProgramDays,
 } from './routines';
 
 beforeEach(() => {
@@ -95,6 +93,13 @@ test('listRoutines returns empty array when no routines exist', async () => {
 test('listRoutines throws when supabase returns an error', async () => {
   mockOrder.mockResolvedValue({ data: null, error: { message: 'DB error' } });
   await expect(listRoutines()).rejects.toThrow('DB error');
+});
+
+test('listRoutines filters by programId when opts.programId is provided', async () => {
+  mockOrder.mockResolvedValue({ data: [{ id: 'r2', name: 'Pull', program_id: 'prog-1' }], error: null });
+  const result = await listRoutines({ programId: 'prog-1' });
+  expect(mockEq).toHaveBeenCalledWith('program_id', 'prog-1');
+  expect(result).toHaveLength(1);
 });
 
 // ── getRoutine ───────────────────────────────────────────────────────────────
@@ -290,29 +295,3 @@ test('createProgram throws if no authenticated user', async () => {
   await expect(createProgram({ name: 'Test' })).rejects.toThrow();
 });
 
-// ── setProgramDay ────────────────────────────────────────────────────────────
-
-test('setProgramDay upserts on (program_id, weekday) with user_id', async () => {
-  mockUpsert.mockResolvedValue({ data: [{}], error: null });
-  await setProgramDay('prog-1', 1, 'r1');
-  expect(mockFrom).toHaveBeenCalledWith('program_days');
-  expect(mockUpsert).toHaveBeenCalledWith(
-    expect.objectContaining({
-      program_id: 'prog-1',
-      weekday: 1,
-      routine_id: 'r1',
-      user_id: 'user-123',
-    }),
-    expect.objectContaining({ onConflict: expect.stringContaining('program_id') })
-  );
-});
-
-// ── listProgramDays ──────────────────────────────────────────────────────────
-
-test('listProgramDays queries program_days for the given program ordered by weekday', async () => {
-  mockOrder.mockResolvedValue({ data: [{ id: 'd1', weekday: 1 }], error: null });
-  const days = await listProgramDays('prog-1');
-  expect(mockFrom).toHaveBeenCalledWith('program_days');
-  expect(mockEq).toHaveBeenCalledWith('program_id', 'prog-1');
-  expect(days).toHaveLength(1);
-});

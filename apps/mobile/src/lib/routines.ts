@@ -40,14 +40,6 @@ export type RoutineExercise = {
   primary_muscle: string | null;
 };
 
-export type ProgramDay = {
-  id: string;
-  program_id: string;
-  user_id: string;
-  weekday: number;
-  routine_id: string;
-};
-
 type RoutineExerciseTargets = {
   target_sets?: number;
   target_reps?: string;
@@ -68,11 +60,12 @@ async function requireUser(): Promise<string> {
 
 // ── Routines ─────────────────────────────────────────────────────────────────
 
-export async function listRoutines(): Promise<Routine[]> {
-  const { data, error } = await supabase
-    .from('routines')
-    .select('*')
-    .order('position', { ascending: true });
+export async function listRoutines(opts?: { programId?: string }): Promise<Routine[]> {
+  let query = supabase.from('routines').select('*');
+  if (opts?.programId) {
+    query = query.eq('program_id', opts.programId);
+  }
+  const { data, error } = await query.order('position', { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as Routine[];
 }
@@ -238,32 +231,3 @@ export async function createProgram(input: {
   return data as Program;
 }
 
-// ── Program days ──────────────────────────────────────────────────────────────
-
-export async function setProgramDay(
-  programId: string,
-  weekday: number,
-  routineId: string
-): Promise<void> {
-  const userId = await requireUser();
-  const { error } = await supabase.from('program_days').upsert(
-    {
-      program_id: programId,
-      weekday,
-      routine_id: routineId,
-      user_id: userId,
-    },
-    { onConflict: 'program_id,weekday' }
-  );
-  if (error) throw new Error(error.message);
-}
-
-export async function listProgramDays(programId: string): Promise<ProgramDay[]> {
-  const { data, error } = await supabase
-    .from('program_days')
-    .select('*')
-    .eq('program_id', programId)
-    .order('weekday', { ascending: true });
-  if (error) throw new Error(error.message);
-  return (data ?? []) as ProgramDay[];
-}

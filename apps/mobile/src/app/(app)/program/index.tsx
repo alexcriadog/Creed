@@ -35,13 +35,12 @@ import {
 import {
   getActiveProgram,
   createProgram,
-  listProgramDays,
   listRoutines,
   type Program,
   type Routine,
 } from '../../../lib/routines';
 
-// Lun–Dom. listProgramDays usa weekday 0=Lun … 6=Dom.
+// Lun–Dom. weekday 0=Lun … 6=Dom.
 const WEEKDAYS: { index: number; short: string; long: string }[] = [
   { index: 0, short: 'Lun', long: 'Lunes' },
   { index: 1, short: 'Mar', long: 'Martes' },
@@ -235,13 +234,8 @@ export default function ProgramScreen() {
         byId[r.id] = r;
       });
 
+      // TODO(Task3): weekly-schedule removed in Hevy model — program screen will be rewritten.
       const days: Record<number, string> = {};
-      if (activeProgram) {
-        const programDays = await listProgramDays(activeProgram.id);
-        programDays.forEach((d) => {
-          days[d.weekday] = d.routine_id;
-        });
-      }
 
       if (!active) return;
       setProgram(activeProgram);
