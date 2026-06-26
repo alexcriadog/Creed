@@ -116,19 +116,21 @@ jest.mock('react-native-safe-area-context', () => ({
 import { render, screen, waitFor } from '@testing-library/react-native';
 import LiveSession from './[id]';
 
-test('la sesión muestra los ejercicios y sus filas de serie con peso/reps', async () => {
+test('modo foco: muestra el primer ejercicio, sus series, cronómetro y progreso', async () => {
   await render(<LiveSession />);
 
-  // Nombres de ejercicios (agrupados).
+  // El primer ejercicio (foco) y su nombre. El pager renderiza todas las
+  // páginas en JSDOM, así que el resto de ejercicios también está presente.
   await waitFor(() =>
     expect(screen.getByText('Bench Press')).toBeOnTheScreen()
   );
   expect(screen.getByText('Overhead Press')).toBeOnTheScreen();
 
-  // Nombre de la rutina en el hero.
+  // Cabecera de modo foco: posición del ejercicio + nombre de la rutina.
+  expect(screen.getByText('Ejercicio 1 / 2')).toBeOnTheScreen();
   expect(screen.getByText('Push Day')).toBeOnTheScreen();
 
-  // Inputs de peso y reps por serie (testID por id de set).
+  // Filas de serie del primer ejercicio (inputs por testID de set).
   expect(screen.getByTestId('weight-set-a1')).toBeOnTheScreen();
   expect(screen.getByTestId('reps-set-a1')).toBeOnTheScreen();
   expect(screen.getByTestId('weight-set-a2')).toBeOnTheScreen();
@@ -141,6 +143,12 @@ test('la sesión muestra los ejercicios y sus filas de serie con peso/reps', asy
   // Check toggle por serie.
   expect(screen.getByTestId('check-set-a1')).toBeOnTheScreen();
 
-  // CTA de finalizar.
+  // Cronómetro horizontal (mm:ss en una sola línea) — formato presente.
+  expect(screen.getByText(/^\d{1,2}:\d{2}(:\d{2})?$/)).toBeOnTheScreen();
+
+  // Progreso global: 1 de 3 series marcadas (set-b1 completada en el mock).
+  expect(screen.getByText('1 / 3 series')).toBeOnTheScreen();
+
+  // Acción de finalizar (secundaria) sigue accesible.
   expect(screen.getByText('Finalizar entreno')).toBeOnTheScreen();
 });

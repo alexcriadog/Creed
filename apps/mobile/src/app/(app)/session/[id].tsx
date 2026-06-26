@@ -14,18 +14,22 @@ import {
   Alert,
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import {
   AppText,
-  Button,
-  Header,
   GlassCard,
-  useFadeSlideIn,
   haptic,
   lightColors,
   spacing,
@@ -42,10 +46,14 @@ import {
 } from '../../../lib/sessions';
 import { getRoutine } from '../../../lib/routines';
 import {
-  SessionExerciseCard,
   type ExerciseTarget,
   type SetPatch,
 } from '../../../components/session/session-exercise-card';
+import { SessionFocusPage } from '../../../components/session/session-focus-page';
+import {
+  ExerciseRail,
+  type RailSegment,
+} from '../../../components/session/exercise-rail';
 
 // ── Cronómetro ────────────────────────────────────────────────────────────────
 
@@ -121,10 +129,14 @@ export default function LiveSession() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  // Índice del ejercicio en foco (controla pager + riel + cabecera).
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const elapsed = useChronometer(session?.started_at ?? null);
 
-  const slideHero = useFadeSlideIn(0);
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const pagerRef = useRef<FlatList<ExerciseGroup>>(null);
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -179,6 +191,52 @@ export default function LiveSession() {
 
   const totalSets = sets.length;
   const doneSets = useMemo(() => sets.filter((s) => s.completed).length, [sets]);
+
+  // ── Paginación / modo foco ──────────────────────────────────────────────────
+  const groupCount = groups.length;
+
+  // Clamp del índice si el nº de ejercicios encoge (defensivo).
+  useEffect(() => {
+    if (currentIndex > groupCount - 1) {
+      setCurrentIndex(Math.max(0, groupCount - 1));
+    }
+  }, [groupCount, currentIndex]);
+
+  // Estados del riel — done (todas las series marcadas), current, pending.
+  const railSegments = useMemo<RailSegment[]>(
+    () =>
+      groups.map((g, i) => {
+        const allDone = g.sets.length > 0 && g.sets.every((s) => s.completed);
+        return {
+          id: g.exerciseId,
+          state: allDone ? 'done' : i === currentIndex ? 'current' : 'pending',
+        };
+      }),
+    [groups, currentIndex]
+  );
+
+  // Mueve el pager a un índice y sincroniza la cabecera/riel.
+  const goToIndex = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(index, groupCount - 1));
+      setCurrentIndex(clamped);
+      pagerRef.current?.scrollToOffset({
+        offset: clamped * width,
+        animated: true,
+      });
+    },
+    [groupCount, width]
+  );
+
+  // Sincroniza el índice tras un swipe del usuario (al terminar el momentum).
+  const handleMomentumEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (width <= 0) return;
+      const next = Math.round(e.nativeEvent.contentOffset.x / width);
+      setCurrentIndex((prev) => (prev === next ? prev : next));
+    },
+    [width]
+  );
 
   // ── Editar campo numérico (optimista + rollback) ────────────────────────────
   // Snapshot se captura desde la ref (lectura síncrona fuera del updater) para
@@ -335,7 +393,21 @@ export default function LiveSession() {
     return (
       <View style={styles.root}>
         <Background />
-        <Header title="Sesión" onBack={() => router.back()} withSafeArea />
+        <View style={[styles.topBar, { paddingTop: insets.top + spacing[3] }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar"
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+          >
+            <X size={20} color={lightColors.textSecondary} strokeWidth={2.2} />
+          </Pressable>
+          <AppText variant="label" style={styles.topBarTitle}>
+            Sesión
+          </AppText>
+          <View style={styles.topBarSide} />
+        </View>
         <View style={[styles.center, styles.fill]}>
           <GlassCard intensity={42} tone="light" padding={spacing[6]}>
             <View style={styles.emptyInner}>
@@ -354,55 +426,80 @@ export default function LiveSession() {
 
   const isFinished = session.status !== 'in_progress';
   const progressPct = totalSets > 0 ? (doneSets / totalSets) * 100 : 0;
+  const isEmpty = groupCount === 0;
+  const headerLabel = isEmpty
+    ? (routineName ?? 'Sesión')
+    : `Ejercicio ${currentIndex + 1} / ${groupCount}`;
+  const isFirst = currentIndex <= 0;
+  const isLast = currentIndex >= groupCount - 1;
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <Background />
 
-      <Header
-        title="En sesión"
-        onBack={() => router.back()}
-        withSafeArea
-        rightAction={
+      {/* ── Cabecera compacta fija ─────────────────────────────────────────── */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing[3] }]}>
+        <View style={styles.headerRow}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar sesión"
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+          >
+            <X size={20} color={lightColors.textSecondary} strokeWidth={2.2} />
+          </Pressable>
+
+          <View style={styles.headerCenter}>
+            <AppText variant="label" style={styles.headerLabel} numberOfLines={1}>
+              {headerLabel}
+            </AppText>
+            {routineName && !isEmpty ? (
+              <AppText variant="muted" style={styles.headerSub} numberOfLines={1}>
+                {routineName}
+              </AppText>
+            ) : null}
+          </View>
+
+          {/* Cronómetro — pastilla horizontal que nunca envuelve */}
           <View style={styles.chrono}>
-            <AppText variant="label" style={styles.chronoValue}>
+            <AppText
+              variant="label"
+              style={styles.chronoValue}
+              numberOfLines={1}
+              allowFontScaling={false}
+            >
               {elapsed}
             </AppText>
           </View>
-        }
-      />
+        </View>
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-      >
-        {/* Hero: nombre + progreso global */}
-        <Animated.View style={[slideHero, shadows.md]}>
-          <GlassCard intensity={52} tone="light" padding={spacing[5]}>
-            <AppText variant="muted" style={styles.heroEyebrow}>
-              {isFinished ? 'Sesión finalizada' : 'Entreno en curso'}
-            </AppText>
-            <AppText variant="title" style={styles.heroTitle} numberOfLines={2}>
-              {routineName ?? 'Sesión libre'}
-            </AppText>
-            <View style={styles.heroMeta}>
-              <View style={styles.progressPill}>
-                <AppText variant="label" style={styles.progressText}>
-                  {`${doneSets} / ${totalSets} series`}
-                </AppText>
-              </View>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
-            </View>
-          </GlassCard>
-        </Animated.View>
+        {/* Progreso global + recuento de series */}
+        <View style={styles.progressRow}>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+          </View>
+          <AppText variant="muted" style={styles.progressCount} numberOfLines={1}>
+            {`${doneSets} / ${totalSets} series`}
+          </AppText>
+        </View>
 
-        {/* Ejercicios */}
-        {groups.length === 0 ? (
+        {/* Riel de ejercicios */}
+        {!isEmpty ? (
+          <ExerciseRail
+            segments={railSegments}
+            currentIndex={currentIndex}
+            onSelect={goToIndex}
+          />
+        ) : null}
+      </View>
+
+      {/* ── Ejercicio en foco (pager horizontal) ───────────────────────────── */}
+      {isEmpty ? (
+        <View style={[styles.center, styles.fill]}>
           <GlassCard intensity={42} tone="light" padding={spacing[6]}>
             <View style={styles.emptyInner}>
               <AppText variant="heading" style={styles.emptyTitle}>
@@ -413,31 +510,118 @@ export default function LiveSession() {
               </AppText>
             </View>
           </GlassCard>
-        ) : (
-          groups.map((group, index) => (
-            <SessionExerciseCard
-              key={group.exerciseId}
-              sets={group.sets}
+        </View>
+      ) : (
+        <FlatList
+          ref={pagerRef}
+          data={groups}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          onMomentumScrollEnd={handleMomentumEnd}
+          keyExtractor={(g) => g.exerciseId}
+          getItemLayout={(_, index) => ({
+            length: width,
+            offset: width * index,
+            index,
+          })}
+          contentContainerStyle={{ paddingBottom: spacing[4] }}
+          renderItem={({ item, index }) => (
+            <SessionFocusPage
+              width={width}
+              sets={item.sets}
               index={index}
-              target={targets[group.exerciseId]}
+              total={groupCount}
+              target={targets[item.exerciseId]}
               onChangeSet={handleChangeSet}
               onToggleComplete={handleToggleComplete}
-              onAddSet={() => handleAddSet(group)}
+              onAddSet={() => handleAddSet(item)}
             />
-          ))
-        )}
-      </ScrollView>
-
-      {/* CTA fijo: finalizar */}
-      <View style={styles.finishBar}>
-        <Button
-          label={finishing ? 'Finalizando…' : 'Finalizar entreno'}
-          onPress={handleFinish}
-          loading={finishing}
-          disabled={isFinished}
+          )}
         />
+      )}
+
+      {/* ── Barra inferior: navegación + finalizar ─────────────────────────── */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + spacing[3] }]}>
+        {!isEmpty ? (
+          <View style={styles.navRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Ejercicio anterior"
+              disabled={isFirst}
+              onPress={() => {
+                haptic('light');
+                goToIndex(currentIndex - 1);
+              }}
+              style={({ pressed }) => [
+                styles.navBtn,
+                isFirst && styles.navBtnDisabled,
+                pressed && !isFirst && { opacity: 0.6 },
+              ]}
+            >
+              <ChevronLeft
+                size={18}
+                color={isFirst ? lightColors.textMuted : lightColors.accent}
+                strokeWidth={2.4}
+              />
+              <AppText
+                variant="label"
+                style={[styles.navLabel, isFirst && styles.navLabelDisabled]}
+              >
+                Anterior
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Siguiente ejercicio"
+              disabled={isLast}
+              onPress={() => {
+                haptic('light');
+                goToIndex(currentIndex + 1);
+              }}
+              style={({ pressed }) => [
+                styles.navBtn,
+                styles.navBtnNext,
+                isLast && styles.navBtnSubtle,
+                pressed && !isLast && { opacity: 0.6 },
+              ]}
+            >
+              <AppText
+                variant="label"
+                style={[styles.navLabel, isLast && styles.navLabelDisabled]}
+              >
+                Siguiente
+              </AppText>
+              <ChevronRight
+                size={18}
+                color={isLast ? lightColors.textMuted : lightColors.accent}
+                strokeWidth={2.4}
+              />
+            </Pressable>
+          </View>
+        ) : null}
+
+        {/* Finalizar — secundario respecto al flujo de registro */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Finalizar entreno"
+          disabled={isFinished || finishing}
+          onPress={handleFinish}
+          style={({ pressed }) => [
+            styles.finishLink,
+            (isFinished || finishing) && { opacity: 0.5 },
+            pressed && !isFinished && !finishing && { opacity: 0.6 },
+          ]}
+        >
+          <AppText variant="label" style={styles.finishLinkLabel}>
+            {finishing ? 'Finalizando…' : 'Finalizar entreno'}
+          </AppText>
+        </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -469,57 +653,73 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
+
+  // ── Cabecera compacta ──────────────────────────────────────────────────────
+  header: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[4],
-    paddingBottom: 128,
-    gap: spacing[4],
+    paddingBottom: spacing[2],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: lightColors.borderSubtle,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+  headerCenter: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+  },
+  headerLabel: {
+    color: lightColors.textPrimary,
+    fontWeight: '700',
+  },
+  headerSub: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: lightColors.bgSurfaceRaised,
+    borderWidth: 1,
+    borderColor: lightColors.borderSubtle,
+  },
+
+  // Cronómetro — pastilla horizontal; flexShrink:0 + minWidth para no envolver
   chrono: {
+    flexShrink: 0,
+    minWidth: 76,
     paddingHorizontal: spacing[3],
-    paddingVertical: 5,
+    paddingVertical: 6,
     borderRadius: radii.pill,
     backgroundColor: lightColors.accentSoft,
     borderWidth: 1,
     borderColor: `${lightColors.accent}44`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chronoValue: {
     color: lightColors.accent,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  heroEyebrow: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: lightColors.accent,
-    fontWeight: '600',
-  },
-  heroTitle: {
-    marginTop: spacing[1],
-  },
-  heroMeta: {
+
+  // Progreso global + recuento
+  progressRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
     marginTop: spacing[3],
-  },
-  progressPill: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: 5,
-    borderRadius: radii.pill,
-    backgroundColor: lightColors.bgSurfaceRaised,
-    borderWidth: 1,
-    borderColor: lightColors.borderSubtle,
-  },
-  progressText: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
   },
   progressTrack: {
-    marginTop: spacing[3],
+    flex: 1,
     height: 6,
     borderRadius: radii.pill,
     backgroundColor: lightColors.bgCanvasTint,
@@ -530,6 +730,70 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: lightColors.accent,
   },
+  progressCount: {
+    flexShrink: 0,
+    fontSize: 12,
+    color: lightColors.textSecondary,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+
+  // ── Barra inferior ─────────────────────────────────────────────────────────
+  bottomBar: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: lightColors.borderSubtle,
+    backgroundColor: lightColors.bgSurfaceRaised,
+  },
+  navRow: {
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+  navBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[1],
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: lightColors.bgSurface,
+    borderWidth: 1,
+    borderColor: lightColors.borderDefault,
+    ...shadows.sm,
+  },
+  navBtnNext: {
+    backgroundColor: lightColors.accentSoft,
+    borderColor: `${lightColors.accent}44`,
+  },
+  navBtnDisabled: {
+    opacity: 0.4,
+  },
+  navBtnSubtle: {
+    backgroundColor: lightColors.bgSurface,
+    borderColor: lightColors.borderDefault,
+  },
+  navLabel: {
+    color: lightColors.accent,
+    fontWeight: '700',
+  },
+  navLabelDisabled: {
+    color: lightColors.textMuted,
+  },
+  finishLink: {
+    alignSelf: 'center',
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[1],
+  },
+  finishLinkLabel: {
+    color: lightColors.textSecondary,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+
+  // ── Empty / error ──────────────────────────────────────────────────────────
   emptyInner: {
     gap: spacing[2],
     alignItems: 'center',
@@ -541,12 +805,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  finishBar: {
-    position: 'absolute',
-    left: spacing[5],
-    right: spacing[5],
-    bottom: spacing[8],
+
+  // Top bar minimal (error state)
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[3],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: lightColors.borderSubtle,
   },
+  topBarTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: lightColors.textPrimary,
+    fontWeight: '700',
+  },
+  topBarSide: {
+    width: 36,
+  },
+
+  // ── Fondo ──────────────────────────────────────────────────────────────────
   orb: {
     position: 'absolute',
     borderRadius: 9999,
