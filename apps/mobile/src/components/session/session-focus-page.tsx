@@ -31,7 +31,7 @@ import {
   fontFamily,
 } from '@creed/ui-native';
 import { displayName } from '../../lib/exercises';
-import type { SessionSet } from '../../lib/sessions';
+import type { SessionSet, PrevByExercise } from '../../lib/sessions';
 import { SetRow } from './set-row';
 import type { ExerciseTarget, SetPatch } from './session-exercise-card';
 
@@ -51,6 +51,11 @@ interface SessionFocusPageProps {
    * libren la barra inferior fija (y el teclado cuando aplica).
    */
   bottomInset?: number;
+  /**
+   * Previous-session values per set_number for this exercise.
+   * Used as gray placeholder hints in SetRow when no value is logged yet.
+   */
+  prevSets?: Record<number, { weight_kg: number | null; reps: number | null; rir: number | null }>;
   onChangeSet: (setId: string, patch: SetPatch) => void;
   onToggleComplete: (setId: string) => void;
   onAddSet: () => void;
@@ -75,6 +80,7 @@ function SessionFocusPageBase({
   index,
   total,
   target,
+  prevSets = {},
   bottomInset = 0,
   onChangeSet,
   onToggleComplete,
@@ -174,6 +180,7 @@ function SessionFocusPageBase({
               <SetRow
                 key={set.id}
                 set={set}
+                prevSet={prevSets[set.set_number]}
                 disabled={set.id.startsWith('temp-')}
                 onChange={(patch) => onChangeSet(set.id, patch)}
                 onToggleComplete={() => onToggleComplete(set.id)}

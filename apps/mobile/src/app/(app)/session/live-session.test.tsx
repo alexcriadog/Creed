@@ -88,6 +88,7 @@ jest.mock('../../../lib/sessions', () => ({
   updateSet: jest.fn().mockResolvedValue(undefined),
   addSet: jest.fn(),
   completeSession: jest.fn().mockResolvedValue(undefined),
+  getLastPerformedByExercise: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock('../../../lib/routines', () => ({

@@ -228,6 +228,83 @@ export async function completeSession(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+
+// ── Previous-set hints ────────────────────────────────────────────────────────
+
+/**
+ * Shape returned per exercise: set_number → {weight_kg, reps, rir} from the
+ * user's most recent COMPLETED session that contains that exercise.
+ */
+export type PrevSetValues = {
+  weight_kg: number | null;
+  reps: number | null;
+  rir: number | null;
+};
+
+export type PrevByExercise = Record<string, Record<number, PrevSetValues>>;
+
+/**
+ * For each exercise_id in the list, finds the user's most recent completed
+ * session that contains it and returns its set values keyed by set_number.
+ *
+ * Returns an empty object for exercises with no prior completed history.
+ * Never throws — on any DB error returns {}.
+ */
+export async function getLastPerformedByExercise(
+  exerciseIds: string[]
+): Promise<PrevByExercise> {
+  if (exerciseIds.length === 0) return {};
+
+  let userId: string;
+  try {
+    userId = await requireUser();
+  } catch {
+    return {};
+  }
+
+  // Fetch all completed sets for these exercises, ordered newest session first,
+  // then by set_number. We keep only the newest session per exercise in JS.
+  const { data, error } = await supabase
+    .from('sets')
+    .select(
+      'exercise_id, set_number, weight_kg, reps, rir, sessions!inner(status, completed_at, user_id)'
+    )
+    .eq('sessions.status', 'completed')
+    .eq('sessions.user_id', userId)
+    .in('exercise_id', exerciseIds)
+    .order('sessions.completed_at', { ascending: false })
+    .order('set_number', { ascending: true });
+
+  if (error || !data) return {};
+
+  // Per exercise, keep only the rows from the single most recent session.
+  // Because rows are ordered newest → oldest, the first completed_at we see
+  // per exercise is the one we want.
+  const latestCompletedAt = new Map<string, string>();
+  const result: PrevByExercise = {};
+
+  for (const row of data as any[]) {
+    const exerciseId: string = row.exercise_id;
+    const sessionCompletedAt: string = (row.sessions as any)?.completed_at ?? '';
+
+    if (!latestCompletedAt.has(exerciseId)) {
+      latestCompletedAt.set(exerciseId, sessionCompletedAt);
+      result[exerciseId] = {};
+    }
+
+    // Skip rows from older sessions for this exercise
+    if (latestCompletedAt.get(exerciseId) !== sessionCompletedAt) continue;
+
+    result[exerciseId][row.set_number as number] = {
+      weight_kg: row.weight_kg ?? null,
+      reps: row.reps ?? null,
+      rir: row.rir ?? null,
+    };
+  }
+
+  return result;
+}
+
 export async function listSessions(): Promise<
   (Session & { routine_name: string | null; set_count: number })[]
 > {

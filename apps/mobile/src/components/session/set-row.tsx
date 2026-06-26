@@ -24,7 +24,7 @@ import {
   radii,
   fontFamily,
 } from '@creed/ui-native';
-import type { SessionSet } from '../../lib/sessions';
+import type { SessionSet, PrevSetValues } from '../../lib/sessions';
 
 export type SetRowPatch = {
   reps?: number | null;
@@ -34,6 +34,12 @@ export type SetRowPatch = {
 
 interface SetRowProps {
   set: SessionSet;
+  /**
+   * Valores del último entreno completado para esta serie (mismo set_number).
+   * Se muestra como placeholder gris cuando el campo no tiene valor aún.
+   * NO se escribe en el estado — es solo visual.
+   */
+  prevSet?: PrevSetValues;
   /** Persistir un campo numérico (optimista en el padre). */
   onChange: (patch: SetRowPatch) => void;
   /** Alternar el estado "hecha". El padre fija completed + performed_at. */
@@ -57,6 +63,7 @@ function toText(value: number | null): string {
 
 function SetRowBase({
   set,
+  prevSet,
   onChange,
   onToggleComplete,
   disabled = false,
@@ -114,11 +121,15 @@ function SetRowBase({
           onChange({ weight_kg: parseNumeric(weight) });
         }}
         editable={!disabled}
-        placeholder="—"
+        placeholder={
+          prevSet?.weight_kg != null ? String(prevSet.weight_kg) : '—'
+        }
         keyboardType="decimal-pad"
         returnKeyType="done"
         style={inputStyle('weight')}
-        placeholderTextColor={colors.textMuted}
+        placeholderTextColor={
+          colors.textMuted
+        }
         selectionColor={colors.accent}
         accessibilityLabel={`Peso serie ${set.set_number}`}
       />
@@ -134,7 +145,7 @@ function SetRowBase({
           onChange({ reps: parseNumeric(reps) });
         }}
         editable={!disabled}
-        placeholder="—"
+        placeholder={prevSet?.reps != null ? String(prevSet.reps) : '—'}
         keyboardType="number-pad"
         returnKeyType="done"
         style={inputStyle('reps')}
@@ -154,7 +165,7 @@ function SetRowBase({
           onChange({ rir: parseNumeric(rir) });
         }}
         editable={!disabled}
-        placeholder="—"
+        placeholder={prevSet?.rir != null ? String(prevSet.rir) : '—'}
         keyboardType="number-pad"
         returnKeyType="done"
         style={inputStyle('rir')}

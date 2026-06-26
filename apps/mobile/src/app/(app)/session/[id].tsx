@@ -53,8 +53,10 @@ import {
   updateSet,
   addSet,
   completeSession,
+  getLastPerformedByExercise,
   type SessionWithSets,
   type SessionSet,
+  type PrevByExercise,
 } from '../../../lib/sessions';
 import { getRoutine } from '../../../lib/routines';
 import {
@@ -170,6 +172,8 @@ export default function LiveSession() {
   const setsRef = useRef<SessionSet[]>([]);
   const [routineName, setRoutineName] = useState<string | null>(null);
   const [targets, setTargets] = useState<Record<string, ExerciseTarget>>({});
+  // Previous-session values per exercise+set — loaded best-effort after session load.
+  const [prevByExercise, setPrevByExercise] = useState<PrevByExercise>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -200,6 +204,14 @@ export default function LiveSession() {
         }
         setSession(data);
         setSets(data.sets);
+        // Previous-session hints (best-effort, non-blocking).
+        const distinctExerciseIds = [...new Set(data.sets.map((s) => s.exercise_id))];
+        getLastPerformedByExercise(distinctExerciseIds)
+          .then((prev) => {
+            if (active) setPrevByExercise(prev);
+          })
+          .catch(() => {/* no prev hints — session still usable */});
+
         // Targets + nombre de la rutina (best-effort, no bloqueante).
         if (data.routine_id) {
           try {
@@ -602,6 +614,7 @@ export default function LiveSession() {
               index={index}
               total={groupCount}
               target={targets[item.exerciseId]}
+              prevSets={prevByExercise[item.exerciseId] ?? {}}
               bottomInset={BOTTOM_BAR_CLEARANCE}
               onChangeSet={handleChangeSet}
               onToggleComplete={handleToggleComplete}
