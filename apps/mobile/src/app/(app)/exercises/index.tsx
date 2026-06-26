@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
@@ -76,6 +77,14 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.root}>
+      <LinearGradient
+        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
+        locations={[0, 0.55, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={[styles.orb, styles.orbTop]} />
       <Header title="Ejercicios" withSafeArea />
 
       <View style={styles.body}>
@@ -139,7 +148,17 @@ export default function ExercisesScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+  },
+  orb: {
+    position: 'absolute',
+    borderRadius: 9999,
+  },
+  orbTop: {
+    width: 320,
+    height: 320,
+    top: -120,
+    right: -90,
+    backgroundColor: 'rgba(139,157,255,0.16)',
   },
   body: {
     flex: 1,
