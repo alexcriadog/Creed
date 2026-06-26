@@ -13,7 +13,7 @@
  */
 
 import { memo } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
@@ -46,6 +46,11 @@ interface SessionFocusPageProps {
   total: number;
   /** Target de referencia de la rutina (si existe). */
   target?: ExerciseTarget;
+  /**
+   * Padding inferior del scroll para que la última fila + "Añadir serie"
+   * libren la barra inferior fija (y el teclado cuando aplica).
+   */
+  bottomInset?: number;
   onChangeSet: (setId: string, patch: SetPatch) => void;
   onToggleComplete: (setId: string) => void;
   onAddSet: () => void;
@@ -70,6 +75,7 @@ function SessionFocusPageBase({
   index,
   total,
   target,
+  bottomInset = 0,
   onChangeSet,
   onToggleComplete,
   onAddSet,
@@ -80,7 +86,17 @@ function SessionFocusPageBase({
   const enter = useFadeSlideIn(40);
 
   return (
-    <View style={[styles.page, { width }]}>
+    <ScrollView
+      style={[styles.page, { width }]}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingBottom: spacing[6] + bottomInset },
+      ]}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      // iOS: inserta para el teclado y sube el campo enfocado a la vista.
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+    >
       <Animated.View style={[styles.cardWrap, enter]}>
         <GlassCard padding={spacing[5]}>
           {/* Eyebrow: posición del ejercicio en la sesión */}
@@ -180,14 +196,19 @@ function SessionFocusPageBase({
           </Pressable>
         </GlassCard>
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }
 
 export const SessionFocusPage = memo(SessionFocusPageBase);
 
 const styles = StyleSheet.create({
+  // El ScrollView rellena la altura disponible (entre el riel y la barra
+  // inferior); su contenido scrollea el overflow → todas las series alcanzables.
   page: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: spacing[5],
     paddingTop: spacing[4],
   },
@@ -266,15 +287,21 @@ const styles = StyleSheet.create({
   exProgressDone: {
     fontFamily: fontFamily.display,
     fontSize: 34,
+    // Space Grotesk recorta arriba/abajo sin lineHeight holgado (~1.15×) +
+    // padding vertical: el "0" se veía como "U".
+    lineHeight: 34 * 1.15,
     color: colors.accent,
     fontVariant: ['tabular-nums'],
     letterSpacing: -1,
+    paddingVertical: 2,
   },
   exProgressTotal: {
     fontFamily: fontFamily.displayMedium,
     fontSize: 19,
+    lineHeight: 19 * 1.15,
     color: colors.textMuted,
     fontVariant: ['tabular-nums'],
+    paddingVertical: 2,
   },
   divider: {
     marginVertical: spacing[5],

@@ -16,7 +16,7 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  KeyboardAvoidingView,
+  Keyboard,
   Platform,
   useWindowDimensions,
   type NativeScrollEvent,
@@ -80,6 +80,12 @@ function formatElapsed(ms: number): string {
 }
 
 const TICK_MS = 1000;
+
+/**
+ * Holgura inferior del scroll de cada página para que la última fila + "Añadir
+ * serie" libren la barra inferior fija (nav + swipe-to-finish + safe area).
+ */
+const BOTTOM_BAR_CLEARANCE = 132;
 
 /** Cronómetro vivo: tick cada segundo, se limpia al desmontar / cambiar inicio. */
 function useChronometer(startedAt: string | null): string {
@@ -169,6 +175,9 @@ export default function LiveSession() {
   const [finishing, setFinishing] = useState(false);
   // Índice del ejercicio en foco (controla pager + riel + cabecera).
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Teclado abierto → ocultamos la barra inferior (Anterior/Siguiente + finish)
+  // para que no se solape con el teclado mientras se edita un campo.
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   const elapsed = useChronometer(session?.started_at ?? null);
   const chronoPulse = useChronoPulse();
@@ -222,6 +231,22 @@ export default function LiveSession() {
       active = false;
     };
   }, [sessionId]);
+
+  // ── Visibilidad del teclado ──────────────────────────────────────────────
+  // En iOS usamos los eventos *Will* (animados, sin parpadeo); en Android los
+  // *Did* (no hay variante Will fiable). Limpia los listeners al desmontar.
+  useEffect(() => {
+    const showEvt =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvt, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvt, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Keep ref in sync — must happen every render, before handlers read it.
   setsRef.current = sets;
@@ -470,10 +495,10 @@ export default function LiveSession() {
   const isLast = currentIndex >= groupCount - 1;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    // El teclado lo gestiona el ScrollView de cada página
+    // (automaticallyAdjustKeyboardInsets sube el campo enfocado); por eso aquí
+    // NO usamos KeyboardAvoidingView con padding — duplicaría el desplazamiento.
+    <View style={styles.root}>
       <Background />
 
       {/* ── Cabecera compacta fija ─────────────────────────────────────────── */}
@@ -556,6 +581,7 @@ export default function LiveSession() {
       ) : (
         <FlatList
           ref={pagerRef}
+          style={styles.pager}
           data={groups}
           horizontal
           pagingEnabled
@@ -569,7 +595,6 @@ export default function LiveSession() {
             offset: width * index,
             index,
           })}
-          contentContainerStyle={{ paddingBottom: spacing[4] }}
           renderItem={({ item, index }) => (
             <SessionFocusPage
               width={width}
@@ -577,6 +602,7 @@ export default function LiveSession() {
               index={index}
               total={groupCount}
               target={targets[item.exerciseId]}
+              bottomInset={BOTTOM_BAR_CLEARANCE}
               onChangeSet={handleChangeSet}
               onToggleComplete={handleToggleComplete}
               onAddSet={() => handleAddSet(item)}
@@ -586,40 +612,45 @@ export default function LiveSession() {
       )}
 
       {/* ── Barra inferior: navegación + swipe-to-finish ───────────────────── */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + spacing[3] }]}>
-        {!isEmpty ? (
-          <View style={styles.navRow}>
-            <View style={styles.navItem}>
-              <Button
-                variant="surface"
-                size="sm"
-                label="‹  Anterior"
-                disabled={isFirst}
-                onPress={() => goToIndex(currentIndex - 1)}
-              />
+      {/* Se oculta mientras el teclado está abierto para no solaparse con él. */}
+      {!keyboardOpen ? (
+        <View
+          style={[styles.bottomBar, { paddingBottom: insets.bottom + spacing[3] }]}
+        >
+          {!isEmpty ? (
+            <View style={styles.navRow}>
+              <View style={styles.navItem}>
+                <Button
+                  variant="surface"
+                  size="sm"
+                  label="‹  Anterior"
+                  disabled={isFirst}
+                  onPress={() => goToIndex(currentIndex - 1)}
+                />
+              </View>
+              <View style={styles.navItem}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  label="Siguiente  ›"
+                  disabled={isLast}
+                  onPress={() => goToIndex(currentIndex + 1)}
+                />
+              </View>
             </View>
-            <View style={styles.navItem}>
-              <Button
-                variant="ghost"
-                size="sm"
-                label="Siguiente  ›"
-                disabled={isLast}
-                onPress={() => goToIndex(currentIndex + 1)}
-              />
-            </View>
-          </View>
-        ) : null}
+          ) : null}
 
-        {/* Finalizar — swipe-to-finish (reemplaza el botón plano) */}
-        <View style={styles.finishWrap}>
-          <SwipeToFinish
-            onFinish={handleFinish}
-            disabled={isFinished}
-            loading={finishing}
-          />
+          {/* Finalizar — swipe-to-finish (reemplaza el botón plano) */}
+          <View style={styles.finishWrap}>
+            <SwipeToFinish
+              onFinish={handleFinish}
+              disabled={isFinished}
+              loading={finishing}
+            />
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      ) : null}
+    </View>
   );
 }
 
@@ -655,6 +686,11 @@ const styles = StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // El pager ocupa el alto restante entre el riel y la barra inferior; cada
+  // página es un ScrollView que scrollea su overflow (todas las series).
+  pager: {
+    flex: 1,
   },
 
   // ── Cabecera compacta ──────────────────────────────────────────────────────
@@ -749,15 +785,20 @@ const styles = StyleSheet.create({
   progressDone: {
     fontFamily: fontFamily.display,
     fontSize: 20,
+    // lineHeight holgado para que Space Grotesk no recorte el número arriba/abajo.
+    lineHeight: 20 * 1.15,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.5,
+    paddingVertical: 1,
   },
   progressTotal: {
     fontFamily: fontFamily.displayMedium,
     fontSize: 15,
+    lineHeight: 15 * 1.15,
     color: colors.textMuted,
     fontVariant: ['tabular-nums'],
+    paddingVertical: 1,
   },
   progressUnit: {
     color: colors.textMuted,

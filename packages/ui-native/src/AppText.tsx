@@ -54,10 +54,13 @@ const variantStyles = StyleSheet.create({
     fontFamily: fontFamily.display,
     fontWeight: fontWeight.bold,
     fontSize: fontSize.numeric,
-    lineHeight: fontSize.numeric * lineHeight.tight,
+    // Space Grotesk tiene glifos altos: tight (1.05) recortaba el número.
+    // ~1.15× deja respirar el "0" arriba/abajo sin descuadrar el baseline.
+    lineHeight: fontSize.numeric * lineHeight.statNumber,
     color: colors.textPrimary,
     letterSpacing: -1,
     fontVariant: ['tabular-nums'],
+    paddingVertical: 2,
   },
   title: {
     fontFamily: fontFamily.display,

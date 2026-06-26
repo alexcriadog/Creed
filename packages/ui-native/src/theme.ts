@@ -231,6 +231,9 @@ export const fontWeight = {
 
 export const lineHeight = {
   tight: 1.05,
+  // Para números grandes en Space Grotesk: tight recorta los glifos altos
+  // (un "0" se ve como "U"). ~1.15× los deja completos sin descuadrar.
+  statNumber: 1.15,
   snug: 1.2,
   normal: 1.5,
   relaxed: 1.65,
