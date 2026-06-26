@@ -18,23 +18,35 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   useWindowDimensions,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import {
   AppText,
+  Button,
   GlassCard,
+  IconButton,
+  SwipeToFinish,
   haptic,
-  lightColors,
+  colors,
+  gradients,
+  glow,
   spacing,
   radii,
-  shadows,
+  fontFamily,
 } from '@creed/ui-native';
 import {
   getSession,
@@ -82,6 +94,32 @@ function useChronometer(startedAt: string | null): string {
   if (!startedAt) return '00:00';
   const startMs = new Date(startedAt).getTime();
   return formatElapsed(now - startMs);
+}
+
+/**
+ * Pulso de respiración muy sutil para el glow del cronómetro (opacity 0.5→1→0.5,
+ * loop infinito). Compositor-only y reduced-motion aware.
+ */
+function useChronoPulse() {
+  const pulse = useSharedValue(1);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    if (reduced) {
+      pulse.value = 1;
+      return;
+    }
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(0.45, { duration: 1400 }),
+        withTiming(1, { duration: 1400 })
+      ),
+      -1,
+      false
+    );
+  }, [reduced, pulse]);
+
+  return useAnimatedStyle(() => ({ opacity: pulse.value }));
 }
 
 // ── Agrupación por ejercicio ────────────────────────────────────────────────
@@ -133,6 +171,7 @@ export default function LiveSession() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const elapsed = useChronometer(session?.started_at ?? null);
+  const chronoPulse = useChronoPulse();
 
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -384,7 +423,7 @@ export default function LiveSession() {
     return (
       <View style={[styles.root, styles.center]}>
         <Background />
-        <ActivityIndicator color={lightColors.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -394,24 +433,21 @@ export default function LiveSession() {
       <View style={styles.root}>
         <Background />
         <View style={[styles.topBar, { paddingTop: insets.top + spacing[3] }]}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar"
+          <IconButton
             onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+            accessibilityLabel="Cerrar"
           >
-            <X size={20} color={lightColors.textSecondary} strokeWidth={2.2} />
-          </Pressable>
-          <AppText variant="label" style={styles.topBarTitle}>
+            <X size={20} color={colors.textPrimary} strokeWidth={2.4} />
+          </IconButton>
+          <AppText variant="eyebrow" style={styles.topBarTitle}>
             Sesión
           </AppText>
           <View style={styles.topBarSide} />
         </View>
         <View style={[styles.center, styles.fill]}>
-          <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+          <GlassCard padding={spacing[6]}>
             <View style={styles.emptyInner}>
-              <AppText variant="heading" style={styles.emptyTitle}>
+              <AppText variant="title" style={styles.emptyTitle}>
                 No se pudo cargar
               </AppText>
               <AppText variant="muted" style={styles.emptyCopy}>
@@ -443,18 +479,15 @@ export default function LiveSession() {
       {/* ── Cabecera compacta fija ─────────────────────────────────────────── */}
       <View style={[styles.header, { paddingTop: insets.top + spacing[3] }]}>
         <View style={styles.headerRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar sesión"
+          <IconButton
             onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
+            accessibilityLabel="Cerrar sesión"
           >
-            <X size={20} color={lightColors.textSecondary} strokeWidth={2.2} />
-          </Pressable>
+            <X size={20} color={colors.textPrimary} strokeWidth={2.4} />
+          </IconButton>
 
           <View style={styles.headerCenter}>
-            <AppText variant="label" style={styles.headerLabel} numberOfLines={1}>
+            <AppText variant="eyebrow" style={styles.headerLabel} numberOfLines={1}>
               {headerLabel}
             </AppText>
             {routineName && !isEmpty ? (
@@ -464,27 +497,36 @@ export default function LiveSession() {
             ) : null}
           </View>
 
-          {/* Cronómetro — pastilla horizontal que nunca envuelve */}
-          <View style={styles.chrono}>
-            <AppText
-              variant="label"
-              style={styles.chronoValue}
-              numberOfLines={1}
-              allowFontScaling={false}
-            >
-              {elapsed}
-            </AppText>
+          {/* Cronómetro — pastilla lima, números tabulares, glow que respira */}
+          <View style={styles.chronoWrap}>
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.chronoGlow, chronoPulse]}
+            />
+            <View style={styles.chrono}>
+              <AppText
+                style={styles.chronoValue}
+                numberOfLines={1}
+                allowFontScaling={false}
+              >
+                {elapsed}
+              </AppText>
+            </View>
           </View>
         </View>
 
-        {/* Progreso global + recuento de series */}
+        {/* Progreso global + recuento de series (stat tabular) */}
         <View style={styles.progressRow}>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
           </View>
-          <AppText variant="muted" style={styles.progressCount} numberOfLines={1}>
-            {`${doneSets} / ${totalSets} series`}
-          </AppText>
+          <View style={styles.progressCountRow}>
+            <AppText style={styles.progressDone}>{doneSets}</AppText>
+            <AppText style={styles.progressTotal}>{` / ${totalSets}`}</AppText>
+            <AppText variant="eyebrow" style={styles.progressUnit}>
+              series
+            </AppText>
+          </View>
         </View>
 
         {/* Riel de ejercicios */}
@@ -500,9 +542,9 @@ export default function LiveSession() {
       {/* ── Ejercicio en foco (pager horizontal) ───────────────────────────── */}
       {isEmpty ? (
         <View style={[styles.center, styles.fill]}>
-          <GlassCard intensity={42} tone="light" padding={spacing[6]}>
+          <GlassCard padding={spacing[6]}>
             <View style={styles.emptyInner}>
-              <AppText variant="heading" style={styles.emptyTitle}>
+              <AppText variant="title" style={styles.emptyTitle}>
                 Sin series
               </AppText>
               <AppText variant="muted" style={styles.emptyCopy}>
@@ -543,100 +585,61 @@ export default function LiveSession() {
         />
       )}
 
-      {/* ── Barra inferior: navegación + finalizar ─────────────────────────── */}
+      {/* ── Barra inferior: navegación + swipe-to-finish ───────────────────── */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + spacing[3] }]}>
         {!isEmpty ? (
           <View style={styles.navRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ejercicio anterior"
-              disabled={isFirst}
-              onPress={() => {
-                haptic('light');
-                goToIndex(currentIndex - 1);
-              }}
-              style={({ pressed }) => [
-                styles.navBtn,
-                isFirst && styles.navBtnDisabled,
-                pressed && !isFirst && { opacity: 0.6 },
-              ]}
-            >
-              <ChevronLeft
-                size={18}
-                color={isFirst ? lightColors.textMuted : lightColors.accent}
-                strokeWidth={2.4}
+            <View style={styles.navItem}>
+              <Button
+                variant="surface"
+                size="sm"
+                label="‹  Anterior"
+                disabled={isFirst}
+                onPress={() => goToIndex(currentIndex - 1)}
               />
-              <AppText
-                variant="label"
-                style={[styles.navLabel, isFirst && styles.navLabelDisabled]}
-              >
-                Anterior
-              </AppText>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Siguiente ejercicio"
-              disabled={isLast}
-              onPress={() => {
-                haptic('light');
-                goToIndex(currentIndex + 1);
-              }}
-              style={({ pressed }) => [
-                styles.navBtn,
-                styles.navBtnNext,
-                isLast && styles.navBtnSubtle,
-                pressed && !isLast && { opacity: 0.6 },
-              ]}
-            >
-              <AppText
-                variant="label"
-                style={[styles.navLabel, isLast && styles.navLabelDisabled]}
-              >
-                Siguiente
-              </AppText>
-              <ChevronRight
-                size={18}
-                color={isLast ? lightColors.textMuted : lightColors.accent}
-                strokeWidth={2.4}
+            </View>
+            <View style={styles.navItem}>
+              <Button
+                variant="ghost"
+                size="sm"
+                label="Siguiente  ›"
+                disabled={isLast}
+                onPress={() => goToIndex(currentIndex + 1)}
               />
-            </Pressable>
+            </View>
           </View>
         ) : null}
 
-        {/* Finalizar — secundario respecto al flujo de registro */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Finalizar entreno"
-          disabled={isFinished || finishing}
-          onPress={handleFinish}
-          style={({ pressed }) => [
-            styles.finishLink,
-            (isFinished || finishing) && { opacity: 0.5 },
-            pressed && !isFinished && !finishing && { opacity: 0.6 },
-          ]}
-        >
-          <AppText variant="label" style={styles.finishLinkLabel}>
-            {finishing ? 'Finalizando…' : 'Finalizar entreno'}
-          </AppText>
-        </Pressable>
+        {/* Finalizar — swipe-to-finish (reemplaza el botón plano) */}
+        <View style={styles.finishWrap}>
+          <SwipeToFinish
+            onFinish={handleFinish}
+            disabled={isFinished}
+            loading={finishing}
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-/** Fondo glass: gradiente premium + orbe ambiental. */
+/** Fondo dark atlético: gradiente de atmósfera + orbe de glow lima muy tenue. */
 function Background() {
   return (
     <>
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.2, y: 0.6 }}
+        style={[styles.orb, styles.orbTop]}
+      />
     </>
   );
 }
@@ -644,7 +647,7 @@ function Background() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: lightColors.bgCanvas,
+    backgroundColor: colors.canvas,
   },
   fill: {
     flex: 1,
@@ -659,7 +662,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[2],
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: lightColors.borderSubtle,
+    borderBottomColor: colors.hairline,
   },
   headerRow: {
     flexDirection: 'row',
@@ -672,40 +675,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerLabel: {
-    color: lightColors.textPrimary,
-    fontWeight: '700',
+    color: colors.textPrimary,
   },
   headerSub: {
     fontSize: 12,
-    marginTop: 1,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: lightColors.bgSurfaceRaised,
-    borderWidth: 1,
-    borderColor: lightColors.borderSubtle,
+    marginTop: 2,
   },
 
-  // Cronómetro — pastilla horizontal; flexShrink:0 + minWidth para no envolver
-  chrono: {
+  // Cronómetro — pastilla lima; flexShrink:0 + minWidth para no envolver
+  chronoWrap: {
     flexShrink: 0,
-    minWidth: 76,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chronoGlow: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    right: -6,
+    bottom: -6,
     borderRadius: radii.pill,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: 'transparent',
+    ...glow('strong'),
+  },
+  chrono: {
+    minWidth: 84,
+    paddingHorizontal: spacing[4],
+    paddingVertical: 7,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
     borderWidth: 1,
-    borderColor: `${lightColors.accent}44`,
+    borderColor: 'rgba(198,255,58,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   chronoValue: {
-    color: lightColors.accent,
-    fontWeight: '700',
+    fontFamily: fontFamily.display,
+    fontSize: 19,
+    color: colors.accent,
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
     textAlign: 'center',
@@ -715,82 +722,66 @@ const styles = StyleSheet.create({
   progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[3],
-    marginTop: spacing[3],
+    gap: spacing[4],
+    marginTop: spacing[4],
   },
   progressTrack: {
     flex: 1,
-    height: 6,
+    height: 8,
     borderRadius: radii.pill,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: radii.pill,
-    backgroundColor: lightColors.accent,
+    backgroundColor: colors.accent,
+    ...glow('soft'),
   },
-  progressCount: {
+  progressCountRow: {
     flexShrink: 0,
-    fontSize: 12,
-    color: lightColors.textSecondary,
-    fontWeight: '600',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  progressDone: {
+    fontFamily: fontFamily.display,
+    fontSize: 20,
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
+  },
+  progressTotal: {
+    fontFamily: fontFamily.displayMedium,
+    fontSize: 15,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  progressUnit: {
+    color: colors.textMuted,
+    marginLeft: 2,
   },
 
   // ── Barra inferior ─────────────────────────────────────────────────────────
   bottomBar: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[3],
+    paddingTop: spacing[4],
+    gap: spacing[4],
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: lightColors.borderSubtle,
-    backgroundColor: lightColors.bgSurfaceRaised,
+    borderTopColor: colors.hairline,
+    backgroundColor: colors.surface1,
   },
   navRow: {
     flexDirection: 'row',
     gap: spacing[3],
   },
-  navBtn: {
+  navItem: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing[1],
-    height: 48,
-    borderRadius: radii.md,
-    backgroundColor: lightColors.bgSurface,
-    borderWidth: 1,
-    borderColor: lightColors.borderDefault,
-    ...shadows.sm,
   },
-  navBtnNext: {
-    backgroundColor: lightColors.accentSoft,
-    borderColor: `${lightColors.accent}44`,
-  },
-  navBtnDisabled: {
-    opacity: 0.4,
-  },
-  navBtnSubtle: {
-    backgroundColor: lightColors.bgSurface,
-    borderColor: lightColors.borderDefault,
-  },
-  navLabel: {
-    color: lightColors.accent,
-    fontWeight: '700',
-  },
-  navLabelDisabled: {
-    color: lightColors.textMuted,
-  },
-  finishLink: {
-    alignSelf: 'center',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    marginTop: spacing[1],
-  },
-  finishLinkLabel: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
+  finishWrap: {
+    width: '100%',
   },
 
   // ── Empty / error ──────────────────────────────────────────────────────────
@@ -813,16 +804,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[3],
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: lightColors.borderSubtle,
+    borderBottomColor: colors.hairline,
   },
   topBarTitle: {
     flex: 1,
     textAlign: 'center',
-    color: lightColors.textPrimary,
-    fontWeight: '700',
+    color: colors.textPrimary,
   },
   topBarSide: {
-    width: 36,
+    width: 44,
   },
 
   // ── Fondo ──────────────────────────────────────────────────────────────────
@@ -831,10 +821,9 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   orbTop: {
-    width: 300,
-    height: 300,
-    top: -110,
-    right: -90,
-    backgroundColor: 'rgba(139,157,255,0.16)',
+    width: 360,
+    height: 360,
+    top: -130,
+    right: -110,
   },
 });

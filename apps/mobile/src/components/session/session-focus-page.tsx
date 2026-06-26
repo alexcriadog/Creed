@@ -14,6 +14,7 @@
 
 import { memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { Plus } from 'lucide-react-native';
 import {
@@ -21,11 +22,13 @@ import {
   Badge,
   GlassCard,
   Divider,
+  useFadeSlideIn,
   haptic,
-  lightColors,
+  colors,
   spacing,
   radii,
-  shadows,
+  fontSize,
+  fontFamily,
 } from '@creed/ui-native';
 import { displayName } from '../../lib/exercises';
 import type { SessionSet } from '../../lib/sessions';
@@ -74,13 +77,14 @@ function SessionFocusPageBase({
   const head = sets[0];
   const targetLine = buildTargetLine(target);
   const doneCount = sets.filter((s) => s.completed).length;
+  const enter = useFadeSlideIn(40);
 
   return (
     <View style={[styles.page, { width }]}>
-      <View style={[styles.cardWrap, shadows.md]}>
-        <GlassCard intensity={50} tone="light" padding={spacing[5]}>
+      <Animated.View style={[styles.cardWrap, enter]}>
+        <GlassCard padding={spacing[5]}>
           {/* Eyebrow: posición del ejercicio en la sesión */}
-          <AppText variant="muted" style={styles.eyebrow}>
+          <AppText variant="eyebrow" style={styles.eyebrow}>
             {`Ejercicio ${index + 1} de ${total}`}
           </AppText>
 
@@ -95,14 +99,12 @@ function SessionFocusPageBase({
               />
             ) : (
               <View style={styles.thumbPlaceholder}>
-                <AppText variant="title" style={styles.thumbIndex}>
-                  {index + 1}
-                </AppText>
+                <AppText style={styles.thumbIndex}>{index + 1}</AppText>
               </View>
             )}
 
             <View style={styles.titleBlock}>
-              <AppText variant="heading" style={styles.title} numberOfLines={2}>
+              <AppText variant="title" style={styles.title} numberOfLines={2}>
                 {head ? displayName(head) : 'Ejercicio'}
               </AppText>
               <View style={styles.metaRow}>
@@ -118,33 +120,33 @@ function SessionFocusPageBase({
             </View>
           </View>
 
-          {/* Progreso del ejercicio — banda destacada */}
+          {/* Progreso del ejercicio — dato protagonista en stat tabular */}
           <View style={styles.exProgressBand}>
-            <AppText variant="label" style={styles.exProgressLabel}>
-              Series completadas
+            <AppText variant="eyebrow" style={styles.exProgressLabel}>
+              Series
             </AppText>
-            <AppText variant="heading" style={styles.exProgressValue}>
-              {doneCount}
-              <AppText variant="muted" style={styles.exProgressTotal}>
+            <View style={styles.exProgressValue}>
+              <AppText style={styles.exProgressDone}>{doneCount}</AppText>
+              <AppText style={styles.exProgressTotal}>
                 {` / ${sets.length}`}
               </AppText>
-            </AppText>
+            </View>
           </View>
 
-          <Divider color={lightColors.borderDefault} style={styles.divider} />
+          <Divider style={styles.divider} />
 
           {/* Cabecera de columnas */}
           <View style={styles.colHead}>
-            <AppText variant="label" style={[styles.colLabel, styles.colSet]}>
-              Serie
+            <AppText variant="eyebrow" style={[styles.colLabel, styles.colSet]}>
+              #
             </AppText>
-            <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
+            <AppText variant="eyebrow" style={[styles.colLabel, styles.colNum]}>
               Kg
             </AppText>
-            <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
+            <AppText variant="eyebrow" style={[styles.colLabel, styles.colNum]}>
               Reps
             </AppText>
-            <AppText variant="label" style={[styles.colLabel, styles.colNum]}>
+            <AppText variant="eyebrow" style={[styles.colLabel, styles.colNum]}>
               RIR
             </AppText>
             <View style={styles.colCheck} />
@@ -163,7 +165,7 @@ function SessionFocusPageBase({
             ))}
           </View>
 
-          {/* Añadir serie */}
+          {/* Añadir serie — afordancia lima punteada */}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Añadir serie"
@@ -173,13 +175,11 @@ function SessionFocusPageBase({
             }}
             style={({ pressed }) => [styles.addSet, pressed && { opacity: 0.6 }]}
           >
-            <Plus size={18} color={lightColors.accent} strokeWidth={2.4} />
-            <AppText variant="label" style={styles.addSetLabel}>
-              Añadir serie
-            </AppText>
+            <Plus size={18} color={colors.accent} strokeWidth={2.6} />
+            <AppText style={styles.addSetLabel}>Añadir serie</AppText>
           </Pressable>
         </GlassCard>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -193,12 +193,8 @@ const styles = StyleSheet.create({
   },
   cardWrap: {},
   eyebrow: {
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    color: lightColors.accent,
-    fontWeight: '600',
-    marginBottom: spacing[3],
+    color: colors.accent,
+    marginBottom: spacing[4],
   },
   header: {
     flexDirection: 'row',
@@ -206,29 +202,36 @@ const styles = StyleSheet.create({
     gap: spacing[4],
   },
   thumb: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
     borderRadius: radii.lg,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
   thumbPlaceholder: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
     borderRadius: radii.lg,
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(198,255,58,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   thumbIndex: {
-    color: lightColors.accent,
-    fontWeight: '700',
+    fontFamily: fontFamily.display,
+    fontSize: 30,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
   },
   titleBlock: {
     flex: 1,
     gap: spacing[2],
   },
   title: {
-    fontWeight: '700',
+    fontSize: fontSize.xl,
+    lineHeight: fontSize.xl * 1.1,
   },
   metaRow: {
     flexDirection: 'row',
@@ -239,56 +242,63 @@ const styles = StyleSheet.create({
   targetLine: {
     fontSize: 13,
     letterSpacing: 0.2,
+    color: colors.textSecondary,
   },
   exProgressBand: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing[4],
+    marginTop: spacing[5],
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgSurfaceRaised,
+    backgroundColor: colors.surface2,
     borderWidth: 1,
-    borderColor: lightColors.borderSubtle,
+    borderColor: colors.hairline,
   },
   exProgressLabel: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
+    color: colors.textSecondary,
   },
   exProgressValue: {
-    color: lightColors.textPrimary,
-    fontWeight: '700',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  exProgressDone: {
+    fontFamily: fontFamily.display,
+    fontSize: 34,
+    color: colors.accent,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
   },
   exProgressTotal: {
-    fontSize: 17,
-    fontWeight: '500',
+    fontFamily: fontFamily.displayMedium,
+    fontSize: 19,
+    color: colors.textMuted,
+    fontVariant: ['tabular-nums'],
   },
   divider: {
-    marginVertical: spacing[4],
+    marginVertical: spacing[5],
   },
   colHead: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    paddingHorizontal: spacing[1],
-    marginBottom: spacing[2],
+    paddingHorizontal: spacing[2],
+    marginBottom: spacing[3],
   },
   colLabel: {
-    fontSize: 11,
-    color: lightColors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    color: colors.textMuted,
   },
   colSet: {
-    width: 40,
+    width: 34,
+    textAlign: 'center',
   },
   colNum: {
     flex: 1,
     textAlign: 'center',
   },
   colCheck: {
-    width: 44,
+    width: 48,
   },
   rows: {
     gap: spacing[3],
@@ -298,17 +308,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing[2],
-    marginTop: spacing[4],
+    marginTop: spacing[5],
     paddingVertical: spacing[3],
     borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: lightColors.borderDefault,
+    borderWidth: 1.5,
+    borderColor: 'rgba(198,255,58,0.35)',
     borderStyle: 'dashed',
-    backgroundColor: lightColors.bgSurfaceRaised,
+    backgroundColor: colors.accentSoft,
   },
   addSetLabel: {
-    color: lightColors.accent,
-    fontWeight: '600',
+    fontFamily: fontFamily.displayMedium,
+    color: colors.accent,
     fontSize: 15,
+    letterSpacing: 0.3,
   },
 });

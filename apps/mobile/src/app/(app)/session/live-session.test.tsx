@@ -113,10 +113,12 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
 }));
 
-import { render, screen, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react-native';
+import { completeSession } from '../../../lib/sessions';
 import LiveSession from './[id]';
 
-test('modo foco: muestra el primer ejercicio, sus series, cronómetro y progreso', async () => {
+test('sesión dark atlético: ejercicio en foco, series, cronómetro y progreso', async () => {
   await render(<LiveSession />);
 
   // El primer ejercicio (foco) y su nombre. El pager renderiza todas las
@@ -126,7 +128,7 @@ test('modo foco: muestra el primer ejercicio, sus series, cronómetro y progreso
   );
   expect(screen.getByText('Overhead Press')).toBeOnTheScreen();
 
-  // Cabecera de modo foco: posición del ejercicio + nombre de la rutina.
+  // Cabecera: posición del ejercicio (eyebrow) + nombre de la rutina.
   expect(screen.getByText('Ejercicio 1 / 2')).toBeOnTheScreen();
   expect(screen.getByText('Push Day')).toBeOnTheScreen();
 
@@ -147,8 +149,37 @@ test('modo foco: muestra el primer ejercicio, sus series, cronómetro y progreso
   expect(screen.getByText(/^\d{1,2}:\d{2}(:\d{2})?$/)).toBeOnTheScreen();
 
   // Progreso global: 1 de 3 series marcadas (set-b1 completada en el mock).
-  expect(screen.getByText('1 / 3 series')).toBeOnTheScreen();
+  // Ahora el recuento se compone de stats tabulares separados; "/ 3" + "series"
+  // son únicos (el "1" suelto colisiona con los números de serie).
+  expect(screen.getByText('/ 3')).toBeOnTheScreen();
+  expect(screen.getByText('series')).toBeOnTheScreen();
 
-  // Acción de finalizar (secundaria) sigue accesible.
-  expect(screen.getByText('Finalizar entreno')).toBeOnTheScreen();
+  // El swipe-to-finish reemplaza al botón plano (role=button + label).
+  expect(
+    screen.getByRole('button', { name: 'Desliza para finalizar' })
+  ).toBeOnTheScreen();
+});
+
+test('finalizar pasa por el guard de series sin marcar (no completa directo)', async () => {
+  const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+  await render(<LiveSession />);
+  await waitFor(() =>
+    expect(screen.getByText('Bench Press')).toBeOnTheScreen()
+  );
+
+  // El fallback accesible del SwipeToFinish dispara handleFinish.
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Desliza para finalizar' })
+  );
+
+  // Con 1/3 series marcadas, el guard muestra confirmación y NO completa aún.
+  expect(alertSpy).toHaveBeenCalledWith(
+    'Finalizar entreno',
+    expect.stringContaining('sin marcar'),
+    expect.any(Array)
+  );
+  expect(completeSession).not.toHaveBeenCalled();
+
+  alertSpy.mockRestore();
 });

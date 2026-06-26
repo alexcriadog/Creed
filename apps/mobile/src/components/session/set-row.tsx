@@ -1,25 +1,28 @@
 /**
- * SetRow — fila de una serie en la sesión en vivo.
+ * SetRow — fila de una serie en la sesión en vivo (v3 dark atlético).
  *
- * Columnas: nº de serie · Peso (kg) · Reps · RIR (opcional) · check grande.
- * - Inputs numéricos: persisten en onBlur (optimista, vía onChange del padre).
- * - Check: marca la serie hecha con press-scale, relleno accent y háptica de
- *   éxito; al completar el padre fija performed_at = ahora.
+ * Columnas: nº de serie · Kg · Reps · RIR (opcional) · check memorable.
+ * - Inputs numéricos sobre surface2, números tabulares grandes; persisten en
+ *   onBlur (optimista, vía onChange del padre). Focus → borde lima.
+ * - Check: el momento memorable. Al completar → `usePop` (rebote) + relleno
+ *   lima + glow accent + háptica `success`. La fila hecha se tiñe de accentSoft.
  *
  * App-specific (mobile / React Native). No confundir con el set-row del web.
  */
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { View, TextInput, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Check } from 'lucide-react-native';
 import {
   AppText,
-  usePressScale,
+  usePop,
   haptic,
-  lightColors,
+  colors,
+  glow,
   spacing,
   radii,
+  fontFamily,
 } from '@creed/ui-native';
 import type { SessionSet } from '../../lib/sessions';
 
@@ -63,13 +66,21 @@ function SetRowBase({
   const [weight, setWeight] = useState(toText(set.weight_kg));
   const [reps, setReps] = useState(toText(set.reps));
   const [rir, setRir] = useState(toText(set.rir));
+  const [focused, setFocused] = useState<'weight' | 'reps' | 'rir' | null>(null);
 
   useEffect(() => setWeight(toText(set.weight_kg)), [set.weight_kg]);
   useEffect(() => setReps(toText(set.reps)), [set.reps]);
   useEffect(() => setRir(toText(set.rir)), [set.rir]);
 
-  const { animatedStyle, onPressIn, onPressOut } = usePressScale();
+  // Pop del check al confirmar — el momento memorable de la serie.
+  const { animatedStyle, pop } = usePop(1.22);
   const done = set.completed;
+  // Evita disparar el pop en el render inicial (sólo en la transición a "done").
+  const prevDone = useRef(done);
+  useEffect(() => {
+    if (done && !prevDone.current) pop();
+    prevDone.current = done;
+  }, [done, pop]);
 
   const handleToggle = () => {
     if (disabled) return;
@@ -77,15 +88,19 @@ function SetRowBase({
     onToggleComplete();
   };
 
+  const inputStyle = (field: 'weight' | 'reps' | 'rir') => [
+    styles.input,
+    styles.colNum,
+    focused === field && styles.inputFocused,
+  ];
+
   return (
     <View
       style={[styles.row, done && styles.rowDone, disabled && styles.rowDisabled]}
     >
       {/* Nº de serie */}
       <View style={styles.colSet}>
-        <AppText variant="label" style={styles.setNumber}>
-          {set.set_number}
-        </AppText>
+        <AppText style={styles.setNumber}>{set.set_number}</AppText>
       </View>
 
       {/* Peso (kg) */}
@@ -93,13 +108,18 @@ function SetRowBase({
         testID={`weight-${set.id}`}
         value={weight}
         onChangeText={setWeight}
-        onBlur={() => onChange({ weight_kg: parseNumeric(weight) })}
+        onFocus={() => setFocused('weight')}
+        onBlur={() => {
+          setFocused(null);
+          onChange({ weight_kg: parseNumeric(weight) });
+        }}
         editable={!disabled}
         placeholder="—"
         keyboardType="decimal-pad"
         returnKeyType="done"
-        style={[styles.input, styles.colNum]}
-        placeholderTextColor={lightColors.textMuted}
+        style={inputStyle('weight')}
+        placeholderTextColor={colors.textMuted}
+        selectionColor={colors.accent}
         accessibilityLabel={`Peso serie ${set.set_number}`}
       />
 
@@ -108,13 +128,18 @@ function SetRowBase({
         testID={`reps-${set.id}`}
         value={reps}
         onChangeText={setReps}
-        onBlur={() => onChange({ reps: parseNumeric(reps) })}
+        onFocus={() => setFocused('reps')}
+        onBlur={() => {
+          setFocused(null);
+          onChange({ reps: parseNumeric(reps) });
+        }}
         editable={!disabled}
         placeholder="—"
         keyboardType="number-pad"
         returnKeyType="done"
-        style={[styles.input, styles.colNum]}
-        placeholderTextColor={lightColors.textMuted}
+        style={inputStyle('reps')}
+        placeholderTextColor={colors.textMuted}
+        selectionColor={colors.accent}
         accessibilityLabel={`Reps serie ${set.set_number}`}
       />
 
@@ -123,17 +148,22 @@ function SetRowBase({
         testID={`rir-${set.id}`}
         value={rir}
         onChangeText={setRir}
-        onBlur={() => onChange({ rir: parseNumeric(rir) })}
+        onFocus={() => setFocused('rir')}
+        onBlur={() => {
+          setFocused(null);
+          onChange({ rir: parseNumeric(rir) });
+        }}
         editable={!disabled}
         placeholder="—"
         keyboardType="number-pad"
         returnKeyType="done"
-        style={[styles.input, styles.colNum]}
-        placeholderTextColor={lightColors.textMuted}
+        style={inputStyle('rir')}
+        placeholderTextColor={colors.textMuted}
+        selectionColor={colors.accent}
         accessibilityLabel={`RIR serie ${set.set_number}`}
       />
 
-      {/* Check grande */}
+      {/* Check grande — el momento memorable (pop + relleno lima + glow) */}
       <Animated.View style={[styles.colCheck, animatedStyle]}>
         <Pressable
           testID={`check-${set.id}`}
@@ -142,14 +172,16 @@ function SetRowBase({
           accessibilityLabel={`Serie ${set.set_number}`}
           disabled={disabled}
           onPress={handleToggle}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          style={[styles.check, done ? styles.checkDone : styles.checkIdle]}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={[
+            styles.check,
+            done ? styles.checkDone : styles.checkIdle,
+            done && glow('strong'),
+          ]}
         >
           <Check
-            size={20}
-            color={done ? lightColors.textOnAccent : lightColors.textMuted}
+            size={22}
+            color={done ? colors.onAccent : colors.textMuted}
             strokeWidth={done ? 3 : 2}
           />
         </Pressable>
@@ -165,57 +197,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[2],
-    paddingVertical: spacing[1],
-    paddingHorizontal: spacing[1],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[2],
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   rowDone: {
-    backgroundColor: lightColors.accentSoft,
+    backgroundColor: colors.accentSoft,
+    borderColor: 'rgba(198,255,58,0.20)',
   },
   rowDisabled: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
   colSet: {
-    width: 40,
+    width: 34,
     alignItems: 'center',
   },
   setNumber: {
-    color: lightColors.textSecondary,
-    fontWeight: '600',
+    fontFamily: fontFamily.display,
+    fontSize: 18,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
   },
   colNum: {
     flex: 1,
   },
   input: {
     textAlign: 'center',
-    fontSize: 16,
-    color: lightColors.textPrimary,
-    borderWidth: 1,
-    borderColor: lightColors.borderDefault,
+    fontFamily: fontFamily.display,
+    fontSize: 19,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+    borderWidth: 1.5,
+    borderColor: colors.hairline,
     borderRadius: radii.sm,
     paddingVertical: spacing[2],
     paddingHorizontal: spacing[1],
-    backgroundColor: lightColors.bgSurface,
-    minHeight: 40,
+    backgroundColor: colors.surface2,
+    minHeight: 48,
+  },
+  inputFocused: {
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceHi,
   },
   colCheck: {
-    width: 44,
+    width: 48,
     alignItems: 'center',
   },
   check: {
-    width: 40,
-    height: 40,
+    width: 46,
+    height: 46,
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
   },
   checkIdle: {
-    backgroundColor: lightColors.bgSurfaceRaised,
-    borderColor: lightColors.borderStrong,
+    backgroundColor: colors.surface2,
+    borderColor: colors.hairlineStrong,
   },
   checkDone: {
-    backgroundColor: lightColors.accent,
-    borderColor: lightColors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
 });
