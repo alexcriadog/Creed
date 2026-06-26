@@ -10,20 +10,21 @@ import {
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  CalendarDays,
   ChevronRight,
   Dumbbell,
-  Moon,
+  ListChecks,
+  Play,
   Sparkles,
+  Target,
 } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import {
   AppText,
   Badge,
   Button,
   GlassCard,
   Header,
-  Input,
   useFadeSlideIn,
   usePressScale,
   haptic,
@@ -34,101 +35,72 @@ import {
 } from '@creed/ui-native';
 import {
   getActiveProgram,
-  createProgram,
   listRoutines,
   type Program,
   type Routine,
 } from '../../../lib/routines';
+import { startSession } from '../../../lib/sessions';
 
-// Lun–Dom. weekday 0=Lun … 6=Dom.
-const WEEKDAYS: { index: number; short: string; long: string }[] = [
-  { index: 0, short: 'Lun', long: 'Lunes' },
-  { index: 1, short: 'Mar', long: 'Martes' },
-  { index: 2, short: 'Mié', long: 'Miércoles' },
-  { index: 3, short: 'Jue', long: 'Jueves' },
-  { index: 4, short: 'Vie', long: 'Viernes' },
-  { index: 5, short: 'Sáb', long: 'Sábado' },
-  { index: 6, short: 'Dom', long: 'Domingo' },
-];
+// ── Routine card ──────────────────────────────────────────────────────────────
 
-type WeekDayView = {
-  index: number;
-  short: string;
-  long: string;
-  routineName: string | null;
-};
-
-// ── Day card ───────────────────────────────────────────────────────────────────
-
-function DayCard({
-  day,
-  position,
-  onPress,
+function RoutineCard({
+  item,
+  index,
+  isStarting,
+  onOpen,
+  onStart,
 }: {
-  day: WeekDayView;
-  position: number;
-  onPress: () => void;
+  item: Routine;
+  index: number;
+  isStarting: boolean;
+  onOpen: () => void;
+  onStart: () => void;
 }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
-  const enter = useFadeSlideIn(120 + position * 55);
-  const assigned = day.routineName !== null;
+  const enter = useFadeSlideIn(140 + index * 65);
 
   return (
-    <Animated.View style={[enter]}>
+    <Animated.View style={enter}>
       <Animated.View style={[animatedStyle, shadows.md]}>
-        <GlassCard intensity={48} tone="light" padding={spacing[4]}>
+        <GlassCard intensity={50} tone="light" padding={spacing[5]}>
+          {/* Row: icon + title + chevron → opens editor */}
           <Pressable
-            onPress={onPress}
+            onPress={onOpen}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
             accessibilityRole="button"
-            accessibilityLabel={
-              assigned
-                ? `${day.long}: ${day.routineName}. Cambiar rutina`
-                : `${day.long}: descanso. Asignar rutina`
-            }
-            style={styles.dayRow}
+            accessibilityLabel={`Ver rutina ${item.name}`}
+            style={styles.cardHeader}
           >
-            <View
-              style={[
-                styles.dayChip,
-                assigned ? styles.dayChipActive : styles.dayChipRest,
-              ]}
-            >
-              <AppText
-                variant="label"
-                style={[
-                  styles.dayChipText,
-                  { color: assigned ? lightColors.accent : lightColors.textMuted },
-                ]}
-              >
-                {day.short}
-              </AppText>
+            <View style={styles.cardIconWrap}>
+              <Dumbbell size={22} color={lightColors.accent} strokeWidth={1.8} />
             </View>
-
-            <View style={styles.dayBody}>
-              <AppText variant="label" style={styles.dayLong}>
-                {day.long}
+            <View style={styles.cardTitleBlock}>
+              <AppText variant="heading" style={styles.cardTitle} numberOfLines={1}>
+                {item.name}
               </AppText>
-              {assigned ? (
-                <View style={styles.dayRoutineRow}>
-                  <Dumbbell size={15} color={lightColors.accent} strokeWidth={2} />
-                  <AppText variant="body" style={styles.dayRoutine} numberOfLines={1}>
-                    {day.routineName}
-                  </AppText>
-                </View>
-              ) : (
-                <View style={styles.dayRoutineRow}>
-                  <Moon size={15} color={lightColors.textMuted} strokeWidth={1.8} />
-                  <AppText variant="muted">Descanso</AppText>
-                </View>
-              )}
+              <AppText variant="muted">Toca para editar</AppText>
             </View>
+            <ChevronRight size={20} color={lightColors.textMuted} strokeWidth={1.8} />
+          </Pressable>
 
-            {assigned ? (
-              <Badge label="Activo" tone="accent" size="sm" />
-            ) : null}
-            <ChevronRight size={18} color={lightColors.textMuted} strokeWidth={1.8} />
+          {/* Divider */}
+          <View style={styles.cardDivider} />
+
+          {/* Empezar CTA */}
+          <Pressable
+            onPress={onStart}
+            disabled={isStarting}
+            accessibilityRole="button"
+            accessibilityLabel={`Empezar rutina ${item.name}`}
+            style={styles.startRow}
+          >
+            <View style={styles.startIconWrap}>
+              <Play size={16} color={lightColors.accent} strokeWidth={2} />
+            </View>
+            <AppText variant="label" style={styles.startLabel}>
+              Empezar
+            </AppText>
           </Pressable>
         </GlassCard>
       </Animated.View>
@@ -136,30 +108,10 @@ function DayCard({
   );
 }
 
-// ── Empty / onboarding ──────────────────────────────────────────────────────────
+// ── Empty: no program or no routines ─────────────────────────────────────────
 
-function CreateProgram({ onCreated }: { onCreated: (p: Program) => void }) {
+function EmptyState({ onNavigate }: { onNavigate: () => void }) {
   const enter = useFadeSlideIn(80);
-  const [name, setName] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const canCreate = name.trim().length > 0 && !saving;
-
-  const handleCreate = async () => {
-    const trimmed = name.trim();
-    if (trimmed.length === 0 || saving) return;
-    setSaving(true);
-    try {
-      const program = await createProgram({ name: trimmed });
-      haptic('success');
-      onCreated(program);
-    } catch (err) {
-      setSaving(false);
-      const msg = err instanceof Error ? err.message : 'Error al crear el programa';
-      Alert.alert('No se pudo crear', msg);
-    }
-  };
-
   return (
     <Animated.View style={[styles.emptyWrap, enter]}>
       <View style={[styles.emptyCard, shadows.md]}>
@@ -171,33 +123,18 @@ function CreateProgram({ onCreated }: { onCreated: (p: Program) => void }) {
             <Sparkles size={32} color={lightColors.accent} strokeWidth={1.6} />
           </View>
           <AppText variant="heading" style={styles.emptyTitle}>
-            Crea tu programa
+            Aún no tienes rutinas
           </AppText>
           <AppText variant="muted" style={styles.emptyCopy}>
-            Un programa organiza tu semana: asigna una rutina a cada día y deja los
-            demás como descanso. Tu coach trabajará sobre este horario.
+            Crea rutinas, añade ejercicios y vincúlalas a tu programa. Tu coach trabajará
+            sobre ellas.
           </AppText>
-
-          <View style={styles.formField}>
-            <Input
-              label="Nombre del programa"
-              value={name}
-              onChangeText={setName}
-              placeholder="Ej. Hipertrofia · Bloque 1"
-              autoCapitalize="sentences"
-              returnKeyType="done"
-              onSubmitEditing={handleCreate}
-            />
-          </View>
-
           <View style={styles.emptyBtn}>
             <Button
-              label="Crear programa"
+              label="Gestionar rutinas"
               variant="primary"
               size="md"
-              loading={saving}
-              disabled={!canCreate}
-              onPress={handleCreate}
+              onPress={onNavigate}
             />
           </View>
         </LinearGradient>
@@ -206,41 +143,33 @@ function CreateProgram({ onCreated }: { onCreated: (p: Program) => void }) {
   );
 }
 
-// ── Screen ──────────────────────────────────────────────────────────────────────
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ProgramScreen() {
   const router = useRouter();
   const [program, setProgram] = useState<Program | null>(null);
-  const [routinesById, setRoutinesById] = useState<Record<string, Routine>>({});
-  const [assignments, setAssignments] = useState<Record<number, string>>({});
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [startingId, setStartingId] = useState<string | null>(null);
 
   const slideHeader = useFadeSlideIn(0);
-  const slideWeekLabel = useFadeSlideIn(80);
+  const slideSection = useFadeSlideIn(80);
 
   const load = useCallback(() => {
     let active = true;
     setLoading(true);
     setLoadError(false);
-    (async () => {
-      // Independientes: en paralelo para evitar waterfall.
-      const [activeProgram, routines] = await Promise.all([
-        getActiveProgram(),
-        listRoutines(),
-      ]);
-      const byId: Record<string, Routine> = {};
-      routines.forEach((r) => {
-        byId[r.id] = r;
-      });
 
-      // TODO(Task3): weekly-schedule removed in Hevy model — program screen will be rewritten.
-      const days: Record<number, string> = {};
+    (async () => {
+      const activeProgram = await getActiveProgram();
+      const programRoutines = activeProgram
+        ? await listRoutines({ programId: activeProgram.id })
+        : [];
 
       if (!active) return;
       setProgram(activeProgram);
-      setRoutinesById(byId);
-      setAssignments(days);
+      setRoutines(programRoutines);
     })()
       .catch(() => {
         if (!active) return;
@@ -255,23 +184,32 @@ export default function ProgramScreen() {
 
   useFocusEffect(load);
 
-  const week: WeekDayView[] = WEEKDAYS.map((d) => {
-    const routineId = assignments[d.index];
-    const routine = routineId ? routinesById[routineId] : undefined;
-    return {
-      index: d.index,
-      short: d.short,
-      long: d.long,
-      routineName: routine ? routine.name : null,
-    };
-  });
+  const handleStart = useCallback(
+    async (routine: Routine) => {
+      if (startingId !== null) return;
+      setStartingId(routine.id);
+      try {
+        const session = await startSession(routine.id);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace(`/(app)/session/${session.id}` as any);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error desconocido';
+        Alert.alert('No se pudo iniciar el entreno', message);
+      } finally {
+        setStartingId(null);
+      }
+    },
+    [startingId, router]
+  );
 
-  const trainingCount = week.filter((d) => d.routineName !== null).length;
-
-  const goAssign = (weekday: number) => {
-    if (!program) return;
-    router.push(`/(app)/program/day/${weekday}?programId=${program.id}` as any);
-  };
+  // Hero meta line: goal · period
+  const heroMeta = (() => {
+    if (!program) return '';
+    const parts: string[] = [];
+    if (program.goal) parts.push(program.goal);
+    if (program.period_weeks) parts.push(`${program.period_weeks} semanas`);
+    return parts.join(' · ');
+  })();
 
   return (
     <View style={styles.root}>
@@ -284,12 +222,16 @@ export default function ProgramScreen() {
       />
       <View style={[styles.orb, styles.orbTop]} />
 
-      <Header title="Programa" onBack={() => router.back()} withSafeArea />
+      <Header
+        title={program?.name ?? 'Programa'}
+        onBack={() => router.back()}
+        withSafeArea
+      />
 
       {loading ? (
         <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
       ) : loadError ? (
-        <View style={styles.body}>
+        <View style={styles.centeredBody}>
           <View style={styles.errorWrap}>
             <AppText variant="muted" style={styles.errorText}>
               No se pudo cargar — toca para reintentar
@@ -297,14 +239,9 @@ export default function ProgramScreen() {
             <Button label="Reintentar" variant="primary" size="md" onPress={load} />
           </View>
         </View>
-      ) : !program ? (
-        <View style={styles.body}>
-          <CreateProgram
-            onCreated={(p) => {
-              setProgram(p);
-              setAssignments({});
-            }}
-          />
+      ) : !program || routines.length === 0 ? (
+        <View style={styles.centeredBody}>
+          <EmptyState onNavigate={() => router.push('/(app)/routines' as any)} />
         </View>
       ) : (
         <ScrollView
@@ -322,43 +259,60 @@ export default function ProgramScreen() {
                 style={[styles.heroGradient, { borderRadius: radii.xl }]}
               >
                 <View style={styles.heroBadge}>
-                  <CalendarDays size={15} color="#FCFCFD" strokeWidth={2} />
+                  <Target size={14} color="#FCFCFD" strokeWidth={2} />
                   <AppText variant="label" style={styles.heroBadgeText}>
                     Programa activo
                   </AppText>
                 </View>
+
                 <AppText variant="title" style={styles.heroTitle} numberOfLines={2}>
                   {program.name}
                 </AppText>
-                <AppText variant="body" style={styles.heroMeta}>
-                  {trainingCount === 0
-                    ? 'Sin días asignados todavía'
-                    : trainingCount === 1
-                    ? '1 día de entreno · 6 de descanso'
-                    : `${trainingCount} días de entreno · ${7 - trainingCount} de descanso`}
-                </AppText>
+
+                {heroMeta.length > 0 ? (
+                  <AppText variant="body" style={styles.heroMeta}>
+                    {heroMeta}
+                  </AppText>
+                ) : null}
+
+                <View style={styles.heroStats}>
+                  <Badge
+                    label={
+                      routines.length === 1
+                        ? '1 rutina'
+                        : `${routines.length} rutinas`
+                    }
+                    tone="accent"
+                    size="sm"
+                  />
+                </View>
               </LinearGradient>
             </View>
           </Animated.View>
 
-          {/* Etiqueta semana */}
-          <Animated.View style={[styles.weekLabel, slideWeekLabel]}>
-            <AppText variant="heading" style={styles.weekLabelTitle}>
-              Tu semana
-            </AppText>
+          {/* Section label */}
+          <Animated.View style={[styles.sectionLabel, slideSection]}>
+            <View style={styles.sectionLabelRow}>
+              <ListChecks size={18} color={lightColors.accent} strokeWidth={1.8} />
+              <AppText variant="heading" style={styles.sectionLabelText}>
+                Rutinas del programa
+              </AppText>
+            </View>
             <AppText variant="muted">
-              Toca un día para asignar o cambiar su rutina.
+              Toca una tarjeta para editarla o empezar el entreno.
             </AppText>
           </Animated.View>
 
-          {/* Días */}
-          <View style={styles.week}>
-            {week.map((day, position) => (
-              <DayCard
-                key={day.index}
-                day={day}
-                position={position}
-                onPress={() => goAssign(day.index)}
+          {/* Routine cards */}
+          <View style={styles.routineList}>
+            {routines.map((r, index) => (
+              <RoutineCard
+                key={r.id}
+                item={r}
+                index={index}
+                isStarting={startingId !== null}
+                onOpen={() => router.push(`/(app)/routines/${r.id}` as any)}
+                onStart={() => handleStart(r)}
               />
             ))}
           </View>
@@ -382,7 +336,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[16],
     gap: spacing[5],
   },
-  body: {
+  centeredBody: {
     flex: 1,
     paddingHorizontal: spacing[5],
   },
@@ -420,55 +374,73 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.82)',
     marginTop: 2,
   },
-  // Week label
-  weekLabel: {
+  heroStats: {
+    flexDirection: 'row',
+    marginTop: spacing[3],
+    gap: spacing[2],
+  },
+  // Section label
+  sectionLabel: {
     gap: spacing[1],
   },
-  weekLabelTitle: {
+  sectionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  sectionLabelText: {
     letterSpacing: -0.2,
   },
-  // Week
-  week: {
+  // Routine list
+  routineList: {
     gap: spacing[3],
   },
-  dayRow: {
+  // Routine card
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
   },
-  dayChip: {
-    width: 48,
-    height: 48,
+  cardIconWrap: {
+    width: 44,
+    height: 44,
     borderRadius: radii.md,
+    backgroundColor: lightColors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayChipActive: {
-    backgroundColor: lightColors.accentSoft,
-  },
-  dayChipRest: {
-    backgroundColor: lightColors.bgCanvasTint,
-  },
-  dayChipText: {
-    fontSize: 13,
-    letterSpacing: 0.3,
-  },
-  dayBody: {
+  cardTitleBlock: {
     flex: 1,
-    gap: 3,
+    gap: 2,
   },
-  dayLong: {
-    color: lightColors.textSecondary,
+  cardTitle: {
+    letterSpacing: -0.2,
   },
-  dayRoutineRow: {
+  cardDivider: {
+    height: 1,
+    backgroundColor: lightColors.borderDefault,
+    marginVertical: spacing[3],
+    marginHorizontal: -spacing[5],
+    // pull out to full card width
+    marginLeft: 0,
+    marginRight: 0,
+  },
+  startRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing[2],
   },
-  dayRoutine: {
-    flex: 1,
+  startIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.md,
+    backgroundColor: lightColors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  startLabel: {
+    color: lightColors.accent,
     fontWeight: '600',
-    letterSpacing: -0.2,
   },
   // Empty
   emptyWrap: {
@@ -503,14 +475,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  formField: {
-    alignSelf: 'stretch',
-    marginTop: spacing[2],
-  },
   emptyBtn: {
     marginTop: spacing[2],
     alignSelf: 'stretch',
   },
+  // Error
   errorWrap: {
     flex: 1,
     justifyContent: 'center',
@@ -521,6 +490,7 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
   },
+  // Orb
   orb: {
     position: 'absolute',
     borderRadius: 9999,
