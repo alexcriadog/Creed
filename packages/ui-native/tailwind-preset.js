@@ -47,7 +47,7 @@ module.exports = {
         text: {
           primary: '#F4F6F8',                    // v3 textPrimary (era #1F2024)
           secondary: '#9AA1AC',                  // v3 textSecondary
-          muted: '#5C636E',                      // v3 textMuted
+          muted: '#7A828D',                      // v3 textMuted (AA-compliant ≈4.5:1)
           'on-accent': '#0A0B0D',               // v3 onAccent (era #FCFCFD)
         },
         accent: {

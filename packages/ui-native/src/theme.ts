@@ -28,7 +28,7 @@ const DARK_V3 = {
   // Texto
   textPrimary: '#F4F6F8',
   textSecondary: '#9AA1AC',
-  textMuted: '#5C636E',
+  textMuted: '#7A828D',
 
   // Acento — lima/volt, THE acento
   accent: '#C6FF3A',

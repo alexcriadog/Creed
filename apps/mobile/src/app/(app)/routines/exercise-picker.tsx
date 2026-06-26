@@ -108,16 +108,16 @@ function PickerRow({
             styles.addPill,
             {
               backgroundColor: added
-                ? 'rgba(52,179,107,0.15)'
+                ? colors.accentSoft
                 : colors.accentSoft,
               borderColor: added
-                ? 'rgba(52,179,107,0.40)'
+                ? 'rgba(198,255,58,0.40)'
                 : 'rgba(198,255,58,0.30)',
             },
           ]}
         >
           {added ? (
-            <Check size={18} color="#3EC97A" strokeWidth={2.4} />
+            <Check size={18} color={colors.accent} strokeWidth={2.4} />
           ) : (
             <Plus size={18} color={colors.accent} strokeWidth={2.4} />
           )}
