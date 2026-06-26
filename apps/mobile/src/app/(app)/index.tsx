@@ -1,10 +1,10 @@
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Dumbbell, CalendarDays, CalendarRange, ChevronRight, ClipboardList } from 'lucide-react-native';
+import { Dumbbell, CalendarDays, CalendarRange, ChevronRight, ClipboardList, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import {
-  AppText, Button, GlassCard, Header, Divider,
+  AppText, Button, Header, Divider,
   useFadeSlideIn, lightColors, spacing, radii, shadows,
 } from '@creed/ui-native';
 import { signOut } from '../../lib/auth';
@@ -44,21 +44,36 @@ export default function Home() {
           <AppText variant="muted">Aquí vivirá tu día de entreno.</AppText>
         </Animated.View>
 
-        {/* Hero placeholder card */}
+        {/* Hero CTA — Empezar entreno */}
         <Animated.View style={slideHero}>
-          <GlassCard intensity={55} tone="light" padding={spacing[6]} style={styles.heroCard}>
-            <View style={styles.heroInner}>
-              <View style={styles.heroBadge}>
-                <AppText variant="label" style={styles.heroBadgeText}>Próximo entreno</AppText>
-              </View>
-              <AppText variant="heading" style={styles.heroTitle}>
-                Tu plan llega pronto
-              </AppText>
-              <AppText variant="muted">
-                Aquí vivirá tu día de entreno con series, reps y notas del coach.
-              </AppText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Empezar entreno"
+            onPress={() => router.push('/(app)/start' as any)}
+            style={({ pressed }) => [pressed && { opacity: 0.94 }]}
+          >
+            <View style={[styles.heroCard, shadows.lg]}>
+              <LinearGradient
+                colors={['#4F62E0', '#3D4FCC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.heroGradient, { borderRadius: radii.xl }]}
+              >
+                <View style={styles.heroIconWrap}>
+                  <Zap size={30} color="#FCFCFD" strokeWidth={1.8} />
+                </View>
+                <View style={styles.heroTextBlock}>
+                  <AppText variant="heading" style={styles.heroTitle}>
+                    Empezar entreno
+                  </AppText>
+                  <AppText variant="body" style={styles.heroSub}>
+                    Elige una rutina y empieza ahora.
+                  </AppText>
+                </View>
+                <ChevronRight size={24} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              </LinearGradient>
             </View>
-          </GlassCard>
+          </Pressable>
         </Animated.View>
 
         {/* CTA cards */}
@@ -131,7 +146,7 @@ export default function Home() {
                     Tu programa
                   </AppText>
                   <AppText variant="body" style={styles.programSub}>
-                    Organiza tu semana de entreno, día a día.
+                    Tu programa y sus rutinas.
                   </AppText>
                 </View>
                 <ChevronRight size={22} color="rgba(255,255,255,0.85)" strokeWidth={2} />
@@ -207,23 +222,36 @@ const styles = StyleSheet.create({
     letterSpacing: -1.5,
   },
   heroCard: {
+    borderRadius: radii.xl,
+    overflow: 'hidden',
     marginTop: spacing[2],
   },
-  heroInner: {
-    gap: spacing[3],
+  heroGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[4],
+    padding: spacing[5],
   },
-  heroBadge: {
-    backgroundColor: lightColors.accentSoft,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing[3],
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
+  heroIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: radii.lg,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroBadgeText: {
-    color: lightColors.accent,
+  heroTextBlock: {
+    flex: 1,
+    gap: 3,
   },
   heroTitle: {
-    marginTop: spacing[1],
+    color: '#FCFCFD',
+    letterSpacing: -0.3,
+    fontSize: 19,
+  },
+  heroSub: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 14,
   },
   ctaRow: {
     flexDirection: 'row',
