@@ -1,5 +1,5 @@
 /**
- * Tailwind preset — Creed Design System v2
+ * Tailwind preset — Creed Design System v3 (dark atlético)
  *
  * Tokens de docs/design.md portados a valores renderizables por React Native / NativeWind.
  * Los oklch originales no son renderizables en RN; estos hex/rgba son conversiones
@@ -7,50 +7,69 @@
  *
  * v1 (Fase 1): colores light básicos + radius + fuente.
  * v2 (Fase 3): dark completo, accent-strong/soft, gradientes, sombras, semánticos.
+ * v3 (Fase 6): canvas y tokens principales actualizados al dark atlético v3
+ *              (#0A0B0D negro frío, lima #C6FF3A). Los tokens light v2 se mantienen
+ *              como `canvas-light` para backward compat.
  *
- * CLASES QUE DEBEN SEGUIR FUNCIONANDO (backward compat):
- *   bg-canvas, bg-surface, text-text-primary, bg-accent,
- *   border-border, rounded-sm/md/lg/xl/2xl/pill
+ * CLASES QUE DEBEN SEGUIR FUNCIONANDO:
+ *   bg-canvas (#0A0B0D v3), bg-surface, text-text-primary, bg-accent (#C6FF3A v3),
+ *   border-border, rounded-sm/md/lg/xl/2xl/pill,
+ *   bg-canvas-light (v2 legacy #F6F7FA)
  */
 module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // ── Light ─────────────────────────────────────────────────────────
+        // ── v3 Dark Atlético — tokens primarios ───────────────────────────
+        // `canvas` apunta al negro frío v3. Los valores light v2 → `canvas-light`.
         canvas: {
-          DEFAULT: '#F6F7FA',                    // oklch(98% 0.005 260)
-          tint: '#EDEFF4',                       // oklch(96% 0.010 260)
+          DEFAULT: '#0A0B0D',                    // v3 negro frío (era #F6F7FA)
+          tint: '#141619',                       // v3 surface1 (era #EDEFF4)
         },
+        // v3 surfaces
+        'surface-1': '#141619',
+        'surface-2': '#1C1F25',
+        'surface-hi': '#232730',
+        // v3 hairlines
+        hairline: 'rgba(255,255,255,0.07)',
+        'hairline-strong': 'rgba(255,255,255,0.12)',
         surface: {
-          DEFAULT: 'rgba(255,255,255,0.65)',      // glass — translúcido
-          strong: 'rgba(255,255,255,0.85)',
-          raised: 'rgba(255,255,255,0.40)',
+          DEFAULT: '#141619',                    // v3 surface1 (era rgba glass)
+          strong: '#1C1F25',                     // v3 surface2
+          raised: '#232730',                     // v3 surfaceHi
         },
         border: {
-          subtle: 'rgba(255,255,255,0.18)',       // borde glass luz
-          DEFAULT: 'rgba(32,32,32,0.10)',
-          strong: 'rgba(32,32,32,0.20)',
+          subtle: 'rgba(255,255,255,0.07)',       // v3 hairline
+          DEFAULT: 'rgba(255,255,255,0.07)',      // v3 hairline
+          strong: 'rgba(255,255,255,0.12)',       // v3 hairlineStrong
         },
         text: {
-          primary: '#1F2024',
-          secondary: '#555860',
-          muted: '#8A8C93',
-          'on-accent': '#FCFCFD',
+          primary: '#F4F6F8',                    // v3 textPrimary (era #1F2024)
+          secondary: '#9AA1AC',                  // v3 textSecondary
+          muted: '#5C636E',                      // v3 textMuted
+          'on-accent': '#0A0B0D',               // v3 onAccent (era #FCFCFD)
         },
         accent: {
-          DEFAULT: '#4F62E0',
-          strong: '#3D4FCC',
-          soft: 'rgba(79,98,224,0.12)',
+          DEFAULT: '#C6FF3A',                    // v3 lima/volt (era #4F62E0)
+          strong: '#9FCC2E',                     // v3 accentDim
+          soft: 'rgba(198,255,58,0.10)',         // v3 accentSoft
+          glow: 'rgba(198,255,58,0.25)',         // v3 accentGlow
         },
         status: {
           green: '#34B36B',
-          amber: '#E2A23A',
-          red: '#DE4A3C',
+          amber: '#FFB44D',                      // v3 warn
+          red: '#FF5D5D',                        // v3 danger
         },
         info: '#4E88CC',
 
-        // ── Dark (usar con dark: prefix en NativeWind) ────────────────────
+        // ── v2 legacy (backward compat) ───────────────────────────────────
+        'canvas-light': {
+          DEFAULT: '#F6F7FA',
+          tint: '#EDEFF4',
+        },
+
+        // ── Dark v2 (usar con dark: prefix en NativeWind) ─────────────────
         'canvas-dark': {
           DEFAULT: '#16171B',
           tint: '#1D1F25',

@@ -1,56 +1,111 @@
+/**
+ * Catálogo de ejercicios — dark atlético v3.
+ * Canvas negro + orbe lima. Search Input dark. Muscle filter Chips dark+lima.
+ * Exercise rows dark surface1 + thumb + badge + press-spring.
+ * Lógica preservada: listExercises / search / filter.
+ */
+
 import { useEffect, useState } from 'react';
-import { FlatList, View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import {
+  FlatList,
+  View,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import {
-  AppText, Input, Chip, Badge, GlassCard, Header,
-  useFadeSlideIn, usePressScale, lightColors, spacing, radii, shadows,
+  AppText,
+  Input,
+  Chip,
+  Badge,
+  Header,
+  useFadeSlideIn,
+  usePressScale,
+  colors,
+  gradients,
+  glow,
+  spacing,
+  radii,
+  shadows,
+  fontFamily,
+  fontSize,
 } from '@creed/ui-native';
 import { listExercises, displayName, type Exercise } from '../../../lib/exercises';
 
-const MUSCLES = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'abs'];
+const MUSCLES = [
+  'chest',
+  'back',
+  'shoulders',
+  'biceps',
+  'triceps',
+  'quads',
+  'hamstrings',
+  'glutes',
+  'abs',
+];
 
 const MUSCLE_LABEL: Record<string, string> = {
-  chest: 'Pecho', back: 'Espalda', shoulders: 'Hombros',
-  biceps: 'Bíceps', triceps: 'Tríceps', quads: 'Cuádriceps',
-  hamstrings: 'Isquios', glutes: 'Glúteos', abs: 'Abdomen',
+  chest: 'Pecho',
+  back: 'Espalda',
+  shoulders: 'Hombros',
+  biceps: 'Bíceps',
+  triceps: 'Tríceps',
+  quads: 'Cuádriceps',
+  hamstrings: 'Isquios',
+  glutes: 'Glúteos',
+  abs: 'Abdomen',
 };
+
+// ── Exercise row ──────────────────────────────────────────────────────────────
 
 function ExerciseRow({ item, onPress }: { item: Exercise; onPress: () => void }) {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale();
 
   return (
-    <Animated.View style={[animatedStyle, shadows.sm]}>
-      <GlassCard intensity={40} tone="light" padding={spacing[3]}>
-        <Pressable
-          onPress={onPress}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-          style={styles.row}
-        >
-          {item.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
-              style={styles.thumb}
-              contentFit="cover"
-              transition={200}
-            />
-          ) : (
-            <View style={styles.thumbPlaceholder} />
-          )}
-          <View style={styles.rowText}>
-            <AppText variant="body" style={styles.rowTitle}>{displayName(item)}</AppText>
-            {item.primary_muscle ? (
-              <Badge label={item.primary_muscle} tone="accent" size="sm" />
-            ) : null}
+    <Animated.View style={[animatedStyle, styles.rowOuter, glow('soft')]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="button"
+        accessibilityLabel={displayName(item)}
+        style={styles.row}
+      >
+        {item.image_url ? (
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.thumb}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View style={styles.thumbPlaceholder}>
+            <AppText style={styles.thumbInitial}>
+              {displayName(item).charAt(0).toUpperCase()}
+            </AppText>
           </View>
-        </Pressable>
-      </GlassCard>
+        )}
+        <View style={styles.rowText}>
+          <AppText style={styles.rowTitle} numberOfLines={1}>
+            {displayName(item)}
+          </AppText>
+          {item.primary_muscle ? (
+            <Badge label={item.primary_muscle} tone="accent" size="sm" />
+          ) : null}
+        </View>
+        <View style={styles.rowChevron}>
+          <AppText style={styles.rowChevronText}>›</AppText>
+        </View>
+      </Pressable>
     </Animated.View>
   );
 }
+
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ExercisesScreen() {
   const router = useRouter();
@@ -77,18 +132,26 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.root}>
+      {/* Fondo dark atlético: gradiente de atmósfera */}
       <LinearGradient
-        colors={['#EEF0FF', '#F6F7FA', '#FFF8F4']}
-        locations={[0, 0.55, 1]}
+        colors={gradients.canvasV3}
+        locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0.6, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <View style={[styles.orb, styles.orbTop]} />
-      <Header title="Ejercicios" withSafeArea />
+      {/* Orbe lima tenue — esquina superior derecha */}
+      <LinearGradient
+        colors={gradients.accentOrb}
+        start={{ x: 1, y: 0 }}
+        end={{ x: 0.15, y: 0.6 }}
+        style={[styles.orb, styles.orbTopRight]}
+      />
+
+      <Header title="Ejercicios" onBack={() => router.back()} withSafeArea />
 
       <View style={styles.body}>
-        {/* Search input */}
+        {/* Search input — dark */}
         <Animated.View style={[styles.searchWrap, slideSearch]}>
           <Input
             testID="search-input"
@@ -100,7 +163,7 @@ export default function ExercisesScreen() {
           />
         </Animated.View>
 
-        {/* Filter chips — horizontal scroll, no height clip */}
+        {/* Filter chips — horizontal scroll */}
         <Animated.View style={slideChips}>
           <FlatList
             horizontal
@@ -121,7 +184,7 @@ export default function ExercisesScreen() {
         {/* Exercise list */}
         <Animated.View style={[styles.listWrap, slideList]}>
           {loading ? (
-            <ActivityIndicator color={lightColors.accent} style={styles.spinner} />
+            <ActivityIndicator color={colors.accent} style={styles.spinner} />
           ) : (
             <FlatList
               data={items}
@@ -135,7 +198,11 @@ export default function ExercisesScreen() {
                 />
               )}
               ListEmptyComponent={
-                <AppText variant="muted" style={styles.empty}>Sin resultados.</AppText>
+                <View style={styles.emptyWrap}>
+                  <AppText variant="muted" style={styles.empty}>
+                    Sin resultados.
+                  </AppText>
+                </View>
               }
             />
           )}
@@ -148,18 +215,21 @@ export default function ExercisesScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: colors.canvas,
   },
+
+  // Orbe
   orb: {
     position: 'absolute',
-    borderRadius: 9999,
+    borderRadius: radii.pill,
   },
-  orbTop: {
+  orbTopRight: {
     width: 320,
     height: 320,
     top: -120,
     right: -90,
-    backgroundColor: 'rgba(139,157,255,0.16)',
   },
+
   body: {
     flex: 1,
     paddingHorizontal: spacing[5],
@@ -181,32 +251,67 @@ const styles = StyleSheet.create({
   spinner: {
     marginTop: spacing[8],
   },
+
+  // Exercise row — dark surface1 card
+  rowOuter: {
+    backgroundColor: colors.surface1,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    overflow: 'hidden',
+    ...shadows.sm,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
+    padding: spacing[3],
   },
   thumb: {
     width: 56,
     height: 56,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.surface2,
   },
   thumbPlaceholder: {
     width: 56,
     height: 56,
     borderRadius: radii.md,
-    backgroundColor: lightColors.bgCanvasTint,
+    backgroundColor: colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(198,255,58,0.15)',
+  },
+  thumbInitial: {
+    fontFamily: fontFamily.display,
+    fontSize: fontSize.lg,
+    color: colors.accent,
   },
   rowText: {
     flex: 1,
     gap: spacing[1],
   },
   rowTitle: {
-    fontWeight: '600',
+    fontFamily: fontFamily.sansMedium,
+    fontSize: fontSize.base,
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  rowChevron: {
+    paddingHorizontal: spacing[1],
+  },
+  rowChevronText: {
+    fontSize: 20,
+    color: colors.textMuted,
+  },
+
+  // Empty
+  emptyWrap: {
+    alignItems: 'center',
+    marginTop: spacing[8],
   },
   empty: {
     textAlign: 'center',
-    marginTop: spacing[8],
   },
 });
