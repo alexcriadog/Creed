@@ -27,7 +27,6 @@ import {
   Header,
   useFadeSlideIn,
   usePressScale,
-  haptic,
   lightColors,
   spacing,
   radii,
