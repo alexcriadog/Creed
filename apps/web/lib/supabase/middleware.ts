@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { safeNext } from '@/lib/auth/safe-next';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -48,14 +49,19 @@ export async function updateSession(request: NextRequest) {
   const publicPath = isPublicPath(pathname);
 
   if (!user && !publicPath) {
+    // Conserva el destino (p. ej. /oauth/consent?authorization_id=…) para volver tras el OTP.
     const url = request.nextUrl.clone();
+    const next = safeNext(pathname + request.nextUrl.search);
     url.pathname = '/login';
+    url.search = next ? `?next=${encodeURIComponent(next)}` : '';
     return NextResponse.redirect(url);
   }
 
   if (user && (pathname === '/login' || pathname === '/verify')) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    const next = safeNext(request.nextUrl.searchParams.get('next'));
+    url.pathname = next ? next.split('?')[0]! : '/';
+    url.search = next && next.includes('?') ? `?${next.split('?')[1]}` : '';
     return NextResponse.redirect(url);
   }
 
@@ -64,7 +70,8 @@ export async function updateSession(request: NextRequest) {
   if (
     user &&
     !pathname.startsWith('/onboarding') &&
-    !pathname.startsWith('/api/')
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/oauth/') // el consentimiento OAuth no debe caer en el onboarding
   ) {
     const { data: profile } = await supabase
       .from('profiles')

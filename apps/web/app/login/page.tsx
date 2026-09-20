@@ -12,9 +12,9 @@ const ERRORS: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
   const errorMsg = error ? ERRORS[error] ?? 'Algo no fue bien.' : null;
 
   return (
@@ -44,6 +44,7 @@ export default async function LoginPage({
         )}
 
         <form action={signInWithPassword} className="space-y-3">
+          {next && <input type="hidden" name="next" value={next} />}
           <input
             name="email"
             type="email"
@@ -67,6 +68,7 @@ export default async function LoginPage({
         <details className="mt-5 text-[length:var(--text-sm)] text-[color:var(--color-text-muted)]">
           <summary className="cursor-pointer">¿Sin contraseña? Magic link por email</summary>
           <form action={sendOtp} className="mt-3 space-y-2">
+            {next && <input type="hidden" name="next" value={next} />}
             <input
               name="email"
               type="email"

@@ -1,16 +1,18 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { safeNext, withNext } from '@/lib/auth/safe-next';
 
 export async function verifyOtp(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
   const code = String(formData.get('code') ?? '').trim();
+  const next = safeNext(String(formData.get('next') ?? ''));
 
   if (!email) {
-    redirect('/login?error=missing_email');
+    redirect(withNext('/login?error=missing_email', next));
   }
   if (!/^\d{6}$/.test(code)) {
-    redirect(`/verify?email=${encodeURIComponent(email)}&error=invalid_code`);
+    redirect(withNext(`/verify?email=${encodeURIComponent(email)}&error=invalid_code`, next));
   }
 
   const supabase = await createSupabaseServerClient();
@@ -22,8 +24,11 @@ export async function verifyOtp(formData: FormData) {
 
   if (error) {
     console.error('[verify.verifyOtp]', { code: error.code, name: error.name });
-    redirect(`/verify?email=${encodeURIComponent(email)}&error=invalid_code`);
+    redirect(withNext(`/verify?email=${encodeURIComponent(email)}&error=invalid_code`, next));
   }
+
+  // Un destino explícito (p. ej. el consentimiento OAuth) tiene prioridad sobre el onboarding.
+  if (next) redirect(next);
 
   // Decidir destino: si onboarding pendiente → /onboarding, si no → /
   const {

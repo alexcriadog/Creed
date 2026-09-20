@@ -10,9 +10,9 @@ const ERRORS: Record<string, string> = {
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string; error?: string }>;
+  searchParams: Promise<{ email?: string; error?: string; next?: string }>;
 }) {
-  const { email, error } = await searchParams;
+  const { email, error, next } = await searchParams;
   const errorMsg = error ? ERRORS[error] ?? 'Algo no fue bien.' : null;
 
   if (!email) {
@@ -55,6 +55,7 @@ export default async function VerifyPage({
 
         <form action={verifyOtp} className="space-y-4">
           <input type="hidden" name="email" value={email} />
+          {next && <input type="hidden" name="next" value={next} />}
           <input
             name="code"
             type="text"
