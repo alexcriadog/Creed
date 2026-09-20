@@ -417,12 +417,12 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [remotes.creed]
 project_id = "najngsgcjwunedcytvii"
 
-# Site URL del proyecto cloud. Sustituir por el dominio de Vercel tras el deploy
-# (https://<dominio>) y añadir "https://<dominio>/**" a additional_redirect_urls.
-# Sin este bloque, `config push` mandaría el site_url local (localhost:3030) a cloud.
+# Site URL del proyecto cloud (= dominio de Vercel). Supabase construye la URL de
+# consentimiento como site_url + /oauth/consent. Sin este bloque, `config push`
+# mandaría el site_url local (localhost:3030) a cloud.
 [remotes.creed.auth]
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+site_url = "https://project-7h15x.vercel.app"
+additional_redirect_urls = ["https://project-7h15x.vercel.app/**", "http://localhost:3030/**"]
 
 [remotes.creed.auth.rate_limit]
 email_sent = 20

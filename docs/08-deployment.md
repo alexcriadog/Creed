@@ -593,6 +593,10 @@ Settings → Connectors → **Add custom connector** → URL `https://<dominio>/
 
 **Plan B** si claude.ai completa el OAuth pero no adjunta el token (issue anthropics/claude-ai-mcp#1038): registrar un cliente manual en Supabase (Authentication → OAuth Server → Clients) y pasar client id/secret en *Advanced settings* del connector. Si tampoco, mini servidor OAuth propio de un solo usuario.
 
+**Gotcha cloud:** `approveAuthorization` devuelve 404 `oauth_authorization_not_found` si antes no se ha llamado a `getAuthorizationDetails` con la sesión del usuario (en local no pasa). La página `/oauth/consent` ya lo hace al renderizar; no aprobar "a ciegas" desde scripts.
+
+**Estado 2026-09-20:** desplegado en `https://project-7h15x.vercel.app`; Site URL y Redirect URLs configurados; verificado en producción con un usuario desechable: OAuth cloud → token → `tools/list` (14) → `search_exercises` → `get_daily_briefing`; token inválido → 401.
+
 ### 17.5 Verificación
 
 ```bash

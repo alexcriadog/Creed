@@ -56,6 +56,8 @@ describe('OAuth 2.1 con Supabase (registro dinámico + PKCE)', () => {
         auth: { persistSession: false, autoRefreshToken: false },
       });
       await sessionClient.auth.setSession({ access_token: u.token, refresh_token: u.refreshToken });
+      // En cloud, getAuthorizationDetails "reclama" la autorización para el usuario y el
+      // consent posterior falla con 404 si se salta; la página /oauth/consent lo hace al renderizar.
       const details = await sessionClient.auth.oauth.getAuthorizationDetails(authorizationId);
       expect(details.error).toBeNull();
       expect(details.data).toMatchObject({ client: { name: 'test-mcp-client' }, redirect_uri: REDIRECT });
