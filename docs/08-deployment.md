@@ -563,7 +563,7 @@ Creed expone sus datos a claude.ai como *custom connector* MCP remoto. Todo vive
 
 ### 17.1 Supabase cloud
 
-1. `supabase config push` aplica `[remotes.creed.auth.oauth_server]` (enabled, `/oauth/consent`, registro dinámico).
+1. `supabase config push` aplica `[remotes.creed.auth.oauth_server]` (enabled, `/oauth/consent`, registro dinámico). **Hecho el 2026-09-20 vía management API** (`PATCH /v1/projects/<ref>/config/auth` con `oauth_server_enabled`, `oauth_server_allow_dynamic_registration`, `oauth_server_authorization_path`) porque el CLI v2.98 aún no conoce esas claves; con CLI ≥ 2.117 basta el push. Migraciones `20260920*` ya aplicadas en cloud.
 2. Dashboard → Authentication → URL Configuration: **Site URL** = dominio de Vercel; **Redirect URLs** += `https://<dominio>/**`.
 3. JWT Signing Keys debe ser asimétrica (ES256/RS256) para que `getClaims` verifique con JWKS. Comprobar `https://<ref>.supabase.co/auth/v1/.well-known/jwks.json`.
 4. Si el proyecto free se pausa por inactividad (pasó en sept-2026), restaurar: `POST https://api.supabase.com/v1/projects/<ref>/restore` con el token del CLI.
