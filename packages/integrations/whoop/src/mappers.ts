@@ -1,4 +1,4 @@
-import type { WhoopCycle, WhoopRecovery, WhoopSleep, WhoopWorkout } from './client';
+import type { WhoopBodyMeasurement, WhoopCycle, WhoopRecovery, WhoopSleep, WhoopWorkout } from './client';
 
 const milliToMinutes = (ms: number | null | undefined): number | null =>
   ms != null ? Math.round(ms / 60000) : null;
@@ -174,4 +174,36 @@ export function mapWhoopSportToType(sportName: string | null): {
     isParallelSport: false,
     normalizedType: s || 'whoop',
   };
+}
+
+export interface BodyMeasurementRow {
+  user_id: string;
+  height_m: number | null;
+  weight_kg: number | null;
+  max_hr: number | null;
+  raw: unknown;
+}
+
+export function bodyMeasurementToRow(userId: string, body: WhoopBodyMeasurement): BodyMeasurementRow {
+  return {
+    user_id: userId,
+    height_m: body.height_meter ?? null,
+    weight_kg: body.weight_kilogram ?? null,
+    max_hr: body.max_heart_rate ?? null,
+    raw: body,
+  };
+}
+
+type BodyValues = Pick<BodyMeasurementRow, 'height_m' | 'weight_kg' | 'max_hr'>;
+type StoredBodyValues = { [K in keyof BodyValues]: number | string | null };
+
+/** true si hay que insertar una fila nueva (no hay previa o cambió algún valor). */
+export function bodyMeasurementChanged(previous: StoredBodyValues | null, next: BodyValues): boolean {
+  if (!previous) return true;
+  const num = (v: number | string | null): number | null => (v == null ? null : Number(v));
+  return (
+    num(previous.height_m) !== next.height_m ||
+    num(previous.weight_kg) !== next.weight_kg ||
+    num(previous.max_hr) !== next.max_hr
+  );
 }

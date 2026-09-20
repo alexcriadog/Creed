@@ -130,6 +130,14 @@ const workoutSchema = z.object({
 });
 export type WhoopWorkout = z.infer<typeof workoutSchema>;
 
+/** GET /v2/user/measurement/body */
+const bodyMeasurementSchema = z.object({
+  height_meter: z.number().nullish(),
+  weight_kilogram: z.number().nullish(),
+  max_heart_rate: z.number().nullish(),
+});
+export type WhoopBodyMeasurement = z.infer<typeof bodyMeasurementSchema>;
+
 const paginatedSchema = <T extends z.ZodTypeAny>(item: T) =>
   z.object({
     records: z.array(item),
@@ -226,6 +234,11 @@ export class WhoopClient {
 
   listWorkouts(params: PaginatedRequest = {}): Promise<PaginatedResponse<WhoopWorkout>> {
     return this.request(this.buildPath('/activity/workout', params), paginatedSchema(workoutSchema));
+  }
+
+  /** Altura, peso y FC máxima que el usuario tiene configurados en Whoop. */
+  getBodyMeasurement(): Promise<WhoopBodyMeasurement> {
+    return this.request('/user/measurement/body', bodyMeasurementSchema);
   }
 
   /**

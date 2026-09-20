@@ -1,6 +1,9 @@
 import { WhoopClient } from './client';
 import { encryptToken } from './encryption';
+import { resolveSyncWindow } from './sync-window';
 import {
+  bodyMeasurementToRow,
+  bodyMeasurementChanged,
   cycleToRow,
   mapWhoopSportToType,
   recoveryToRow,
@@ -18,10 +21,12 @@ export interface SyncOptions {
   userId: string;
   whoopClientId: string;
   whoopClientSecret: string;
-  /** ISO 8601. Default: 90 días atrás. */
+  /** ISO 8601. Default: 90 días atrás (o todo el historial si `full`). */
   since?: string;
   /** ISO 8601. Default: now. */
   until?: string;
+  /** Primera sync: trae todo el historial disponible en Whoop. */
+  full?: boolean;
   /** Si false, salta paginación (solo primera página). */
   paginate?: boolean;
 }
@@ -31,6 +36,8 @@ export interface SyncResult {
   recovery: number;
   sleep: number;
   workouts: number;
+  /** 1 si se guardó una fila nueva de medidas corporales (cambió algo), 0 si no. */
+  body: number;
   errors: string[];
 }
 
@@ -44,9 +51,7 @@ export interface SyncResult {
  * Idempotente por (user_id, whoop_id).
  */
 export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
-  const since =
-    opts.since ?? new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-  const until = opts.until ?? new Date().toISOString();
+  const { since, until } = resolveSyncWindow(opts, new Date());
   const paginate = opts.paginate !== false;
 
   // Load connection
@@ -88,6 +93,7 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
     recovery: 0,
     sleep: 0,
     workouts: 0,
+    body: 0,
     errors: [],
   };
 
@@ -185,6 +191,26 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
     }
   } catch (e) {
     result.errors.push(`workouts fetch: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // --- Body measurement (altura/peso/FC máx): una fila nueva solo si cambia
+  try {
+    const body = await client.getBodyMeasurement();
+    const row = bodyMeasurementToRow(opts.userId, body);
+    const { data: last } = await opts.supabase
+      .from('whoop_body_measurements')
+      .select('height_m, weight_kg, max_hr')
+      .eq('user_id', opts.userId)
+      .order('synced_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (bodyMeasurementChanged(last, row)) {
+      const { error } = await opts.supabase.from('whoop_body_measurements').insert(row);
+      if (error) throw new Error(error.message);
+      result.body = 1;
+    }
+  } catch (e) {
+    result.errors.push(`body fetch: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // --- Match workouts → training_sessions

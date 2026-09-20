@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { encryptToken, exchangeCode, getWhoopUserProfile, syncWhoop, whoopScopes } from '@creed/whoop';
 import {
@@ -7,13 +7,14 @@ import {
 } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
+export const maxDuration = 300;
 
 function redirectHome(error?: string, msg?: string) {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  if (!error) return NextResponse.redirect(`${base}/datos?whoop_connected=1`);
+  if (!error) return NextResponse.redirect(`${base}/whoop?whoop_connected=1`);
   const params = new URLSearchParams({ whoop_error: error });
   if (msg) params.set('whoop_msg', msg.slice(0, 300));
-  return NextResponse.redirect(`${base}/datos?${params.toString()}`);
+  return NextResponse.redirect(`${base}/whoop?${params.toString()}`);
 }
 
 export async function GET(request: NextRequest) {
@@ -122,24 +123,27 @@ export async function GET(request: NextRequest) {
   cookieStore.delete('whoop_oauth_state');
   cookieStore.delete('whoop_oauth_pkce');
 
-  // Trigger initial backfill (90 días) en background — no bloqueamos el redirect.
-  // Si falla, el usuario puede hacer "Sincronizar ahora" desde el home.
-  syncWhoop({
-    supabase: admin,
-    userId: user.id,
-    whoopClientId: process.env.WHOOP_CLIENT_ID!,
-    whoopClientSecret: process.env.WHOOP_CLIENT_SECRET!,
-  })
-    .then(async (result) => {
+  // Backfill inicial de TODO el historial tras responder (after() mantiene viva la
+  // función en Vercel). Si se corta, el cron lo completa: last_synced_at sigue null
+  // hasta que una sync termina, y los upserts son idempotentes.
+  after(async () => {
+    try {
+      const result = await syncWhoop({
+        supabase: admin,
+        userId: user.id,
+        whoopClientId: process.env.WHOOP_CLIENT_ID!,
+        whoopClientSecret: process.env.WHOOP_CLIENT_SECRET!,
+        full: true,
+      });
       await admin.from('audit_log').insert({
         user_id: user.id,
         action: 'whoop_backfill_initial',
         metadata: result as unknown as Record<string, unknown>,
       });
-    })
-    .catch((e) => {
+    } catch (e) {
       console.error('[whoop.callback] initial backfill', e instanceof Error ? e.message : e);
-    });
+    }
+  });
 
   return redirectHome();
 }

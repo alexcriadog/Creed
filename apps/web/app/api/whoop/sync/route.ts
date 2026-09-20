@@ -6,17 +6,17 @@ import {
 } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function homeRedirect(error?: string, msg?: string, payload?: string): NextResponse {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? '';
   if (payload) {
-    return NextResponse.redirect(`${base}/datos?whoop_synced=${encodeURIComponent(payload)}`);
+    return NextResponse.redirect(`${base}/whoop?whoop_synced=${encodeURIComponent(payload)}`);
   }
-  if (!error) return NextResponse.redirect(`${base}/datos`);
+  if (!error) return NextResponse.redirect(`${base}/whoop`);
   const params = new URLSearchParams({ whoop_error: error });
   if (msg) params.set('whoop_msg', msg.slice(0, 300));
-  return NextResponse.redirect(`${base}/datos?${params.toString()}`);
+  return NextResponse.redirect(`${base}/whoop?${params.toString()}`);
 }
 
 export async function GET(): Promise<NextResponse> {
@@ -46,11 +46,19 @@ export async function POST(): Promise<NextResponse> {
       return homeRedirect('config_missing', 'WHOOP_CLIENT_ID/SECRET no configurados');
     }
 
+    const { data: conn } = await admin
+      .from('whoop_connections')
+      .select('last_synced_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     const result = await syncWhoop({
       supabase: admin,
       userId: user.id,
       whoopClientId: clientId,
       whoopClientSecret: clientSecret,
+      // Sin sync previa (o backfill cortado): todo el historial.
+      ...(conn?.last_synced_at ? {} : { full: true }),
     });
 
     try {

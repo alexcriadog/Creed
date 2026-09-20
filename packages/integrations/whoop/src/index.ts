@@ -24,6 +24,7 @@ export {
   type WhoopRecovery,
   type WhoopSleep,
   type WhoopWorkout,
+  type WhoopBodyMeasurement,
 } from './client';
 
 export {
@@ -31,6 +32,9 @@ export {
   recoveryToRow,
   sleepToRow,
   workoutToRow,
+  bodyMeasurementToRow,
+  bodyMeasurementChanged,
+  type BodyMeasurementRow,
   type CycleRow,
   type RecoveryRow,
   type SleepRow,
@@ -38,3 +42,4 @@ export {
 } from './mappers';
 
 export { syncWhoop, type SyncOptions, type SyncResult } from './sync';
+export { resolveSyncWindow, FULL_HISTORY_SINCE, type SyncWindowOptions } from './sync-window';

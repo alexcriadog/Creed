@@ -1,7 +1,7 @@
 /**
  * Vercel Cron — POST /api/whoop/cron-sync
  *
- * Llamado cada 6 horas por Vercel Cron (schedule en apps/web/vercel.json).
+ * Llamado cada 3 horas por Vercel Cron (schedule en apps/web/vercel.json).
  * Red de seguridad: el webhook de Whoop es la fuente real-time, este cron
  * captura lo que el webhook pierda.
  * Auth via Authorization: Bearer <CRON_SECRET>.
@@ -14,6 +14,7 @@ import { syncWhoop } from '@creed/whoop';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 300; // el backfill completo de una conexión nueva puede tardar minutos
 
 interface UserSyncResult {
   user_id: string;
@@ -22,6 +23,7 @@ interface UserSyncResult {
   recovery?: number;
   sleep?: number;
   workouts?: number;
+  body?: number;
   errors?: string[];
   error?: string;
 }
@@ -62,8 +64,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   for (const conn of connections ?? []) {
     try {
       // Incremental: ventana desde el último sync menos 1h de solapamiento
-      // (Whoop puede actualizar registros recientes). Si nunca hubo sync,
-      // dejamos que syncWhoop use su default de 90 días.
+      // (Whoop puede actualizar registros recientes). Si nunca hubo sync
+      // (o el backfill inicial del callback se cortó), trae todo el historial.
       const since = conn.last_synced_at
         ? new Date(new Date(conn.last_synced_at).getTime() - 3_600_000).toISOString()
         : undefined;
@@ -73,7 +75,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         supabase,
         whoopClientId: clientId,
         whoopClientSecret: clientSecret,
-        ...(since ? { since } : {}),
+        ...(since ? { since } : { full: true }),
       });
       results.push({
         user_id: conn.user_id,
@@ -82,6 +84,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         recovery: result.recovery,
         sleep: result.sleep,
         workouts: result.workouts,
+        body: result.body,
         ...(result.errors.length > 0 ? { errors: result.errors } : {}),
       });
     } catch (err) {
