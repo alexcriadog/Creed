@@ -3,9 +3,11 @@
 # sección cloud) y despliega apps/web. No contiene secretos.
 #
 # Uso:
-#   npx vercel login                       # una vez, interactivo
-#   cd apps/web && npx vercel link         # una vez, elegir el proyecto existente
-#   scripts/deploy-vercel.sh https://<dominio>.vercel.app
+#   npx vercel login                                                        # una vez
+#   npx vercel link --yes --project creed --scope alexcrilez-gmailcoms-projects   # una vez, en la RAÍZ del repo
+#   scripts/deploy-vercel.sh https://project-7h15x.vercel.app
+#
+# El proyecto Vercel tiene Root Directory = apps/web, así que se enlaza y despliega desde la raíz.
 #
 # El dominio se conoce tras `vercel link` (Settings → Domains) o tras un primer `vercel --prod`.
 set -euo pipefail
@@ -29,7 +31,7 @@ set_env() {
   echo "  ✓ $1"
 }
 
-cd "$ROOT/apps/web"
+cd "$ROOT"
 echo "Subiendo env vars de producción a Vercel…"
 set_env NEXT_PUBLIC_SUPABASE_URL      "$(val SUPABASE_CLOUD_URL)"
 set_env NEXT_PUBLIC_SUPABASE_ANON_KEY "$(val SUPABASE_CLOUD_PUBLISHABLE_KEY)"

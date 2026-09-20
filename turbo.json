@@ -23,6 +23,7 @@
         "WHOOP_CLIENT_SECRET",
         "WHOOP_REDIRECT_URI",
         "WHOOP_WEBHOOK_SECRET",
+        "WHOOP_TOKEN_ENCRYPTION_KEY",
         "CRON_SECRET"
       ]
     },

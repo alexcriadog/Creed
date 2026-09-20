@@ -572,7 +572,9 @@ Creed expone sus datos a claude.ai como *custom connector* MCP remoto. Todo vive
 
 Env vars de producción (valores en `.env.local`, ver `project_creed_secrets` en memoria): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (service role), `NEXT_PUBLIC_APP_URL` (= dominio Vercel, **sin** barra final), `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`, `WHOOP_REDIRECT_URI` (= `https://<dominio>/api/whoop/callback`), `WHOOP_TOKEN_ENCRYPTION_KEY`, `WHOOP_WEBHOOK_SECRET`, `CRON_SECRET`, `ADMIN_EMAILS`. Legado (rutas del coach viejo): `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `RESEND_API_KEY` pueden quedarse vacías.
 
-Crons (`apps/web/vercel.json`): `/api/whoop/cron-sync` cada 3 h; `/api/weekly-close` legado.
+Crons (`apps/web/vercel.json`): `/api/whoop/cron-sync` **diario a las 05:00 UTC** (el plan Hobby de Vercel solo permite crons diarios; la frescura la dan el webhook de Whoop y el refresco bajo demanda de `get_daily_briefing`); `/api/weekly-close` legado.
+
+El proyecto Vercel `creed` tiene **Root Directory = `apps/web`**: se enlaza (`vercel link --yes --project creed --scope alexcrilez-gmailcoms-projects`) y despliega desde la raíz del repo. Dominio de producción: `https://project-7h15x.vercel.app`.
 
 ```bash
 npx vercel login              # interactivo
