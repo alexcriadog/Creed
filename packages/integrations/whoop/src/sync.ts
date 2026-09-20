@@ -39,6 +39,8 @@ export interface SyncResult {
   /** 1 si se guardó una fila nueva de medidas corporales (cambió algo), 0 si no. */
   body: number;
   errors: string[];
+  /** Avisos de pasos secundarios (body measurement, enlace de sesiones): no marcan la conexión como error. */
+  warnings: string[];
 }
 
 /**
@@ -95,6 +97,7 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
     workouts: 0,
     body: 0,
     errors: [],
+    warnings: [],
   };
 
   // --- Cycles
@@ -210,7 +213,8 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
       result.body = 1;
     }
   } catch (e) {
-    result.errors.push(`body fetch: ${e instanceof Error ? e.message : String(e)}`);
+    // Secundario: no invalida la conexión (las 4 fuentes principales ya están guardadas).
+    result.warnings.push(`body fetch: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // --- Match workouts → training_sessions
@@ -261,7 +265,7 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
               done_at: w.end_at,
             });
           if (insErr) {
-            result.errors.push(`session_import_parallel: ${insErr.message}`);
+            result.warnings.push(`session_import_parallel: ${insErr.message}`);
           }
           continue;
         }
@@ -374,18 +378,20 @@ export async function syncWhoop(opts: SyncOptions): Promise<SyncResult> {
       }
     }
   } catch (e) {
-    result.errors.push(
+    result.warnings.push(
       `session_import: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 
-  // Update last_synced_at + status
+  // Update last_synced_at + status. Solo los errores de las fuentes principales
+  // cambian el status; los avisos quedan en last_error para diagnóstico.
   const newStatus = result.errors.length > 0 ? 'error' : 'connected';
+  const issues = [...result.errors, ...result.warnings];
   await opts.supabase
     .from('whoop_connections')
     .update({
       last_synced_at: new Date().toISOString(),
-      last_error: result.errors.length > 0 ? result.errors.slice(0, 3).join(' | ').slice(0, 500) : null,
+      last_error: issues.length > 0 ? issues.slice(0, 3).join(' | ').slice(0, 500) : null,
       status: newStatus,
     })
     .eq('user_id', opts.userId);

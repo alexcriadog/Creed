@@ -238,7 +238,7 @@ export class WhoopClient {
 
   /** Altura, peso y FC máxima que el usuario tiene configurados en Whoop. */
   getBodyMeasurement(): Promise<WhoopBodyMeasurement> {
-    return this.request('/user/measurement/body', bodyMeasurementSchema);
+    return this.request(`${DATA_API_PREFIX}/user/measurement/body`, bodyMeasurementSchema);
   }
 
   /**
