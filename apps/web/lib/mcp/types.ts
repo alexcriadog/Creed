@@ -22,14 +22,14 @@ export class McpError extends Error {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyObjectSchema = z.ZodObject<any>;
 
-export interface ToolDef<S extends AnyObjectSchema = AnyObjectSchema> {
+export interface ToolDef<S extends AnyObjectSchema = AnyObjectSchema, O = unknown> {
   name: string;
   /** En español: cuándo usarla, unidades y un ejemplo. */
   description: string;
   inputSchema: S;
-  handler: (ctx: McpContext, input: z.infer<S>) => Promise<unknown>;
+  handler: (ctx: McpContext, input: z.infer<S>) => Promise<O>;
 }
 
-export function defineTool<S extends AnyObjectSchema>(def: ToolDef<S>): ToolDef<S> {
+export function defineTool<S extends AnyObjectSchema, O>(def: ToolDef<S, O>): ToolDef<S, O> {
   return def;
 }
