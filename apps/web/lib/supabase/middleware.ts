@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   '/api/whoop/cron-sync',
   '/api/whoop/webhook',
   '/api/weekly-close',
+  '/api/mcp', // auth propia por bearer (lib/mcp/auth.ts)
+  '/.well-known', // metadata OAuth para clientes MCP
 ];
 
 function isPublicPath(pathname: string) {
