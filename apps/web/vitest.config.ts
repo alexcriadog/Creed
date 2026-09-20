@@ -18,6 +18,10 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname) },
+    alias: {
+      '@': path.resolve(__dirname),
+      // Next resuelve los paquetes del workspace por tsconfig paths; vitest necesita el alias explícito.
+      '@creed/whoop': path.resolve(__dirname, '../../packages/integrations/whoop/src/index.ts'),
+    },
   },
 });
