@@ -406,3 +406,31 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# ============================================================
+# Overrides para el proyecto CLOUD (creed / najngsgcjwunedcytvii).
+# Solo aplican con `supabase config push` al proyecto linkado;
+# el stack local sigue usando Mailpit y la config base.
+# ============================================================
+[remotes.creed]
+project_id = "najngsgcjwunedcytvii"
+
+[remotes.creed.auth.rate_limit]
+email_sent = 20
+
+[remotes.creed.auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "onboarding@resend.dev"
+sender_name = "Creed"
+
+[remotes.creed.auth.email.template.magic_link]
+subject = "Tu código de acceso a Creed"
+content_path = "./supabase/templates/otp-code.html"
+
+[remotes.creed.auth.email.template.confirmation]
+subject = "Tu código de acceso a Creed"
+content_path = "./supabase/templates/otp-code.html"
