@@ -544,3 +544,58 @@ Pasos cuando algo se rompe.
 | Texto exacto del email transaccional + política de privacidad v1 | Implementación (fase 7) |
 | Si publicamos la app en marketplace de Whoop | Decisión del autor en cualquier momento |
 | Si añadimos PagerDuty / on-call cuando crezcamos | V1 si abrimos a más usuarios |
+
+---
+
+## 17. MCP para claude.ai (2026-09-20)
+
+> Spec: [`superpowers/specs/2026-09-20-creed-mcp-design.md`](superpowers/specs/2026-09-20-creed-mcp-design.md). Plan: [`superpowers/plans/2026-09-20-creed-mcp.md`](superpowers/plans/2026-09-20-creed-mcp.md).
+
+Creed expone sus datos a claude.ai como *custom connector* MCP remoto. Todo vive en `apps/web` (Vercel):
+
+| Ruta | Qué es |
+|---|---|
+| `POST /api/mcp` | Servidor MCP (mcp-handler v2, stateless). Bearer = JWT de Supabase emitido por OAuth 2.1. |
+| `GET /.well-known/oauth-protected-resource` (+ `/api/mcp`) | Metadata RFC 9728 → apunta a `https://<ref>.supabase.co/auth/v1`. |
+| `GET /oauth/consent` | Consentimiento (Supabase redirige aquí con `authorization_id`). |
+| `POST /api/oauth/decision` | Aprobar / denegar. |
+| `GET /whoop` | Estado de Whoop, conectar, sincronizar. Única pantalla de atleta que se mantiene. |
+
+### 17.1 Supabase cloud
+
+1. `supabase config push` aplica `[remotes.creed.auth.oauth_server]` (enabled, `/oauth/consent`, registro dinámico).
+2. Dashboard → Authentication → URL Configuration: **Site URL** = dominio de Vercel; **Redirect URLs** += `https://<dominio>/**`.
+3. JWT Signing Keys debe ser asimétrica (ES256/RS256) para que `getClaims` verifique con JWKS. Comprobar `https://<ref>.supabase.co/auth/v1/.well-known/jwks.json`.
+4. Si el proyecto free se pausa por inactividad (pasó en sept-2026), restaurar: `POST https://api.supabase.com/v1/projects/<ref>/restore` con el token del CLI.
+
+### 17.2 Vercel
+
+Env vars de producción (valores en `.env.local`, ver `project_creed_secrets` en memoria): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY` (service role), `NEXT_PUBLIC_APP_URL` (= dominio Vercel, **sin** barra final), `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`, `WHOOP_REDIRECT_URI` (= `https://<dominio>/api/whoop/callback`), `WHOOP_TOKEN_ENCRYPTION_KEY`, `WHOOP_WEBHOOK_SECRET`, `CRON_SECRET`, `ADMIN_EMAILS`. Legado (rutas del coach viejo): `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `RESEND_API_KEY` pueden quedarse vacías.
+
+Crons (`apps/web/vercel.json`): `/api/whoop/cron-sync` cada 3 h; `/api/weekly-close` legado.
+
+```bash
+npx vercel login              # interactivo
+npx vercel link               # proyecto existente
+npx vercel env add <NAME> production
+npx vercel --prod
+```
+
+### 17.3 Whoop
+
+En developer.whoop.com, la app debe tener como redirect URI `https://<dominio>/api/whoop/callback`. Luego `https://<dominio>/whoop` → **Conectar Whoop**. La primera sync trae **todo el historial** (`full: true`) en `after()`; si se corta, el cron la completa (idempotente).
+
+### 17.4 claude.ai
+
+Settings → Connectors → **Add custom connector** → URL `https://<dominio>/api/mcp` (sin client id/secret: registro dinámico) → login OTP → Autorizar. En un chat: «dame mi briefing de hoy».
+
+**Plan B** si claude.ai completa el OAuth pero no adjunta el token (issue anthropics/claude-ai-mcp#1038): registrar un cliente manual en Supabase (Authentication → OAuth Server → Clients) y pasar client id/secret en *Advanced settings* del connector. Si tampoco, mini servidor OAuth propio de un solo usuario.
+
+### 17.5 Verificación
+
+```bash
+curl https://<dominio>/.well-known/oauth-protected-resource          # JSON con authorization_servers
+curl -i -X POST https://<dominio>/api/mcp -H 'content-type: application/json' -d '{}'   # 401 + WWW-Authenticate
+```
+
+Tests: `pnpm --filter @creed/web test` (integración contra Supabase local, RLS real) y `pnpm --filter @creed/whoop test`.
